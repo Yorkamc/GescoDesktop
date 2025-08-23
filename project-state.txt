@@ -1,0 +1,7 @@
+﻿Proyecto: GescoDesktop
+Actualizado: 2025-08-23 09:52:16
+Proyectos: 6
+Paquetes NuGet: Instalados
+Compilación: OK
+Archivos en Git: 7
+Estado: Listo para desarrollo
