@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gesco.Desktop.Core\Gesco.Desktop.Core.csproj" />
+    <ProjectReference Include="..\Gesco.Desktop.Data\Gesco.Desktop.Data.csproj" />
+    <ProjectReference Include="..\Gesco.Desktop.Shared\Gesco.Desktop.Shared.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
