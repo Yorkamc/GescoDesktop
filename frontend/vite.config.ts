@@ -4,9 +4,9 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  base: './',
   server: {
     port: 5173,
+    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5100',
@@ -19,15 +19,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src/renderer'),
       '@main': path.resolve(__dirname, './src/main'),
       '@shared': path.resolve(__dirname, './src/shared')
-    }
-  },
-  build: {
-    outDir: 'dist',
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-        preload: path.resolve(__dirname, 'src/main/preload.ts')
-      }
     }
   }
 });
