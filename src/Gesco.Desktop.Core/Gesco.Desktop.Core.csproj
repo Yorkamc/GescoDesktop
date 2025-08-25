@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Gesco.Desktop.Data\Gesco.Desktop.Data.csproj" />
     <ProjectReference Include="..\Gesco.Desktop.Shared\Gesco.Desktop.Shared.csproj" />
+    <ProjectReference Include="..\Gesco.Desktop.Sync\Gesco.Desktop.Sync.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,8 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.0.3" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.2" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" />
   </ItemGroup>
 
   <PropertyGroup>

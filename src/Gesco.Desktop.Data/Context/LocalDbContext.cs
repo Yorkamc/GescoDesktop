@@ -149,12 +149,9 @@ namespace Gesco.Desktop.Data.Context
             
             // Categorías de artículos básicas
             modelBuilder.Entity<CategoriaArticulo>().HasData(
-                new CategoriaArticulo { Id = 1, Nombre = "Comida", Activo = true },
-                new CategoriaArticulo { Id = 2, Nombre = "Bebidas", Activo = true },
-                new CategoriaArticulo { Id = 3, Nombre = "Boletos", Activo = true },
-                new CategoriaArticulo { Id = 4, Nombre = "Servicios", Activo = true },
-                new CategoriaArticulo { Id = 5, Nombre = "Otros", Activo = true }
+              new CategoriaArticulo { Id = 1, Nombre = "Comida", Descripcion = "Productos alimenticios", Activo = true }
             );
         }
     }
 }
+
