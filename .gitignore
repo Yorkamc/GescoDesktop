@@ -1,10 +1,8 @@
 ﻿# Build folders
 bin/
 obj/
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
+publish/
+dist/
 
 # Visual Studio
 .vs/
@@ -35,11 +33,6 @@ artifacts/
 *.db-shm
 *.db-wal
 
-# Node (para Electron futuro)
-node_modules/
-npm-debug.log
-package-lock.json
-
 # Logs
 *.log
 logs/
@@ -48,17 +41,25 @@ logs/
 *.tmp
 *.temp
 *.bak
+.restructure-state.json
 
 # OS files
 Thumbs.db
 .DS_Store
 
-# Config files sensibles
-appsettings.Development.json
-appsettings.Production.json
-*.env
-
 # Environment files
 .env
 .env.local
 .env.*.local
+
+# Backup folders
+backup_*/
+
+# SQLite databases
+data/*.db
+*.sqlite
+gesco_local.db
+
+# Node modules (para Electron futuro)
+node_modules/
+package-lock.json
