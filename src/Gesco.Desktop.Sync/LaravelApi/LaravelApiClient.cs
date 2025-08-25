@@ -42,7 +42,8 @@ namespace Gesco.Desktop.Sync.LaravelApi
                 );
 
                 var response = await _httpClient.PostAsync($"{_baseUrl}/auth/login", content);
-                
+
+
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -76,7 +77,8 @@ namespace Gesco.Desktop.Sync.LaravelApi
                 );
 
                 var response = await _httpClient.PostAsync($"{_baseUrl}/license/activate", content);
-                
+
+
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();

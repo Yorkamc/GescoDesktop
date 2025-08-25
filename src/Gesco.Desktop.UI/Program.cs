@@ -93,8 +93,11 @@ app.UseAuthorization();
 // =====================================================
 
 // Health check
-app.MapGet("/api/health", () => Results.Ok(new { 
-    status = "healthy", 
+app.MapGet("/api/health", () => Results.Ok(new
+{
+
+    status = "healthy",
+
     timestamp = DateTime.Now,
     version = "1.0.0"
 }));

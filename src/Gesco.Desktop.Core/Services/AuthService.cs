@@ -53,8 +53,9 @@ namespace Gesco.Desktop.Core.Services
 
                 // Generar JWT token
                 var token = GenerateJwtToken(user);
-                
+
                 // Actualizar último login
+
                 user.UltimoLogin = DateTime.Now;
                 await _context.SaveChangesAsync();
 
@@ -99,7 +100,8 @@ namespace Gesco.Desktop.Core.Services
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_jwtSecret);
-                
+
+
                 tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -128,7 +130,8 @@ namespace Gesco.Desktop.Core.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSecret);
-            
+
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
@@ -142,7 +145,8 @@ namespace Gesco.Desktop.Core.Services
                 Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
-            
+
+
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }

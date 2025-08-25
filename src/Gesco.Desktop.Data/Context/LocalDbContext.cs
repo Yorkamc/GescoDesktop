@@ -12,12 +12,12 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<Organizacion> Organizaciones { get; set; }
         public DbSet<ClaveActivacion> ClavesActivacion { get; set; }
         public DbSet<SesionLocal> SesionesLocales { get; set; }
-        
+
         // Entidades de actividades
         public DbSet<Actividad> Actividades { get; set; }
         public DbSet<ArticuloActividad> ArticulosActividad { get; set; }
         public DbSet<CategoriaArticulo> CategoriasArticulo { get; set; }
-        
+
         // Entidades de ventas
         public DbSet<Caja> Cajas { get; set; }
         public DbSet<TransaccionVenta> TransaccionesVenta { get; set; }
@@ -35,27 +35,27 @@ namespace Gesco.Desktop.Data.Context
         {
             if (!optionsBuilder.IsConfigured)
             {
+                // Para desarrollo - guardar en la carpeta del proyecto
                 var dbPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Gesco",
+                    Directory.GetCurrentDirectory(),
+                    "data",
                     "gesco_local.db"
                 );
-                
+
                 var directory = Path.GetDirectoryName(dbPath);
                 if (!Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
-                
+
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
                 optionsBuilder.EnableSensitiveDataLogging();
             }
         }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
             // Configuración de Usuario
             modelBuilder.Entity<Usuario>(entity =>
             {
@@ -64,7 +64,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.HasIndex(e => e.Correo).IsUnique();
                 entity.Property(e => e.Password).IsRequired();
             });
-            
+
             // Configuración de ClaveActivacion
             modelBuilder.Entity<ClaveActivacion>(entity =>
             {
@@ -72,7 +72,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.HasIndex(e => e.CodigoActivacion).IsUnique();
                 entity.Property(e => e.FechaExpiracion).IsRequired();
             });
-            
+
             // Configuración de Actividad
             modelBuilder.Entity<Actividad>(entity =>
             {
@@ -83,7 +83,7 @@ namespace Gesco.Desktop.Data.Context
                     .WithOne(e => e.Actividad)
                     .HasForeignKey(e => e.ActividadId);
             });
-            
+
             // Configuración de ArticuloActividad
             modelBuilder.Entity<ArticuloActividad>(entity =>
             {
@@ -91,7 +91,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.PrecioVenta).HasPrecision(10, 2);
                 entity.Property(e => e.CostoActividad).HasPrecision(10, 2);
             });
-            
+
             // Configuración de TransaccionVenta
             modelBuilder.Entity<TransaccionVenta>(entity =>
             {
@@ -103,7 +103,7 @@ namespace Gesco.Desktop.Data.Context
                     .WithOne(e => e.Transaccion)
                     .HasForeignKey(e => e.TransaccionId);
             });
-            
+
             // Configuración de DetalleTransaccionVenta
             modelBuilder.Entity<DetalleTransaccionVenta>(entity =>
             {
@@ -112,11 +112,11 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Subtotal).HasPrecision(10, 2);
                 entity.Property(e => e.Total).HasPrecision(10, 2);
             });
-            
+
             // Datos semilla para desarrollo
             SeedData(modelBuilder);
         }
-        
+
         private void SeedData(ModelBuilder modelBuilder)
         {
             // Organización por defecto
@@ -126,11 +126,13 @@ namespace Gesco.Desktop.Data.Context
                     Id = 1,
                     Nombre = "Organización Demo",
                     CorreoContacto = "demo@gesco.com",
+                    TelefonoContacto = "2222-2222",  // Agregar teléfono
+                    Direccion = "San José, Costa Rica",  // AGREGAR ESTA LÍNEA
                     Activo = true,
                     CreadoEn = DateTime.Now
                 }
             );
-            
+
             // Usuario administrador por defecto (password: admin123)
             modelBuilder.Entity<Usuario>().HasData(
                 new Usuario
@@ -146,10 +148,10 @@ namespace Gesco.Desktop.Data.Context
                     CreadoEn = DateTime.Now
                 }
             );
-            
+
             // Categorías de artículos básicas
             modelBuilder.Entity<CategoriaArticulo>().HasData(
-              new CategoriaArticulo { Id = 1, Nombre = "Comida", Descripcion = "Productos alimenticios", Activo = true }
+                new CategoriaArticulo { Id = 1, Nombre = "Comida", Descripcion = "Productos alimenticios", Activo = true }
             );
         }
     }
