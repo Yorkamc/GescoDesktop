@@ -61,9 +61,10 @@
 
         async loadLicenseStatus() {
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch('/api/license/status', {
                     headers: {
-                        'Authorization': Bearer 
+                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
@@ -97,10 +98,11 @@
 
         async logout() {
             try {
+                const token = localStorage.getItem('token');
                 await fetch('/api/auth/logout', {
                     method: 'POST',
                     headers: {
-                        'Authorization': Bearer 
+                        'Authorization': `Bearer ${token}`
                     }
                 });
             } catch (err) {
@@ -125,9 +127,9 @@
             const minutes = Math.floor(diff / 60000);
             
             if (minutes < 1) return 'Ahora';
-            if (minutes < 60) return ${minutes}m;
-            if (minutes < 1440) return ${Math.floor(minutes / 60)}h;
-            return ${Math.floor(minutes / 1440)}d;
+            if (minutes < 60) return `${minutes}m`;
+            if (minutes < 1440) return `${Math.floor(minutes / 60)}h`;
+            return `${Math.floor(minutes / 1440)}d`;
         }
     }
 }
