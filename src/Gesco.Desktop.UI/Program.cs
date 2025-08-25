@@ -22,15 +22,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Entity Framework con SQLite
 builder.Services.AddDbContext<LocalDbContext>(options =>
 {
+    // Usar la misma ruta que LocalDbContext
     var dbPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Gesco",
+        Directory.GetCurrentDirectory(),
+        "data",
         Environment.GetEnvironmentVariable("SQLITE_DB_PATH") ?? "gesco_local.db"
     );
+    
+    // Crear directorio si no existe
+    var directory = Path.GetDirectoryName(dbPath);
+    if (!Directory.Exists(directory))
+    {
+        Directory.CreateDirectory(directory);
+    }
+    
     options.UseSqlite($"Data Source={dbPath}");
+    options.EnableSensitiveDataLogging(); // Para debugging
 });
 
 // Servicios de negocio
