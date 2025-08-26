@@ -17,21 +17,48 @@ var builder = WebApplication.CreateBuilder(args);
 // Configurar puerto
 builder.WebHost.UseUrls($"http://localhost:{Environment.GetEnvironmentVariable("LOCAL_API_PORT") ?? "5100"}");
 
-// Servicios
+// =====================================================
+// SERVICIOS
+// =====================================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "GESCO Desktop API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Por favor ingrese el token JWT",
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "bearer"
+    });
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
+// Database
 builder.Services.AddDbContext<LocalDbContext>(options =>
 {
-    // Usar la misma ruta que LocalDbContext
     var dbPath = Path.Combine(
         Directory.GetCurrentDirectory(),
         "data",
         Environment.GetEnvironmentVariable("SQLITE_DB_PATH") ?? "gesco_local.db"
     );
     
-    // Crear directorio si no existe
     var directory = Path.GetDirectoryName(dbPath);
     if (!Directory.Exists(directory))
     {
@@ -39,7 +66,7 @@ builder.Services.AddDbContext<LocalDbContext>(options =>
     }
     
     options.UseSqlite($"Data Source={dbPath}");
-    options.EnableSensitiveDataLogging(); // Para debugging
+    options.EnableSensitiveDataLogging();
 });
 
 // Servicios de negocio
@@ -64,20 +91,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// CORS
+// CORS - IMPORTANTE para permitir conexiones desde React
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("LocalElectron", policy =>
+    options.AddPolicy("ReactApp", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // React dev servers
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
-// Crear base de datos si no existe
+// =====================================================
+// INICIALIZACIÓN DE BASE DE DATOS
+// =====================================================
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
@@ -85,61 +115,157 @@ using (var scope = app.Services.CreateScope())
     Console.WriteLine(" Base de datos local verificada/creada");
 }
 
-// Middleware
-if (app.Environment.IsDevelopment())
+// =====================================================
+// MIDDLEWARE
+// =====================================================
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "GESCO Desktop API v1");
+    c.RoutePrefix = string.Empty; // Swagger en la raíz
+});
 
-app.UseCors("LocalElectron");
-app.UseStaticFiles();
+app.UseCors("ReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
 // =====================================================
-// ENDPOINTS
+// API ENDPOINTS
 // =====================================================
 
 // Health check
-app.MapGet("/api/health", () => Results.Ok(new
-{
-
+app.MapGet("/api/health", () => Results.Ok(new 
+{ 
     status = "healthy",
-
     timestamp = DateTime.Now,
-    version = "1.0.0"
-}));
+    version = "1.0.0",
+    environment = app.Environment.EnvironmentName
+}))
+.WithName("HealthCheck")
+.WithOpenApi();
 
-// Login
+// Auth endpoints
 app.MapPost("/api/auth/login", async (LoginRequest request, IAuthService authService) =>
 {
+    if (string.IsNullOrEmpty(request.Usuario) || string.IsNullOrEmpty(request.Password))
+    {
+        return Results.BadRequest(new { message = "Usuario y contraseña son requeridos" });
+    }
+    
     var result = await authService.LoginAsync(request.Usuario, request.Password);
-    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-});
+    return result.Success ? Results.Ok(result) : Results.Unauthorized();
+})
+.WithName("Login")
+.WithOpenApi();
 
-// Logout
 app.MapPost("/api/auth/logout", async (IAuthService authService) =>
 {
     await authService.LogoutAsync();
-    return Results.Ok(new { message = "Sesión cerrada" });
-});
+    return Results.Ok(new { message = "Sesión cerrada exitosamente" });
+})
+.WithName("Logout")
+.RequireAuthorization()
+.WithOpenApi();
 
-// Activar licencia
+app.MapPost("/api/auth/validate", async (HttpContext context, IAuthService authService) =>
+{
+    var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+    if (string.IsNullOrEmpty(token))
+    {
+        return Results.Unauthorized();
+    }
+    
+    var isValid = await authService.ValidateTokenAsync(token);
+    return isValid ? Results.Ok(new { valid = true }) : Results.Unauthorized();
+})
+.WithName("ValidateToken")
+.WithOpenApi();
+
+// License endpoints
 app.MapPost("/api/license/activate", async (ActivationRequest request, IActivationService activationService) =>
 {
+    if (string.IsNullOrEmpty(request.CodigoActivacion))
+    {
+        return Results.BadRequest(new { message = "Código de activación requerido" });
+    }
+    
     var result = await activationService.ActivateAsync(request.CodigoActivacion, request.OrganizacionId);
     return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-});
+})
+.WithName("ActivateLicense")
+.WithOpenApi();
 
-// Estado de licencia
 app.MapGet("/api/license/status", async (IActivationService activationService) =>
 {
     var status = await activationService.GetLicenseStatusAsync();
     return Results.Ok(status);
-});
+})
+.WithName("GetLicenseStatus")
+.WithOpenApi();
 
-// Servir archivo de login por defecto
-app.MapFallbackToFile("wwwroot/login.html");
+// Activities endpoints (ejemplo)
+app.MapGet("/api/activities", async (LocalDbContext context) =>
+{
+    var activities = await context.Actividades
+        .Select(a => new 
+        {
+            a.Id,
+            a.Nombre,
+            a.Descripcion,
+            a.FechaInicio,
+            a.FechaFin,
+            a.PrecioEntrada
+        })
+        .ToListAsync();
+    
+    return Results.Ok(activities);
+})
+.WithName("GetActivities")
+.RequireAuthorization()
+.WithOpenApi();
+
+// Sales endpoints (ejemplo)
+app.MapGet("/api/sales/today", async (LocalDbContext context) =>
+{
+    var today = DateTime.Today;
+    var sales = await context.TransaccionesVenta
+        .Where(t => t.FechaTransaccion.Date == today)
+        .SumAsync(t => t.Total);
+    
+    return Results.Ok(new { date = today, total = sales });
+})
+.WithName("GetTodaySales")
+.RequireAuthorization()
+.WithOpenApi();
+
+// Stats endpoint
+app.MapGet("/api/stats", async (LocalDbContext context) =>
+{
+    var stats = new
+    {
+        actividades = await context.Actividades.CountAsync(),
+        ventasHoy = await context.TransaccionesVenta
+            .Where(t => t.FechaTransaccion.Date == DateTime.Today)
+            .SumAsync(t => t.Total),
+        transacciones = await context.TransaccionesVenta
+            .Where(t => t.FechaTransaccion.Date == DateTime.Today)
+            .CountAsync()
+    };
+    
+    return Results.Ok(stats);
+})
+.WithName("GetStats")
+.RequireAuthorization()
+.WithOpenApi();
+
+// =====================================================
+// INICIO DE LA APLICACIÓN
+// =====================================================
+Console.WriteLine("=========================================");
+Console.WriteLine("  GESCO DESKTOP API");
+Console.WriteLine("=========================================");
+Console.WriteLine($"  URL: http://localhost:{Environment.GetEnvironmentVariable("LOCAL_API_PORT") ?? "5100"}");
+Console.WriteLine($"  Swagger: http://localhost:{Environment.GetEnvironmentVariable("LOCAL_API_PORT") ?? "5100"}/");
+Console.WriteLine("=========================================");
 
 app.Run();
