@@ -1,152 +1,189 @@
-# GESCO Desktop
+GESCO Desktop
 
 Sistema de Gestión de Eventos y Actividades Comunitarias - Versión Desktop
 
-##  Características
+✨ Características
 
--  **Modo Offline First**: Funciona sin conexión a internet
-- ✅ **Base de datos local SQLite**: Almacenamiento local de datos
--  **Sincronización con servidor Laravel**: Cuando hay conexión disponible
--  **Autenticación con BCrypt**: Compatible con Laravel
--  **Activación de licencias**: Sistema de licencias para desktop
-- ✅ **UI simple y eficiente**: HTML + Alpine.js
+🔌 Arquitectura híbrida:
 
-##  Estructura del Proyecto
+Backend en ASP.NET Core con Entity Framework Core + SQLite.
 
-```
+Frontend en React + TypeScript + Electron.
+
+📦 Modo Offline First:
+
+Base de datos local SQLite.
+
+Funciona sin conexión a internet.
+
+🔄 Sincronización con Laravel:
+
+Cuando hay conexión, los datos se sincronizan automáticamente con el servidor Laravel.
+
+🔐 Seguridad:
+
+Autenticación con BCrypt.
+
+Sistema de activación de licencias.
+
+🎨 Interfaz moderna:
+
+React + Tailwind CSS.
+
+UI rápida y responsiva.
+
+📂 Estructura del Proyecto
 GescoDesktop/
- src/
-    Gesco.Desktop.Core/        # Lógica de negocio
-    Gesco.Desktop.Data/        # Acceso a datos (SQLite)
-   ─ Gesco.Desktop.Sync/        # Sincronización con Laravel
-│   ├── Gesco.Desktop.Shared/      # DTOs y modelos compartidos
-    Gesco.Desktop.UI/          # API mínima y UI web
- logs/                           # Archivos de log
- data/                           # Base de datos SQLite
- electron/                       # Aplicación Electron (futuro)
-```
+│
+├── backend/                     # Backend en .NET Core (C#)
+│   |                 
+│   ├── src/
+│   │   ├── Gesco.Desktop.Core/   # Lógica de negocio
+│   │   ├── Gesco.Desktop.Data/   # Acceso a datos (SQLite + EF Core)
+│   │   ├── Gesco.Desktop.Shared/ # Modelos y DTOs compartidos
+│   │   ├── Gesco.Desktop.Sync/   # Sincronización con Laravel
+│   │   └── Gesco.Desktop.UI/     # API mínima con ASP.NET Core
+│   ├── utils/                    # Utilidades
+│   └── tests/                    # Pruebas unitarias
+│
+├── frontend/                     # Frontend React + TS + Electron
+│   ├── public/                   # Archivos estáticos
+│   ├── src/
+│   │   ├── main/                 # Proceso principal de Electron
+│   │   ├── renderer/             # React UI (pantallas)
+│   │   └── shared/               # Código compartido entre procesos
+│   ├── electron-main.cjs         # Entry point de Electron
+│   ├── index.html                # Página base
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── postcss.config.js
+│   └── tailwind.config.js
+│
+├── .env                          # Variables de entorno
+├── .env.example
+├── .prettierrc                   # Configuración de estilos
+├── build-prod.ps1                 # Script build producción
+├── build-release.ps1              # Script release
+├── create-migration.ps1           # Script para EF migrations
+├── start-dev.ps1                  # Script arranque dev
+├── GescoDesktop.sln               # Solución .NET
+└── LICENSE                        # Licencia MIT
 
-##  Tecnologías
+🛠️ Tecnologías
 
-- **.NET 8.0**
-- **Entity Framework Core** con SQLite
-- **BCrypt.Net** para encriptación
-- **HTML + Alpine.js** para UI
-- **Tailwind CSS** para estilos
+Backend: .NET 8.0, Entity Framework Core, SQLite, BCrypt.Net
 
-##  Requisitos
+Frontend: React, TypeScript, Electron, TailwindCSS
 
-- .NET 8.0 SDK o superior
-- Visual Studio 2022 o VS Code
-- Git
+Otros:  Laravel API (para sincronización)
 
-##  Instalación
+⚙️ Requisitos
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/tu-usuario/gesco-desktop.git
-   cd gesco-desktop
-   ```
+.NET 8.0 SDK o superior
 
-2. **Configurar variables de entorno**
-   ```bash
-   cp .env.example .env
-   # Editar .env con tus configuraciones
-   ```
+Node.js 18+ y npm
 
-3. **Restaurar paquetes**
-   ```bash
-   dotnet restore
-   ```
+Visual Studio 2022 o VS Code
 
-4. **Ejecutar la aplicación**
-   ```bash
-   .\start-dev.ps1
-   ```
+Git
 
-##  Uso
+🚀 Instalación y Uso
 
-### Iniciar en modo desarrollo
-```powershell
+Clonar el repositorio
+
+git clone https://github.com/tu-usuario/gesco-desktop.git
+cd gesco-desktop
+
+
+Configurar variables de entorno
+
+cp .env.example .env
+# Editar .env con tus configuraciones
+
+
+Backend: Restaurar paquetes
+
+dotnet restore
+
+
+Frontend: Instalar dependencias
+
+cd frontend
+npm install
+
+
+Iniciar en modo desarrollo
+
 .\start-dev.ps1
-```
 
-### Compilar para producción
-```powershell
+
+Compilar para producción
+
 .\build-release.ps1
-```
 
-### Crear una migración
-```powershell
+🧪 Migraciones de Base de Datos
+
+Crear una nueva migración:
+
 .\create-migration.ps1 -MigrationName "NombreMigracion"
-```
 
-##  Acceso a la Aplicación
 
-- **Login**: http://localhost:5100/login.html
-- **Dashboard**: http://localhost:5100/dashboard.html
-- **Activación**: http://localhost:5100/activation.html
-- **API Swagger**: http://localhost:5100/swagger
+Actualizar la base de datos:
 
-##  Credenciales por Defecto
+cd backend/src/Gesco.Desktop.Data
+dotnet ef database update -s ../Gesco.Desktop.UI/Gesco.Desktop.UI.csproj
 
-- **Usuario**: admin
-- **Contraseña**: admin123
+🌐 Acceso a la Aplicación
 
-##  Sincronización con Laravel
+Login: http://localhost:5100/login
 
-La aplicación funciona de manera offline y sincroniza con el servidor Laravel cuando hay conexión disponible.
+Dashboard: http://localhost:5100/dashboard
 
-### Configurar servidor Laravel
+Activación: http://localhost:5100/activation
 
-En tu archivo `.env`:
+API Swagger: http://localhost:5100/swagger
 
-```env
+
+🔄 Sincronización con Laravel
+
+En tu archivo .env configurar:
+
 LARAVEL_API_URL=https://tu-servidor.com/api
 LARAVEL_API_KEY=tu-api-key
-```
 
-##  Licencias
+🐞 Solución de Problemas
 
-El sistema requiere activación de licencia para funcionar. Las licencias se validan contra el servidor Laravel.
+La base de datos no se crea
 
-## � Solución de Problemas
+dotnet ef database update
 
-### La base de datos no se crea
-```powershell
-# Crear manualmente la migración inicial
-cd src\Gesco.Desktop.Data
-dotnet ef database update -s ..\Gesco.Desktop.UI\Gesco.Desktop.UI.csproj
-```
 
-### Error de puerto en uso
-Cambiar el puerto en `.env`:
-```env
+Error de puerto en uso
+Cambiar el puerto en .env:
+
 LOCAL_API_PORT=5101
-```
 
-##  Documentación Adicional
+🤝 Contribuir
 
-- [Documentación de Entity Framework Core](https://docs.microsoft.com/ef/core/)
-- [Alpine.js Documentation](https://alpinejs.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
+Haz un fork del proyecto
 
-## 🤝 Contribuir
+Crea una rama (git checkout -b feature/NuevaFeature)
 
-Las contribuciones son bienvenidas. Por favor:
+Commit tus cambios (git commit -m 'Agrega nueva feature')
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+Push a tu rama (git push origin feature/NuevaFeature)
 
-## 📄 Licencia
+Abre un Pull Request
 
-Este proyecto está bajo licencia MIT. Ver el archivo `LICENSE` para más detalles.
+📄 Licencia
 
-##  Contacto
+Este proyecto está bajo licencia MIT. Ver el archivo LICENSE
+.
 
-Tu Nombre - [@tutwitter](https://twitter.com/tutwitter) - email@example.com
+📬 Contacto
 
-Link del Proyecto: [https://github.com/tu-usuario/gesco-desktop](https://github.com/tu-usuario/gesco-desktop)
+Yorkael Mc Carthey Sánchez
+
+Email: hernaldomccarthy14@gmail.com
+
+Link del Proyecto: https://github.com/Yorkamc/GescoDesktop.git
