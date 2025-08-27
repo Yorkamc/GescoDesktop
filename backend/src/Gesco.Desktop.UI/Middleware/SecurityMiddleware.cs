@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Gesco.Desktop.Core.Audit;
 
-namespace Gesco.Desktop.Core.Middleware
+namespace Gesco.Desktop.UI.Middleware
 {
     public class SecurityHeadersMiddleware
     {
@@ -93,3 +93,4 @@ namespace Gesco.Desktop.Core.Middleware
         }
     }
 }
+
