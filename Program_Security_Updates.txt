@@ -1,0 +1,21 @@
+﻿// AGREGAR ESTAS LÍNEAS AL Program.cs DESPUÉS DE LA LÍNEA 16
+
+// Configuración de seguridad avanzada
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddHostedService<BackupService>();
+
+// Configuración de DataProtection
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "keys")))
+    .SetApplicationName("GescoDesktop")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+
+// AGREGAR DESPUÉS DE app.UseCors("ReactApp"):
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<RateLimitingMiddleware>();
+
+// AGREGAR USANDO ESTAS DECLARACIONES AL INICIO:
+using Gesco.Desktop.Core.Audit;
+using Gesco.Desktop.Core.Middleware;
+using Gesco.Desktop.Core.Services;
