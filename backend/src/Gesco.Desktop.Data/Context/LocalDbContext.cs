@@ -406,32 +406,56 @@ namespace Gesco.Desktop.Data.Context
             });
         }
 
-        private void ConfigurarNotificacionesYConfiguracion(ModelBuilder modelBuilder)
-        {
-            // Notificacion
-            modelBuilder.Entity<Notificacion>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasIndex(e => new { e.OrganizacionId, e.Leida, e.Importante });
-                entity.HasIndex(e => new { e.UsuarioId, e.Leida, e.FechaProgramada });
-                entity.Property(e => e.Titulo).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.Mensaje).IsRequired();
-                entity.Property(e => e.CanalesEntrega).HasMaxLength(100);
-            });
+private void ConfigurarNotificacionesYConfiguracion(ModelBuilder modelBuilder)
+{
+    // Notificacion - CONFIGURACION CORREGIDA
+    modelBuilder.Entity<Notificacion>(entity =>
+    {
+        entity.HasKey(e => e.Id);
+        entity.HasIndex(e => new { e.OrganizacionId, e.Leida, e.Importante });
+        entity.HasIndex(e => new { e.UsuarioId, e.Leida, e.FechaProgramada });
+        entity.Property(e => e.Titulo).IsRequired().HasMaxLength(200);
+        entity.Property(e => e.Mensaje).IsRequired();
+        entity.Property(e => e.CanalesEntrega).HasMaxLength(100);
 
-            // ConfiguracionSistema
-            modelBuilder.Entity<ConfiguracionSistema>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasIndex(e => new { e.OrganizacionId, e.Clave }).IsUnique();
-                entity.HasIndex(e => new { e.Clave, e.Categoria });
-                entity.Property(e => e.Clave).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Valor).IsRequired();
-                entity.Property(e => e.TipoValor).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Categoria).HasMaxLength(100);
-                entity.Property(e => e.NivelAcceso).HasMaxLength(50).HasDefaultValue("admin");
-            });
-        }
+        // FIX CRITICO: Configurar relaciones explicitamente para evitar ambiguedad
+        entity.HasOne(e => e.Organizacion)
+            .WithMany(o => o.Notificaciones)
+            .HasForeignKey(e => e.OrganizacionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // RELACION 1: Usuario destinatario (UsuarioId)
+        entity.HasOne(e => e.Usuario)
+            .WithMany() // SIN PARAMETROS - esto evita la ambiguedad
+            .HasForeignKey(e => e.UsuarioId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // RELACION 2: Usuario creador (CreadaPor)
+        entity.HasOne(e => e.CreadaPorUsuario)
+            .WithMany() // SIN PARAMETROS - esto evita la ambiguedad
+            .HasForeignKey(e => e.CreadaPor)
+            .OnDelete(DeleteBehavior.SetNull);
+    });
+
+    // ConfiguracionSistema
+    modelBuilder.Entity<ConfiguracionSistema>(entity =>
+    {
+        entity.HasKey(e => e.Id);
+        entity.HasIndex(e => new { e.OrganizacionId, e.Clave }).IsUnique();
+        entity.HasIndex(e => new { e.Clave, e.Categoria });
+        entity.Property(e => e.Clave).IsRequired().HasMaxLength(100);
+        entity.Property(e => e.Valor).IsRequired();
+        entity.Property(e => e.TipoValor).IsRequired().HasMaxLength(50);
+        entity.Property(e => e.Categoria).HasMaxLength(100);
+        entity.Property(e => e.NivelAcceso).HasMaxLength(50).HasDefaultValue("admin");
+
+        // Relacion con Usuario para ActualizadoPor
+        entity.HasOne(e => e.ActualizadoPorUsuario)
+            .WithMany() // SIN PARAMETROS
+            .HasForeignKey(e => e.ActualizadoPor)
+            .OnDelete(DeleteBehavior.SetNull);
+    });
+}
 
         private void SeedData(ModelBuilder modelBuilder)
         {
