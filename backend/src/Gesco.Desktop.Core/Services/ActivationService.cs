@@ -27,7 +27,7 @@ namespace Gesco.Desktop.Core.Services
                 var existingActivation = await _context.ClavesActivacion
                     .FirstOrDefaultAsync(ca => ca.CodigoActivacion == codigoActivacion);
 
-                if (existingActivation != null && existingActivation.Activa)
+                if (existingActivation != null && existingActivation.Expirada)
                 {
                     return new ActivationResultDto
                     {
@@ -79,8 +79,8 @@ namespace Gesco.Desktop.Core.Services
             try
             {
                 var activation = await _context.ClavesActivacion
-                    .Where(ca => ca.Activa)
-                    .OrderByDescending(ca => ca.FechaActivacion)
+                    .Where(ca => ca.Expirada)
+                    .OrderByDescending(ca => ca.FechaGeneracion)
                     .FirstOrDefaultAsync();
 
                 if (activation == null)
@@ -100,11 +100,10 @@ namespace Gesco.Desktop.Core.Services
                 {
                     IsActive = isActive,
                     Message = isActive ? "Licencia activa" : "Licencia expirada",
-                    FechaActivacion = activation.FechaActivacion,
+                    FechaActivacion = activation.FechaGeneracion,
                     FechaExpiracion = activation.FechaExpiracion,
                     DiasRestantes = Math.Max(0, diasRestantes),
-                    MaxUsuarios = activation.MaxUsuarios,
-                    OrganizacionId = activation.OrganizacionId
+                    OrganizacionId = activation.GeneradaPorUsuario?.OrganizacionId
                 };
             }
             catch (Exception ex)
@@ -133,15 +132,7 @@ namespace Gesco.Desktop.Core.Services
             var activation = new Data.Entities.ClaveActivacion
             {
                 CodigoActivacion = codigoActivacion,
-                TipoLicenciaId = 1, // Licencia estándar
-                OrganizacionId = organizacionId,
-                FechaActivacion = DateTime.Now,
-                FechaExpiracion = fechaExpiracion,
-                Activa = true,
-                DispositivoId = Environment.MachineName,
-                NombreDispositivo = "GESCO Desktop",
-                MaxUsuarios = 10, // Máximo por defecto
-                UltimaVerificacion = DateTime.Now
+                FechaExpiracion = fechaExpiracion
             };
 
             _context.ClavesActivacion.Add(activation);

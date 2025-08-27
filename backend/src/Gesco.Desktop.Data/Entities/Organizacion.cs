@@ -19,11 +19,23 @@ namespace Gesco.Desktop.Data.Entities
         public string TelefonoContacto { get; set; }
 
         public string Direccion { get; set; }
+
+        [MaxLength(200)]
+        public string PersonaAdquiriente { get; set; }
+
         public bool Activo { get; set; } = true;
         public DateTime CreadoEn { get; set; } = DateTime.Now;
 
         // Navegación
         public virtual ICollection<Usuario> Usuarios { get; set; }
         public virtual ICollection<Actividad> Actividades { get; set; }
+        public virtual ICollection<Suscripcion> Suscripciones { get; set; }
+        public virtual ICollection<CategoriaServicio> CategoriasServicio { get; set; }
+        public virtual ICollection<Modulo> Modulos { get; set; }
+        public virtual ICollection<SecuenciaNumeracion> SecuenciasNumeracion { get; set; }
+        public virtual ICollection<LogAuditoria> LogsAuditoria { get; set; }
+        public virtual ICollection<ColaSincronizacion> ColaSincronizacion { get; set; }
+        public virtual ICollection<Notificacion> Notificaciones { get; set; }
+        public virtual ICollection<ConfiguracionSistema> ConfiguracionesSistema { get; set; }
     }
 }

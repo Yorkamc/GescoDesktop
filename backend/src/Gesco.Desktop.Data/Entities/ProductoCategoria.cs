@@ -6,9 +6,14 @@ using System.Threading.Tasks;
 
 namespace Gesco.Desktop.Data.Entities
 {
- public class Actividad
+public class ProductoCategoria
     {
         public int Id { get; set; }
+        public int ActividadCategoriaId { get; set; }
+
+        // Información del producto
+        [MaxLength(50)]
+        public string Codigo { get; set; }
 
         [Required]
         [MaxLength(200)]
@@ -16,21 +21,16 @@ namespace Gesco.Desktop.Data.Entities
 
         public string Descripcion { get; set; }
 
-        // Fechas y ubicación
         [Required]
-        public DateTime FechaInicio { get; set; }
+        public decimal PrecioUnitario { get; set; }
 
-        public TimeSpan? HoraInicio { get; set; }
-        public DateTime? FechaFin { get; set; }
-        public TimeSpan? HoraFin { get; set; }
+        // Control de inventario
+        public int CantidadInicial { get; set; } = 0;
+        public int CantidadActual { get; set; } = 0;
+        public int CantidadAlerta { get; set; } = 10;
 
-        [MaxLength(200)]
-        public string Ubicacion { get; set; }
-
-        // Estados y responsables
-        public int EstadoId { get; set; }
-        public int? EncargadoUsuarioId { get; set; }
-        public int OrganizacionId { get; set; }
+        // Configuración de venta
+        public bool Activo { get; set; } = true;
 
         // Auditoría
         public int CreadoPor { get; set; }
@@ -46,15 +46,11 @@ namespace Gesco.Desktop.Data.Entities
         public string HashSync { get; set; }
 
         // Navegación
-        public virtual EstadoActividad Estado { get; set; }
-        public virtual Usuario EncargadoUsuario { get; set; }
-        public virtual Organizacion Organizacion { get; set; }
+        public virtual ActividadCategoria ActividadCategoria { get; set; }
         public virtual Usuario CreadoPorUsuario { get; set; }
         public virtual Usuario ActualizadoPorUsuario { get; set; }
-
-        public virtual ICollection<ActividadCategoria> ActividadCategorias { get; set; }
-        public virtual ICollection<ComboVenta> CombosVenta { get; set; }
-        public virtual ICollection<Caja> Cajas { get; set; }
-        public virtual ICollection<CierreActividad> CierresActividad { get; set; }
+        public virtual ICollection<DetalleTransaccionVenta> DetallesTransaccionVenta { get; set; }
+        public virtual ICollection<ComboArticulo> ComboArticulos { get; set; }
+        public virtual ICollection<MovimientoInventario> MovimientosInventario { get; set; }
     }
 }

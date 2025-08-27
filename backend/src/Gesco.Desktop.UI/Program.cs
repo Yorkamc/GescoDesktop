@@ -267,8 +267,7 @@ app.MapGet("/api/activities", async (LocalDbContext context) =>
             a.Descripcion,
             a.FechaInicio,
             a.FechaFin,
-            a.PrecioEntrada,
-            a.CapacidadMaxima
+           
         })
         .ToListAsync();
     

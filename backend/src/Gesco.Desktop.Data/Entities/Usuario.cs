@@ -18,17 +18,31 @@ namespace Gesco.Desktop.Data.Entities
         [MaxLength(200)]
         public string NombreCompleto { get; set; }
 
-        [Required]
-        public string Password { get; set; }
+        [MaxLength(50)]
+        public string Telefono { get; set; }
 
+        [Required]
+        public string Contrasena { get; set; }
+
+        public bool PrimerLogin { get; set; } = true;
+        public bool Activo { get; set; } = true;
+
+        // Foreign Keys
         public int? OrganizacionId { get; set; }
         public int RolId { get; set; }
-        public bool Activo { get; set; } = true;
-        public DateTime? UltimoLogin { get; set; }
-        public DateTime? UltimaSincronizacion { get; set; }
+        public int? CreadoPor { get; set; }
+        public int? ActualizadoPor { get; set; }
+
+        // Timestamps
         public DateTime CreadoEn { get; set; } = DateTime.Now;
+        public DateTime? PrimerLoginEn { get; set; }
+        public DateTime? UltimoLogin { get; set; }
+        public DateTime? ActualizadoEn { get; set; }
 
         // Navegación
         public virtual Organizacion Organizacion { get; set; }
+        public virtual Rol Rol { get; set; }
+        public virtual Usuario CreadoPorUsuario { get; set; }
+        public virtual Usuario ActualizadoPorUsuario { get; set; }
     }
 }
