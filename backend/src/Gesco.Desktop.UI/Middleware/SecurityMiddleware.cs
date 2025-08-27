@@ -66,7 +66,7 @@ namespace Gesco.Desktop.UI.Middleware
                     
                     await _auditService.LogSecurityViolationAsync(
                         "Rate Limit Exceeded",
-                        context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown",
                         $"IP: {clientIP}, Requests: {_requests[clientIP].Count}"
                     );
                     
@@ -93,4 +93,3 @@ namespace Gesco.Desktop.UI.Middleware
         }
     }
 }
-
