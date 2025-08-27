@@ -20,7 +20,7 @@ namespace Gesco.Desktop.Core.Services
         public AuthService(LocalDbContext context)
         {
             _context = context;
-            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "TuClaveSecretaMuyLargaYSegura2024GescoDesktop!@#$%";
+            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
         }
 
         public async Task<LoginResultDto> LoginAsync(string usuario, string password)
@@ -30,6 +30,7 @@ namespace Gesco.Desktop.Core.Services
                 // Buscar usuario por nombre de usuario o email
                 var user = await _context.Usuarios
                     .Include(u => u.Organizacion)
+                    .Include(u => u.Rol)
                     .FirstOrDefaultAsync(u => u.NombreUsuario == usuario || u.Correo == usuario);
 
                 if (user == null || !user.Activo)
@@ -42,7 +43,7 @@ namespace Gesco.Desktop.Core.Services
                 }
 
                 // Verificar contraseña
-                if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+                if (!BCrypt.Net.BCrypt.Verify(password, user.Contrasena))
                 {
                     return new LoginResultDto
                     {
@@ -55,7 +56,6 @@ namespace Gesco.Desktop.Core.Services
                 var token = GenerateJwtToken(user);
 
                 // Actualizar último login
-
                 user.UltimoLogin = DateTime.Now;
                 await _context.SaveChangesAsync();
 
@@ -74,7 +74,7 @@ namespace Gesco.Desktop.Core.Services
                         NombreCompleto = user.NombreCompleto,
                         OrganizacionId = user.OrganizacionId,
                         RolId = user.RolId,
-                        NombreRol = GetRoleName(user.RolId)
+                        NombreRol = user.Rol?.Nombre ?? GetRoleName(user.RolId)
                     }
                 };
             }
@@ -100,7 +100,6 @@ namespace Gesco.Desktop.Core.Services
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_jwtSecret);
-
 
                 tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
@@ -131,7 +130,6 @@ namespace Gesco.Desktop.Core.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSecret);
 
-
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
@@ -146,7 +144,6 @@ namespace Gesco.Desktop.Core.Services
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
@@ -156,7 +153,7 @@ namespace Gesco.Desktop.Core.Services
             return rolId switch
             {
                 1 => "Administrador",
-                2 => "Vendedor",
+                2 => "Vendedor", 
                 3 => "Cajero",
                 _ => "Usuario"
             };

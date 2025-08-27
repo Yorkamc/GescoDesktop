@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading;
-using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Gesco.Desktop.Core.Services
 {
@@ -15,10 +15,9 @@ namespace Gesco.Desktop.Core.Services
         Task CleanOldBackupsAsync(int daysToKeep = 30);
     }
 
-    public class BackupService : IBackupService, IHostedService
+    public class BackupService : IBackupService
     {
         private readonly ILogger<BackupService> _logger;
-        private readonly Timer _timer;
         private readonly string _dbPath;
         private readonly string _backupFolder;
 
@@ -33,9 +32,6 @@ namespace Gesco.Desktop.Core.Services
             {
                 Directory.CreateDirectory(_backupFolder);
             }
-
-            // Timer para backup automático cada 6 horas
-            _timer = new Timer(async _ => await CreateBackupAsync(), null, TimeSpan.Zero, TimeSpan.FromHours(6));
         }
 
         public async Task CreateBackupAsync()
@@ -46,60 +42,28 @@ namespace Gesco.Desktop.Core.Services
                 var backupName = $"gesco_backup_{timestamp}.zip";
                 var backupPath = Path.Combine(_backupFolder, backupName);
 
-                using (var fileStream = new FileStream(backupPath, FileMode.Create))
-                using (var zipStream = new ZipOutputStream(fileStream))
+                // Backup simple copiando archivos de base de datos
+                if (Directory.Exists(_dbPath))
                 {
-                    zipStream.SetLevel(6);
-
-                    // Backup de la base de datos
-                    if (Directory.Exists(_dbPath))
+                    var dbFiles = Directory.GetFiles(_dbPath, "*.db");
+                    if (dbFiles.Length > 0)
                     {
-                        foreach (var file in Directory.GetFiles(_dbPath, "*.db"))
+                        foreach (var dbFile in dbFiles)
                         {
-                            await AddFileToZip(zipStream, file, Path.GetFileName(file));
+                            var fileName = Path.GetFileName(dbFile);
+                            var backupDbPath = Path.Combine(_backupFolder, $"{timestamp}_{fileName}");
+                            File.Copy(dbFile, backupDbPath, true);
                         }
-                    }
-
-                    // Backup de logs importantes
-                    var logsPath = Path.Combine(Directory.GetCurrentDirectory(), "logs");
-                    if (Directory.Exists(logsPath))
-                    {
-                        foreach (var file in Directory.GetFiles(logsPath, "*.log"))
-                        {
-                            if (file.Contains("audit") || file.Contains("security"))
-                            {
-                                await AddFileToZip(zipStream, file, $"logs/{Path.GetFileName(file)}");
-                            }
-                        }
+                        _logger.LogInformation("Backup created successfully in: {BackupFolder}", _backupFolder);
                     }
                 }
-
-                _logger.LogInformation("Backup created successfully: {BackupPath}", backupPath);
-                
-                // Limpiar backups antiguos
-                await CleanOldBackupsAsync();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating backup");
             }
-        }
 
-        private async Task AddFileToZip(ZipOutputStream zipStream, string filePath, string entryName)
-        {
-            var entry = new ZipEntry(entryName)
-            {
-                DateTime = File.GetLastWriteTime(filePath)
-            };
-            
-            zipStream.PutNextEntry(entry);
-            
-            using (var fileStream = File.OpenRead(filePath))
-            {
-                await fileStream.CopyToAsync(zipStream);
-            }
-            
-            zipStream.CloseEntry();
+            await Task.CompletedTask;
         }
 
         public async Task<bool> RestoreBackupAsync(string backupPath)
@@ -112,31 +76,16 @@ namespace Gesco.Desktop.Core.Services
                     return false;
                 }
 
-                using (var fileStream = new FileStream(backupPath, FileMode.Open, FileAccess.Read))
-                using (var zipStream = new ZipInputStream(fileStream))
+                var fileName = Path.GetFileName(backupPath);
+                if (fileName.Contains("gesco_backup_") && fileName.EndsWith(".db"))
                 {
-                    ZipEntry entry;
-                    while ((entry = zipStream.GetNextEntry()) != null)
-                    {
-                        if (!entry.IsFile) continue;
-
-                        var outputPath = Path.Combine(Directory.GetCurrentDirectory(), entry.Name);
-                        var outputDir = Path.GetDirectoryName(outputPath);
-                        
-                        if (!Directory.Exists(outputDir))
-                        {
-                            Directory.CreateDirectory(outputDir);
-                        }
-
-                        using (var output = File.Create(outputPath))
-                        {
-                            await zipStream.CopyToAsync(output);
-                        }
-                    }
+                    var targetPath = Path.Combine(_dbPath, "gesco_local.db");
+                    File.Copy(backupPath, targetPath, true);
+                    _logger.LogInformation("Backup restored successfully from: {BackupPath}", backupPath);
+                    return true;
                 }
 
-                _logger.LogInformation("Backup restored successfully from: {BackupPath}", backupPath);
-                return true;
+                return false;
             }
             catch (Exception ex)
             {
@@ -150,7 +99,7 @@ namespace Gesco.Desktop.Core.Services
             try
             {
                 var cutoffDate = DateTime.Now.AddDays(-daysToKeep);
-                var backupFiles = Directory.GetFiles(_backupFolder, "gesco_backup_*.zip");
+                var backupFiles = Directory.GetFiles(_backupFolder, "gesco_backup_*.db");
 
                 foreach (var file in backupFiles)
                 {
@@ -166,24 +115,56 @@ namespace Gesco.Desktop.Core.Services
             {
                 _logger.LogError(ex, "Error cleaning old backups");
             }
+
+            await Task.CompletedTask;
+        }
+    }
+
+    // Servicio separado para tareas en background
+    public class BackupHostedService : BackgroundService
+    {
+        private readonly ILogger<BackupHostedService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly TimeSpan _backupInterval = TimeSpan.FromHours(6); // Cada 6 horas
+
+        public BackupHostedService(ILogger<BackupHostedService> logger, IServiceProvider serviceProvider)
+        {
+            _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Backup Service started");
-            return Task.CompletedTask;
-        }
+            _logger.LogInformation("Backup Hosted Service started");
 
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _timer?.Change(Timeout.Infinite, 0);
-            _logger.LogInformation("Backup Service stopped");
-            return Task.CompletedTask;
-        }
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var backupService = scope.ServiceProvider.GetRequiredService<IBackupService>();
+                    
+                    await backupService.CreateBackupAsync();
+                    await backupService.CleanOldBackupsAsync();
+                    
+                    _logger.LogInformation("Automatic backup completed successfully");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error during automatic backup");
+                }
 
-        public void Dispose()
-        {
-            _timer?.Dispose();
+                try
+                {
+                    await Task.Delay(_backupInterval, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+
+            _logger.LogInformation("Backup Hosted Service stopped");
         }
     }
 }

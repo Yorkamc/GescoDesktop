@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Gesco.Desktop.Core.Interfaces;
@@ -27,7 +28,7 @@ namespace Gesco.Desktop.Core.Services
                 var existingActivation = await _context.ClavesActivacion
                     .FirstOrDefaultAsync(ca => ca.CodigoActivacion == codigoActivacion);
 
-                if (existingActivation != null && existingActivation.Expirada)
+                if (existingActivation != null && existingActivation.Utilizada)
                 {
                     return new ActivationResultDto
                     {
@@ -79,7 +80,7 @@ namespace Gesco.Desktop.Core.Services
             try
             {
                 var activation = await _context.ClavesActivacion
-                    .Where(ca => ca.Expirada)
+                    .Where(ca => ca.Utilizada && !ca.Expirada && !ca.Revocada)
                     .OrderByDescending(ca => ca.FechaGeneracion)
                     .FirstOrDefaultAsync();
 
@@ -89,21 +90,31 @@ namespace Gesco.Desktop.Core.Services
                     {
                         IsActive = false,
                         Message = "No hay licencia activa",
-                        DiasRestantes = 0
+                        DiasRestantes = 0,
+                        MaxUsuarios = 0
                     };
                 }
 
-                var diasRestantes = (int)(activation.FechaExpiracion - DateTime.Now).TotalDays;
-                var isActive = DateTime.Now <= activation.FechaExpiracion;
+                // Corregir el manejo de nullable - verificar si FechaExpiracion tiene valor
+                int diasRestantes = 0;
+                bool isActive = false;
+
+                if (activation.FechaExpiracion.HasValue)
+                {
+                    var timeSpan = activation.FechaExpiracion.Value - DateTime.Now;
+                    diasRestantes = Math.Max(0, (int)timeSpan.TotalDays);
+                    isActive = DateTime.Now <= activation.FechaExpiracion.Value;
+                }
 
                 return new LicenseStatusDto
                 {
                     IsActive = isActive,
                     Message = isActive ? "Licencia activa" : "Licencia expirada",
-                    FechaActivacion = activation.FechaGeneracion,
+                    FechaActivacion = activation.FechaUtilizacion,
                     FechaExpiracion = activation.FechaExpiracion,
-                    DiasRestantes = Math.Max(0, diasRestantes),
-                    OrganizacionId = activation.GeneradaPorUsuario?.OrganizacionId
+                    DiasRestantes = diasRestantes,
+                    MaxUsuarios = 10, // Valor por defecto
+                    OrganizacionId = activation.UtilizadaPorOrganizacionId
                 };
             }
             catch (Exception ex)
@@ -111,7 +122,9 @@ namespace Gesco.Desktop.Core.Services
                 return new LicenseStatusDto
                 {
                     IsActive = false,
-                    Message = $"Error al verificar licencia: {ex.Message}"
+                    Message = $"Error al verificar licencia: {ex.Message}",
+                    DiasRestantes = 0,
+                    MaxUsuarios = 0
                 };
             }
         }
@@ -129,13 +142,42 @@ namespace Gesco.Desktop.Core.Services
 
         private async Task SaveActivationAsync(string codigoActivacion, int organizacionId, DateTime fechaExpiracion)
         {
-            var activation = new Data.Entities.ClaveActivacion
-            {
-                CodigoActivacion = codigoActivacion,
-                FechaExpiracion = fechaExpiracion
-            };
+            // Verificar si ya existe una entrada para este código
+            var existingActivation = await _context.ClavesActivacion
+                .FirstOrDefaultAsync(ca => ca.CodigoActivacion == codigoActivacion);
 
-            _context.ClavesActivacion.Add(activation);
+            if (existingActivation != null)
+            {
+                // Actualizar activación existente
+                existingActivation.FechaUtilizacion = DateTime.Now;
+                existingActivation.FechaExpiracion = fechaExpiracion;
+                existingActivation.Utilizada = true;
+                existingActivation.Expirada = false;
+                existingActivation.Revocada = false;
+                existingActivation.UtilizadaPorOrganizacionId = organizacionId;
+                existingActivation.UsosActuales = 1;
+            }
+            else
+            {
+                // Crear nueva activación
+                var activation = new Data.Entities.ClaveActivacion
+                {
+                    CodigoActivacion = codigoActivacion,
+                    FechaGeneracion = DateTime.Now,
+                    FechaExpiracion = fechaExpiracion,
+                    FechaUtilizacion = DateTime.Now,
+                    Utilizada = true,
+                    Expirada = false,
+                    Revocada = false,
+                    UsosMaximos = 1,
+                    UsosActuales = 1,
+                    UtilizadaPorOrganizacionId = organizacionId,
+                    SuscripcionesId = 1 // Valor por defecto
+                };
+
+                _context.ClavesActivacion.Add(activation);
+            }
+
             await _context.SaveChangesAsync();
         }
     }
