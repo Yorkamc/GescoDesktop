@@ -63,3 +63,31 @@ gesco_local.db
 # Node modules (para Electron futuro)
 node_modules/
 package-lock.json
+
+# ==============================
+#  ARCHIVOS DE SEGURIDAD
+# ==============================
+.env
+.env.local
+.env.production
+*.env
+
+# Base de datos encriptada
+data/gesco_encrypted.db*
+data/*.db
+data/*.sqlite
+
+# Llaves de encriptación
+keys/
+certificates/
+*.pfx
+*.key
+*.pem
+
+# Logs de seguridad
+logs/security/
+logs/audit/
+
+# Configuraciones de producción
+appsettings.Production.json
+appsettings.Staging.json
