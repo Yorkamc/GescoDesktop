@@ -223,18 +223,16 @@ using (var scope = app.Services.CreateScope())
 // CONFIGURACIÓN DEL PIPELINE DE MIDDLEWARE
 // =====================================================
 
-// Swagger (solo en desarrollo por defecto)
-if (app.Environment.IsDevelopment())
+// FORZAR Swagger siempre (para desarrollo y pruebas)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GESCO Desktop API v1");
-        c.RoutePrefix = "swagger";
-        c.DisplayRequestDuration();
-        c.EnableTryItOutByDefault();
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "GESCO Desktop API v1");
+    c.RoutePrefix = "swagger";
+    c.DisplayRequestDuration();
+    c.EnableTryItOutByDefault();
+    c.DocumentTitle = "GESCO Desktop API";
+});
 
 // CORS debe ir temprano en el pipeline
 app.UseCors(app.Environment.IsDevelopment() ? "ReactApp" : "Production");
