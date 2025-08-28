@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 
 namespace Gesco.Desktop.Data.Entities
 {
-  public class Notificacion
+    public class Notificacion
     {
         public int Id { get; set; }
         public int OrganizacionId { get; set; }
         public int? UsuarioId { get; set; }
-        public int TipoNotificacionId { get; set; }
-
+        
         [Required]
         [MaxLength(200)]
         public string Titulo { get; set; }
