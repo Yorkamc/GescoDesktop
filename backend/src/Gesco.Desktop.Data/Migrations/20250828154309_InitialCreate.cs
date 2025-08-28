@@ -1248,3 +1248,4 @@ namespace Gesco.Desktop.Data.Migrations
         }
     }
 }
+
