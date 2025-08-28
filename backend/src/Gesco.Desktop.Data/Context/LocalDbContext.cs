@@ -104,31 +104,30 @@ namespace Gesco.Desktop.Data.Context
             });
 
             // Usuario - SOLO RELACIONES BÁSICAS SIN PROBLEMAS
-            modelBuilder.Entity<Usuario>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.NombreUsuario).IsUnique();
-                entity.HasIndex(e => e.Correo).IsUnique();
-                entity.Property(e => e.NombreUsuario).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Correo).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.NombreCompleto).HasMaxLength(200);
-                entity.Property(e => e.Telefono).HasMaxLength(50);
-                entity.Property(e => e.Contrasena).IsRequired();
+           modelBuilder.Entity<Usuario>(entity =>
+{
+    entity.HasKey(e => e.Id);
+    entity.HasIndex(e => e.NombreUsuario).IsUnique();
+    entity.HasIndex(e => e.Correo).IsUnique();
+    entity.Property(e => e.NombreUsuario).IsRequired().HasMaxLength(100);
+    entity.Property(e => e.Correo).IsRequired().HasMaxLength(200);
+    entity.Property(e => e.NombreCompleto).HasMaxLength(200);
+    entity.Property(e => e.Telefono).HasMaxLength(50);
+    entity.Property(e => e.Contrasena).IsRequired();
 
-                // Solo las relaciones básicas que funcionan
-                entity.HasOne(e => e.Organizacion)
-                    .WithMany(o => o.Usuarios)
-                    .HasForeignKey(e => e.OrganizacionId)
-                    .OnDelete(DeleteBehavior.SetNull);
+    // Solo las relaciones básicas que YA funcionan
+    entity.HasOne(e => e.Organizacion)
+        .WithMany(o => o.Usuarios)
+        .HasForeignKey(e => e.OrganizacionId)
+        .OnDelete(DeleteBehavior.SetNull);
 
-                entity.HasOne(e => e.Rol)
-                    .WithMany(r => r.Usuarios)
-                    .HasForeignKey(e => e.RolId)
-                    .OnDelete(DeleteBehavior.Restrict);
-                    
-                // NOTA: CreadoPor, ActualizadoPor se configurarán después
-                // Por ahora las dejamos como propiedades simples int? para evitar conflictos
-            });
+    entity.HasOne(e => e.Rol)
+        .WithMany(r => r.Usuarios)
+        .HasForeignKey(e => e.RolId)
+        .OnDelete(DeleteBehavior.Restrict);
+        
+    // CreadoPor y ActualizadoPor los dejamos como int? simples por ahora
+});
 
             // Rol
             modelBuilder.Entity<Rol>(entity =>
@@ -205,36 +204,13 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
     entity.Property(e => e.IpActivacion).HasMaxLength(45);
     entity.Property(e => e.RazonRevocacion).HasMaxLength(500);
     entity.Property(e => e.Notas).HasMaxLength(1000);
-
-    // Relación con Suscripcion
+    
+    // Solo relación básica con Suscripción
     entity.HasOne(e => e.Suscripcion)
         .WithMany(s => s.ClavesActivacion)
         .HasForeignKey(e => e.SuscripcionesId)
         .OnDelete(DeleteBehavior.Restrict);
-
-    // Organización que utilizó la clave
-    entity.HasOne(e => e.UtilizadaPorOrganizacion)
-        .WithMany()
-        .HasForeignKey(e => e.UtilizadaPorOrganizacionId)
-        .OnDelete(DeleteBehavior.SetNull);
-
-    // Usuarios relacionados (utilizador, generador, revocador)
-    entity.HasOne(e => e.UtilizadaPorUsuario)
-        .WithMany()
-        .HasForeignKey(e => e.UtilizadaPorUsuarioId)
-        .OnDelete(DeleteBehavior.SetNull);
-
-    entity.HasOne(e => e.GeneradaPorUsuario)
-        .WithMany()
-        .HasForeignKey(e => e.GeneradaPor)
-        .OnDelete(DeleteBehavior.SetNull);
-
-    entity.HasOne(e => e.RevocadaPorUsuario)
-        .WithMany()
-        .HasForeignKey(e => e.RevocadaPor)
-        .OnDelete(DeleteBehavior.SetNull);
 });
-
             // ============================================
             // ENTIDADES DE ACTIVIDADES
             // ============================================
@@ -397,16 +373,12 @@ modelBuilder.Entity<Notificacion>(entity =>
     entity.Property(e => e.CanalesEntrega).HasMaxLength(100);
     entity.Property(e => e.CreadaEn).IsRequired();
 
-    // =============================================
-    // CONFIGURACIÓN EXPLÍCITA DE RELACIONES
-    // =============================================
-    
     // Relación con Organizacion
     entity.HasOne(e => e.Organizacion)
         .WithMany(o => o.Notificaciones)
         .HasForeignKey(e => e.OrganizacionId)
         .OnDelete(DeleteBehavior.Restrict);
-
+    /*
     // Relación Usuario destinatario (UsuarioId -> Usuario)
     entity.HasOne(e => e.Usuario)
         .WithMany() // Sin colección de navegación inversa para evitar conflictos
@@ -418,8 +390,9 @@ modelBuilder.Entity<Notificacion>(entity =>
         .WithMany() // Sin colección de navegación inversa
         .HasForeignKey(e => e.CreadaPor)
         .OnDelete(DeleteBehavior.SetNull);
+        */
 });
-    modelBuilder.Entity<ConfiguracionSistema>(entity =>
+modelBuilder.Entity<ConfiguracionSistema>(entity =>
 {
     entity.HasKey(e => e.Id);
     entity.Property(e => e.Clave).IsRequired().HasMaxLength(100);
@@ -429,18 +402,12 @@ modelBuilder.Entity<Notificacion>(entity =>
     entity.Property(e => e.Descripcion).HasMaxLength(500);
     entity.Property(e => e.ValorPorDefecto).HasMaxLength(1000);
     entity.Property(e => e.NivelAcceso).HasMaxLength(50).HasDefaultValue("admin");
-
-    // Relación con Organizacion (opcional)
+    
+    // Solo relación básica con Organización
     entity.HasOne(e => e.Organizacion)
         .WithMany(o => o.ConfiguracionesSistema)
         .HasForeignKey(e => e.OrganizacionId)
         .OnDelete(DeleteBehavior.Cascade);
-
-    // Relación Usuario actualizador
-    entity.HasOne(e => e.ActualizadoPorUsuario)
-        .WithMany()
-        .HasForeignKey(e => e.ActualizadoPor)
-        .OnDelete(DeleteBehavior.SetNull);
 });
             modelBuilder.Entity<LogAuditoria>(entity =>
             {
