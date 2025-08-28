@@ -103,31 +103,41 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.PersonaAdquiriente).HasMaxLength(200);
             });
 
-            // Usuario - SOLO RELACIONES BÁSICAS SIN PROBLEMAS
-           modelBuilder.Entity<Usuario>(entity =>
-{
-    entity.HasKey(e => e.Id);
-    entity.HasIndex(e => e.NombreUsuario).IsUnique();
-    entity.HasIndex(e => e.Correo).IsUnique();
-    entity.Property(e => e.NombreUsuario).IsRequired().HasMaxLength(100);
-    entity.Property(e => e.Correo).IsRequired().HasMaxLength(200);
-    entity.Property(e => e.NombreCompleto).HasMaxLength(200);
-    entity.Property(e => e.Telefono).HasMaxLength(50);
-    entity.Property(e => e.Contrasena).IsRequired();
+            // Usuario - CONFIGURACIÓN COMPLETA CON RELACIONES EXPLÍCITAS
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.NombreUsuario).IsUnique();
+                entity.HasIndex(e => e.Correo).IsUnique();
+                entity.Property(e => e.NombreUsuario).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Correo).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.NombreCompleto).HasMaxLength(200);
+                entity.Property(e => e.Telefono).HasMaxLength(50);
+                entity.Property(e => e.Contrasena).IsRequired();
 
-    // Solo las relaciones básicas que YA funcionan
-    entity.HasOne(e => e.Organizacion)
-        .WithMany(o => o.Usuarios)
-        .HasForeignKey(e => e.OrganizacionId)
-        .OnDelete(DeleteBehavior.SetNull);
+                // Relación con Organizacion
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.Usuarios)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.SetNull);
 
-    entity.HasOne(e => e.Rol)
-        .WithMany(r => r.Usuarios)
-        .HasForeignKey(e => e.RolId)
-        .OnDelete(DeleteBehavior.Restrict);
-        
-    // CreadoPor y ActualizadoPor los dejamos como int? simples por ahora
-});
+                // Relación con Rol
+                entity.HasOne(e => e.Rol)
+                    .WithMany(r => r.Usuarios)
+                    .HasForeignKey(e => e.RolId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Auto-referencias para auditoría - CONFIGURADAS EXPLÍCITAMENTE
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
 
             // Rol
             modelBuilder.Entity<Rol>(entity =>
@@ -192,25 +202,74 @@ namespace Gesco.Desktop.Data.Context
             modelBuilder.Entity<Suscripcion>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                // Relaciones básicas sin foreign key por ahora
+                
+                // Relaciones básicas
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.Suscripciones)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Membresia)
+                    .WithMany(m => m.Suscripciones)
+                    .HasForeignKey(e => e.MembresiaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Estado)
+                    .WithMany(es => es.Suscripciones)
+                    .HasForeignKey(e => e.EstadoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relaciones de auditoría
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
-modelBuilder.Entity<ClaveActivacion>(entity =>
-{
-    entity.HasKey(e => e.Id);
-    entity.HasIndex(e => e.CodigoActivacion).IsUnique();
-    entity.Property(e => e.CodigoActivacion).IsRequired().HasMaxLength(100);
-    entity.Property(e => e.LoteGeneracion).HasMaxLength(100);
-    entity.Property(e => e.IpActivacion).HasMaxLength(45);
-    entity.Property(e => e.RazonRevocacion).HasMaxLength(500);
-    entity.Property(e => e.Notas).HasMaxLength(1000);
-    
-    // Solo relación básica con Suscripción
-    entity.HasOne(e => e.Suscripcion)
-        .WithMany(s => s.ClavesActivacion)
-        .HasForeignKey(e => e.SuscripcionesId)
-        .OnDelete(DeleteBehavior.Restrict);
-});
+            modelBuilder.Entity<ClaveActivacion>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.CodigoActivacion).IsUnique();
+                entity.Property(e => e.CodigoActivacion).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LoteGeneracion).HasMaxLength(100);
+                entity.Property(e => e.IpActivacion).HasMaxLength(45);
+                entity.Property(e => e.RazonRevocacion).HasMaxLength(500);
+                entity.Property(e => e.Notas).HasMaxLength(1000);
+                
+                // Relación con Suscripción
+                entity.HasOne(e => e.Suscripcion)
+                    .WithMany(s => s.ClavesActivacion)
+                    .HasForeignKey(e => e.SuscripcionesId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relaciones con Usuario (múltiples) - EXPLÍCITAMENTE CONFIGURADAS
+                entity.HasOne(e => e.UtilizadaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.UtilizadaPorUsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.GeneradaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.GeneradaPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.RevocadaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.RevocadaPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                // Relación con Organización
+                entity.HasOne(e => e.UtilizadaPorOrganizacion)
+                    .WithMany()
+                    .HasForeignKey(e => e.UtilizadaPorOrganizacionId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
             // ============================================
             // ENTIDADES DE ACTIVIDADES
             // ============================================
@@ -222,7 +281,33 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
                 entity.Property(e => e.Ubicacion).HasMaxLength(200);
                 entity.Property(e => e.HashSync).HasMaxLength(32);
-                // Sin relaciones complejas por ahora
+
+                // Relaciones básicas
+                entity.HasOne(e => e.Estado)
+                    .WithMany(es => es.Actividades)
+                    .HasForeignKey(e => e.EstadoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.Actividades)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relaciones con Usuario
+                entity.HasOne(e => e.EncargadoUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.EncargadoUsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<CategoriaServicio>(entity =>
@@ -230,12 +315,48 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
+
+                // Relaciones
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.CategoriasServicio)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ActividadCategoria>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                // Configuración básica sin relaciones
+
+                // Relaciones
+                entity.HasOne(e => e.Actividad)
+                    .WithMany(a => a.ActividadCategorias)
+                    .HasForeignKey(e => e.ActividadId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.CategoriaServicio)
+                    .WithMany(cs => cs.ActividadCategorias)
+                    .HasForeignKey(e => e.CategoriaServicioId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ProductoCategoria>(entity =>
@@ -246,6 +367,22 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
                 entity.Property(e => e.PrecioUnitario).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.HashSync).HasMaxLength(32);
+
+                // Relaciones
+                entity.HasOne(e => e.ActividadCategoria)
+                    .WithMany(ac => ac.ProductosCategorias)
+                    .HasForeignKey(e => e.ActividadCategoriaId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // ============================================
@@ -258,6 +395,32 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.Nombre).HasMaxLength(100);
                 entity.Property(e => e.Ubicacion).HasMaxLength(200);
                 entity.Property(e => e.HashSync).HasMaxLength(32);
+
+                // Relaciones
+                entity.HasOne(e => e.Actividad)
+                    .WithMany(a => a.Cajas)
+                    .HasForeignKey(e => e.ActividadId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.OperadorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.OperadorUsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.SupervisorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.SupervisorUsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<TransaccionVenta>(entity =>
@@ -267,6 +430,27 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.NumeroFactura).HasMaxLength(50);
                 entity.Property(e => e.Total).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.HashSync).HasMaxLength(32);
+
+                // Relaciones
+                entity.HasOne(e => e.Caja)
+                    .WithMany(c => c.TransaccionesVenta)
+                    .HasForeignKey(e => e.CajaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Estado)
+                    .WithMany(es => es.TransaccionesVenta)
+                    .HasForeignKey(e => e.EstadoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.VendedorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.VendedorUsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<DetalleTransaccionVenta>(entity =>
@@ -274,6 +458,22 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.PrecioUnitario).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.Total).HasPrecision(10, 2).IsRequired();
+
+                // Relaciones
+                entity.HasOne(e => e.Transaccion)
+                    .WithMany(t => t.DetallesTransaccionVenta)
+                    .HasForeignKey(e => e.TransaccionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Articulo)
+                    .WithMany(a => a.DetallesTransaccionVenta)
+                    .HasForeignKey(e => e.ArticuloId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Combo)
+                    .WithMany(c => c.DetallesTransaccionVenta)
+                    .HasForeignKey(e => e.ComboId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<PagoTransaccion>(entity =>
@@ -281,6 +481,22 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Monto).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.Referencia).HasMaxLength(100);
+
+                // Relaciones
+                entity.HasOne(e => e.Transaccion)
+                    .WithMany(t => t.PagosTransacciones)
+                    .HasForeignKey(e => e.TransaccionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.MetodoPago)
+                    .WithMany(mp => mp.PagosTransacciones)
+                    .HasForeignKey(e => e.MetodoPagoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.ProcesadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProcesadoPor)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ============================================
@@ -293,11 +509,38 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
                 entity.Property(e => e.PrecioCombo).HasPrecision(10, 2).IsRequired();
+
+                // Relaciones
+                entity.HasOne(e => e.Actividad)
+                    .WithMany(a => a.CombosVenta)
+                    .HasForeignKey(e => e.ActividadId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.CreadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ComboArticulo>(entity =>
             {
                 entity.HasKey(e => e.Id);
+
+                // Relaciones
+                entity.HasOne(e => e.Combo)
+                    .WithMany(c => c.ComboArticulos)
+                    .HasForeignKey(e => e.ComboId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Articulo)
+                    .WithMany(a => a.ComboArticulos)
+                    .HasForeignKey(e => e.ArticuloId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ============================================
@@ -311,6 +554,32 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.ValorTotal).HasPrecision(10, 2);
                 entity.Property(e => e.Motivo).HasMaxLength(200);
                 entity.Property(e => e.Justificacion).HasMaxLength(500);
+
+                // Relaciones
+                entity.HasOne(e => e.Articulo)
+                    .WithMany(a => a.MovimientosInventario)
+                    .HasForeignKey(e => e.ArticuloId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.TipoMovimiento)
+                    .WithMany(tm => tm.MovimientosInventario)
+                    .HasForeignKey(e => e.TipoMovimientoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.TransaccionVenta)
+                    .WithMany(t => t.MovimientosInventario)
+                    .HasForeignKey(e => e.TransaccionVentaId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.RealizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.RealizadoPor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.AutorizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.AutorizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // ============================================
@@ -328,6 +597,22 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.DiferenciaEfectivo).HasPrecision(10, 2);
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.ProblemasReportados).HasMaxLength(1000);
+
+                // Relaciones
+                entity.HasOne(e => e.Caja)
+                    .WithMany(c => c.CierresCaja)
+                    .HasForeignKey(e => e.CajaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.CerradaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CerradaPor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.SupervisadaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.SupervisadaPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<CierreActividad>(entity =>
@@ -339,76 +624,97 @@ modelBuilder.Entity<ClaveActivacion>(entity =>
                 entity.Property(e => e.ValorMerma).HasPrecision(10, 2);
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.ProblemasReportados).HasMaxLength(1000);
+
+                // Relaciones
+                entity.HasOne(e => e.Actividad)
+                    .WithMany(a => a.CierresActividad)
+                    .HasForeignKey(e => e.ActividadId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.CerradaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CerradaPor)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.SupervisadaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.SupervisadaPor)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // ============================================
             // ENTIDADES DE SISTEMA
             // ============================================
 
-modelBuilder.Entity<SecuenciaNumeracion>(entity =>
-{
-    entity.HasKey(e => e.Id);
-    entity.Property(e => e.Tipo).IsRequired().HasMaxLength(50);
-    entity.Property(e => e.Prefijo).HasMaxLength(10);
+            modelBuilder.Entity<SecuenciaNumeracion>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Tipo).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Prefijo).HasMaxLength(10);
 
-    // Relación con Organizacion
-    entity.HasOne(e => e.Organizacion)
-        .WithMany(o => o.SecuenciasNumeracion)
-        .HasForeignKey(e => e.OrganizacionId)
-        .OnDelete(DeleteBehavior.Cascade);
+                // Relaciones
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.SecuenciasNumeracion)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
-    // Usuario que actualiza
-    entity.HasOne(e => e.ActualizadoPorUsuario)
-        .WithMany()
-        .HasForeignKey(e => e.ActualizadoPor)
-        .OnDelete(DeleteBehavior.SetNull);
-});
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
 
-modelBuilder.Entity<Notificacion>(entity =>
-{
-    entity.HasKey(e => e.Id);
-    entity.Property(e => e.Titulo).IsRequired().HasMaxLength(200);
-    entity.Property(e => e.Mensaje).IsRequired();
-    entity.Property(e => e.DatosAdicionales).HasMaxLength(2000);
-    entity.Property(e => e.CanalesEntrega).HasMaxLength(100);
-    entity.Property(e => e.CreadaEn).IsRequired();
+            // NOTIFICACION - CONFIGURACIÓN COMPLETA CON RELACIONES EXPLÍCITAS
+            modelBuilder.Entity<Notificacion>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Titulo).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Mensaje).IsRequired();
+                entity.Property(e => e.DatosAdicionales).HasMaxLength(2000);
+                entity.Property(e => e.CanalesEntrega).HasMaxLength(100);
+                entity.Property(e => e.CreadaEn).IsRequired();
 
-    // Relación con Organizacion
-    entity.HasOne(e => e.Organizacion)
-        .WithMany(o => o.Notificaciones)
-        .HasForeignKey(e => e.OrganizacionId)
-        .OnDelete(DeleteBehavior.Restrict);
-    /*
-    // Relación Usuario destinatario (UsuarioId -> Usuario)
-    entity.HasOne(e => e.Usuario)
-        .WithMany() // Sin colección de navegación inversa para evitar conflictos
-        .HasForeignKey(e => e.UsuarioId)
-        .OnDelete(DeleteBehavior.SetNull);
+                // Relación con Organizacion
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.Notificaciones)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
-    // Relación Usuario creador (CreadaPor -> CreadaPorUsuario)  
-    entity.HasOne(e => e.CreadaPorUsuario)
-        .WithMany() // Sin colección de navegación inversa
-        .HasForeignKey(e => e.CreadaPor)
-        .OnDelete(DeleteBehavior.SetNull);
-        */
-});
-modelBuilder.Entity<ConfiguracionSistema>(entity =>
-{
-    entity.HasKey(e => e.Id);
-    entity.Property(e => e.Clave).IsRequired().HasMaxLength(100);
-    entity.Property(e => e.Valor).IsRequired();
-    entity.Property(e => e.TipoValor).IsRequired().HasMaxLength(50);
-    entity.Property(e => e.Categoria).HasMaxLength(100);
-    entity.Property(e => e.Descripcion).HasMaxLength(500);
-    entity.Property(e => e.ValorPorDefecto).HasMaxLength(1000);
-    entity.Property(e => e.NivelAcceso).HasMaxLength(50).HasDefaultValue("admin");
-    
-    // Solo relación básica con Organización
-    entity.HasOne(e => e.Organizacion)
-        .WithMany(o => o.ConfiguracionesSistema)
-        .HasForeignKey(e => e.OrganizacionId)
-        .OnDelete(DeleteBehavior.Cascade);
-});
+                // RELACIONES EXPLÍCITAS CON USUARIO PARA RESOLVER AMBIGÜEDAD
+                entity.HasOne(e => e.Usuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.UsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.CreadaPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreadaPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<ConfiguracionSistema>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Clave).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Valor).IsRequired();
+                entity.Property(e => e.TipoValor).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Categoria).HasMaxLength(100);
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.ValorPorDefecto).HasMaxLength(1000);
+                entity.Property(e => e.NivelAcceso).HasMaxLength(50).HasDefaultValue("admin");
+                
+                // Relaciones
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.ConfiguracionesSistema)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.ActualizadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.ActualizadoPor)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
             modelBuilder.Entity<LogAuditoria>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -417,6 +723,17 @@ modelBuilder.Entity<ConfiguracionSistema>(entity =>
                 entity.Property(e => e.Modulo).HasMaxLength(100);
                 entity.Property(e => e.DatosAnteriores).HasMaxLength(4000);
                 entity.Property(e => e.DatosNuevos).HasMaxLength(4000);
+
+                // Relaciones
+                entity.HasOne(e => e.Usuario)
+                    .WithMany()
+                    .HasForeignKey(e => e.UsuarioId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.LogsAuditoria)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ColaSincronizacion>(entity =>
@@ -425,6 +742,12 @@ modelBuilder.Entity<ConfiguracionSistema>(entity =>
                 entity.Property(e => e.TablaAfectada).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Operacion).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.DatosCambio).IsRequired();
+
+                // Relación
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.ColaSincronizacion)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Modulo>(entity =>
@@ -432,6 +755,12 @@ modelBuilder.Entity<ConfiguracionSistema>(entity =>
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
+
+                // Relación
+                entity.HasOne(e => e.Organizacion)
+                    .WithMany(o => o.Modulos)
+                    .HasForeignKey(e => e.OrganizacionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ============================================
