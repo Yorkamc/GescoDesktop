@@ -2,6 +2,7 @@
 using Gesco.Desktop.Data.Entities;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Gesco.Desktop.Data.Context
 {
@@ -83,24 +84,24 @@ namespace Gesco.Desktop.Data.Context
         }
 
         // ============================================
-        // CONFIGURACIÓN DEL MODELO - CORREGIDO
+        // CONFIGURACIÓN DEL MODELO - VERSIÓN FINAL
         // ============================================
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // ============================================
-            // CONFIGURAR CONVENCIONES GLOBALES
+            // DESACTIVAR CONVENCIONES PROBLEMÁTICAS
             // ============================================
             
-            // Deshabilitar eliminación en cascada por defecto
+            // Configurar eliminación en cascada por defecto como Restrict
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }
 
             // ============================================
-            // ENTIDADES PRINCIPALES
+            // ENTIDADES BÁSICAS PRIMERO
             // ============================================
 
             // Organizacion
@@ -113,7 +114,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.PersonaAdquiriente).HasMaxLength(200);
             });
 
-            // Rol - Configurar primero
+            // Rol
             modelBuilder.Entity<Rol>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -121,7 +122,9 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
             });
 
-            // Usuario - CONFIGURACIÓN CUIDADOSA CON AUTO-REFERENCIAS
+            // ============================================
+            // USUARIO - CONFIGURACIÓN ESPECIAL SIN AUTO-REFERENCIAS
+            // ============================================
             modelBuilder.Entity<Usuario>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -133,86 +136,26 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Telefono).HasMaxLength(50);
                 entity.Property(e => e.Contrasena).IsRequired();
 
-                // Relación con Organizacion
+                // Relaciones externas (no auto-referencias)
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.Usuarios)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.SetNull);
 
-                // Relación con Rol
                 entity.HasOne(e => e.Rol)
                     .WithMany(r => r.Usuarios)
                     .HasForeignKey(e => e.RolId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Auto-referencias para auditoría - CON NOMBRES ÚNICOS
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany() // Sin colección de navegación inversa
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.NoAction)
-                    .HasConstraintName("FK_Usuario_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany() // Sin colección de navegación inversa
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.NoAction)
-                    .HasConstraintName("FK_Usuario_ActualizadoPor");
+                // IGNORAR las propiedades de navegación de auto-referencia
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             // ============================================
             // ENTIDADES DE ESTADOS
             // ============================================
 
-            ConfigureEstados(modelBuilder);
-
-            // ============================================
-            // ENTIDADES DE SUSCRIPCIONES
-            // ============================================
-
-            ConfigureSuscripciones(modelBuilder);
-
-            // ============================================
-            // ENTIDADES DE ACTIVIDADES
-            // ============================================
-
-            ConfigureActividades(modelBuilder);
-
-            // ============================================
-            // ENTIDADES DE VENTAS
-            // ============================================
-
-            ConfigureVentas(modelBuilder);
-
-            // ============================================
-            // ENTIDADES DE COMBOS E INVENTARIO
-            // ============================================
-
-            ConfigureCombosInventario(modelBuilder);
-
-            // ============================================
-            // ENTIDADES DE CIERRES
-            // ============================================
-
-            ConfigureCierres(modelBuilder);
-
-            // ============================================
-            // ENTIDADES DE SISTEMA
-            // ============================================
-
-            ConfigureSistema(modelBuilder);
-
-            // ============================================
-            // DATOS SEMILLA
-            // ============================================
-            SeedData(modelBuilder);
-        }
-
-        // ============================================
-        // MÉTODOS AUXILIARES DE CONFIGURACIÓN
-        // ============================================
-
-        private static void ConfigureEstados(ModelBuilder modelBuilder)
-        {
             modelBuilder.Entity<EstadoActividad>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -247,10 +190,11 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
             });
-        }
 
-        private static void ConfigureSuscripciones(ModelBuilder modelBuilder)
-        {
+            // ============================================
+            // ENTIDADES DE SUSCRIPCIONES
+            // ============================================
+
             modelBuilder.Entity<Membresia>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -280,18 +224,9 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.EstadoId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relaciones de auditoría con nombres únicos
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Suscripcion_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Suscripcion_ActualizadoPor");
+                // IGNORAR propiedades de navegación de auditoría por ahora
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<ClaveActivacion>(entity =>
@@ -310,35 +245,22 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.SuscripcionesId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relaciones con Usuario - CON NOMBRES ÚNICOS
-                entity.HasOne(e => e.UtilizadaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.UtilizadaPorUsuarioId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ClaveActivacion_UtilizadaPor");
-
-                entity.HasOne(e => e.GeneradaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.GeneradaPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ClaveActivacion_GeneradaPor");
-
-                entity.HasOne(e => e.RevocadaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.RevocadaPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ClaveActivacion_RevocadaPor");
-
                 // Relación con Organización
                 entity.HasOne(e => e.UtilizadaPorOrganizacion)
                     .WithMany()
                     .HasForeignKey(e => e.UtilizadaPorOrganizacionId)
                     .OnDelete(DeleteBehavior.SetNull);
-            });
-        }
 
-        private static void ConfigureActividades(ModelBuilder modelBuilder)
-        {
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.UtilizadaPorUsuario);
+                entity.Ignore(e => e.GeneradaPorUsuario);
+                entity.Ignore(e => e.RevocadaPorUsuario);
+            });
+
+            // ============================================
+            // ENTIDADES DE ACTIVIDADES
+            // ============================================
+
             modelBuilder.Entity<Actividad>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -358,24 +280,10 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relaciones con Usuario - CON NOMBRES ÚNICOS
-                entity.HasOne(e => e.EncargadoUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.EncargadoUsuarioId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Actividad_Encargado");
-
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Actividad_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Actividad_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.EncargadoUsuario);
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<CategoriaServicio>(entity =>
@@ -384,30 +292,22 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
 
-                // Relaciones
+                // Relación con Organización
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.CategoriasServicio)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_CategoriaServicio_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_CategoriaServicio_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<ActividadCategoria>(entity =>
             {
                 entity.HasKey(e => e.Id);
 
-                // Relaciones
+                // Relaciones principales
                 entity.HasOne(e => e.Actividad)
                     .WithMany(a => a.ActividadCategorias)
                     .HasForeignKey(e => e.ActividadId)
@@ -418,17 +318,9 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.CategoriaServicioId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ActividadCategoria_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ActividadCategoria_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<ProductoCategoria>(entity =>
@@ -440,28 +332,21 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.PrecioUnitario).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.HashSync).HasMaxLength(32);
 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.ActividadCategoria)
                     .WithMany(ac => ac.ProductosCategorias)
                     .HasForeignKey(e => e.ActividadCategoriaId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ProductoCategoria_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ProductoCategoria_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
-        }
 
-        private static void ConfigureVentas(ModelBuilder modelBuilder)
-        {
+            // ============================================
+            // ENTIDADES DE VENTAS
+            // ============================================
+
             modelBuilder.Entity<Caja>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -469,35 +354,17 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Ubicacion).HasMaxLength(200);
                 entity.Property(e => e.HashSync).HasMaxLength(32);
 
-                // Relaciones
+                // Relación con Actividad
                 entity.HasOne(e => e.Actividad)
                     .WithMany(a => a.Cajas)
                     .HasForeignKey(e => e.ActividadId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.OperadorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.OperadorUsuarioId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Caja_Operador");
-
-                entity.HasOne(e => e.SupervisorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.SupervisorUsuarioId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Caja_Supervisor");
-
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Caja_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Caja_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.OperadorUsuario);
+                entity.Ignore(e => e.SupervisorUsuario);
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<TransaccionVenta>(entity =>
@@ -508,7 +375,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Total).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.HashSync).HasMaxLength(32);
 
-                // Relaciones
+                // Relaciones principales
                 entity.HasOne(e => e.Caja)
                     .WithMany(c => c.TransaccionesVenta)
                     .HasForeignKey(e => e.CajaId)
@@ -519,17 +386,9 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.EstadoId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.VendedorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.VendedorUsuarioId)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_TransaccionVenta_Vendedor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_TransaccionVenta_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.VendedorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<DetalleTransaccionVenta>(entity =>
@@ -561,7 +420,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Monto).HasPrecision(10, 2).IsRequired();
                 entity.Property(e => e.Referencia).HasMaxLength(100);
 
-                // Relaciones
+                // Relaciones principales
                 entity.HasOne(e => e.Transaccion)
                     .WithMany(t => t.PagosTransacciones)
                     .HasForeignKey(e => e.TransaccionId)
@@ -572,16 +431,14 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.MetodoPagoId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.ProcesadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ProcesadoPor)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_PagoTransaccion_ProcesadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.ProcesadoPorUsuario);
             });
-        }
 
-        private static void ConfigureCombosInventario(ModelBuilder modelBuilder)
-        {
+            // ============================================
+            // ENTIDADES DE COMBOS E INVENTARIO
+            // ============================================
+
             modelBuilder.Entity<ComboVenta>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -589,30 +446,22 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
                 entity.Property(e => e.PrecioCombo).HasPrecision(10, 2).IsRequired();
 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.Actividad)
                     .WithMany(a => a.CombosVenta)
                     .HasForeignKey(e => e.ActividadId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.CreadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ComboVenta_CreadoPor");
-
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ComboVenta_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.CreadoPorUsuario);
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<ComboArticulo>(entity =>
             {
                 entity.HasKey(e => e.Id);
 
-                // Relaciones
+                // Relaciones principales
                 entity.HasOne(e => e.Combo)
                     .WithMany(c => c.ComboArticulos)
                     .HasForeignKey(e => e.ComboId)
@@ -632,7 +481,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Motivo).HasMaxLength(200);
                 entity.Property(e => e.Justificacion).HasMaxLength(500);
 
-                // Relaciones
+                // Relaciones principales
                 entity.HasOne(e => e.Articulo)
                     .WithMany(a => a.MovimientosInventario)
                     .HasForeignKey(e => e.ArticuloId)
@@ -648,22 +497,15 @@ namespace Gesco.Desktop.Data.Context
                     .HasForeignKey(e => e.TransaccionVentaId)
                     .OnDelete(DeleteBehavior.SetNull);
 
-                entity.HasOne(e => e.RealizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.RealizadoPor)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_MovimientoInventario_RealizadoPor");
-
-                entity.HasOne(e => e.AutorizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.AutorizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_MovimientoInventario_AutorizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.RealizadoPorUsuario);
+                entity.Ignore(e => e.AutorizadoPorUsuario);
             });
-        }
 
-        private static void ConfigureCierres(ModelBuilder modelBuilder)
-        {
+            // ============================================
+            // ENTIDADES DE CIERRES
+            // ============================================
+
             modelBuilder.Entity<CierreCaja>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -676,23 +518,15 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.ProblemasReportados).HasMaxLength(1000);
 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.Caja)
                     .WithMany(c => c.CierresCaja)
                     .HasForeignKey(e => e.CajaId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.CerradaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CerradaPor)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_CierreCaja_CerradaPor");
-
-                entity.HasOne(e => e.SupervisadaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.SupervisadaPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_CierreCaja_SupervisadaPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.CerradaPorUsuario);
+                entity.Ignore(e => e.SupervisadaPorUsuario);
             });
 
             modelBuilder.Entity<CierreActividad>(entity =>
@@ -705,45 +539,35 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.ProblemasReportados).HasMaxLength(1000);
 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.Actividad)
                     .WithMany(a => a.CierresActividad)
                     .HasForeignKey(e => e.ActividadId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.CerradaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CerradaPor)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_CierreActividad_CerradaPor");
-
-                entity.HasOne(e => e.SupervisadaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.SupervisadaPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_CierreActividad_SupervisadaPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.CerradaPorUsuario);
+                entity.Ignore(e => e.SupervisadaPorUsuario);
             });
-        }
 
-        private static void ConfigureSistema(ModelBuilder modelBuilder)
-        {
+            // ============================================
+            // ENTIDADES DE SISTEMA
+            // ============================================
+
             modelBuilder.Entity<SecuenciaNumeracion>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Tipo).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Prefijo).HasMaxLength(10);
 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.SecuenciasNumeracion)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_SecuenciaNumeracion_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<Notificacion>(entity =>
@@ -755,23 +579,15 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.CanalesEntrega).HasMaxLength(100);
                 entity.Property(e => e.CreadaEn).IsRequired();
 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.Notificaciones)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.Usuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.UsuarioId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Notificacion_Usuario");
-
-                entity.HasOne(e => e.CreadaPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreadaPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_Notificacion_CreadaPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.Usuario);
+                entity.Ignore(e => e.CreadaPorUsuario);
             });
 
             modelBuilder.Entity<ConfiguracionSistema>(entity =>
@@ -785,17 +601,14 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.ValorPorDefecto).HasMaxLength(1000);
                 entity.Property(e => e.NivelAcceso).HasMaxLength(50).HasDefaultValue("admin");
                 
-                // Relaciones
+                // Relación principal
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.ConfiguracionesSistema)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.ActualizadoPorUsuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.ActualizadoPor)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_ConfiguracionSistema_ActualizadoPor");
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.ActualizadoPorUsuario);
             });
 
             modelBuilder.Entity<LogAuditoria>(entity =>
@@ -807,17 +620,14 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.DatosAnteriores).HasMaxLength(4000);
                 entity.Property(e => e.DatosNuevos).HasMaxLength(4000);
 
-                // Relaciones
-                entity.HasOne(e => e.Usuario)
-                    .WithMany()
-                    .HasForeignKey(e => e.UsuarioId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .HasConstraintName("FK_LogAuditoria_Usuario");
-
+                // Relación con Organización
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.LogsAuditoria)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.SetNull);
+
+                // IGNORAR propiedades de navegación de Usuario por ahora
+                entity.Ignore(e => e.Usuario);
             });
 
             modelBuilder.Entity<ColaSincronizacion>(entity =>
@@ -827,7 +637,7 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Operacion).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.DatosCambio).IsRequired();
 
-                // Relación
+                // Relación principal
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.ColaSincronizacion)
                     .HasForeignKey(e => e.OrganizacionId)
@@ -840,12 +650,17 @@ namespace Gesco.Desktop.Data.Context
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
 
-                // Relación
+                // Relación principal
                 entity.HasOne(e => e.Organizacion)
                     .WithMany(o => o.Modulos)
                     .HasForeignKey(e => e.OrganizacionId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ============================================
+            // DATOS SEMILLA
+            // ============================================
+            SeedData(modelBuilder);
         }
 
         // ============================================
