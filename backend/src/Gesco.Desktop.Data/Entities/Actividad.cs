@@ -33,7 +33,7 @@ namespace Gesco.Desktop.Data.Entities
         public int OrganizacionId { get; set; }
 
         // Auditoría
-        public int CreadoPor { get; set; }
+        public int ?CreadoPor { get; set; }
         public DateTime CreadoEn { get; set; } = DateTime.Now;
         public int? ActualizadoPor { get; set; }
         public DateTime? ActualizadoEn { get; set; }

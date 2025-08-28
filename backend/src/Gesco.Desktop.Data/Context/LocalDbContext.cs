@@ -109,30 +109,42 @@ namespace Gesco.Desktop.Data.Context
             });
 
             // Usuario
-            modelBuilder.Entity<Usuario>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.NombreUsuario).IsUnique();
-                entity.HasIndex(e => e.Correo).IsUnique();
-                entity.HasIndex(e => new { e.OrganizacionId, e.RolId, e.Activo });
-                entity.Property(e => e.NombreUsuario).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Correo).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.NombreCompleto).HasMaxLength(200);
-                entity.Property(e => e.Telefono).HasMaxLength(50);
-                entity.Property(e => e.Contrasena).IsRequired();
+ modelBuilder.Entity<Usuario>(entity =>
+{
+    entity.HasKey(e => e.Id);
+    entity.HasIndex(e => e.NombreUsuario).IsUnique();
+    entity.HasIndex(e => e.Correo).IsUnique();
+    entity.HasIndex(e => new { e.OrganizacionId, e.RolId, e.Activo });
+    entity.Property(e => e.NombreUsuario).IsRequired().HasMaxLength(100);
+    entity.Property(e => e.Correo).IsRequired().HasMaxLength(200);
+    entity.Property(e => e.NombreCompleto).HasMaxLength(200);
+    entity.Property(e => e.Telefono).HasMaxLength(50);
+    entity.Property(e => e.Contrasena).IsRequired();
 
-                // Relaciones
-                entity.HasOne(e => e.Organizacion)
-                    .WithMany(o => o.Usuarios)
-                    .HasForeignKey(e => e.OrganizacionId)
-                    .OnDelete(DeleteBehavior.SetNull);
+    // Relaciones básicas
+    entity.HasOne(e => e.Organizacion)
+        .WithMany(o => o.Usuarios)
+        .HasForeignKey(e => e.OrganizacionId)
+        .OnDelete(DeleteBehavior.SetNull);
 
-                entity.HasOne(e => e.Rol)
-                    .WithMany(r => r.Usuarios)
-                    .HasForeignKey(e => e.RolId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
+    entity.HasOne(e => e.Rol)
+        .WithMany(r => r.Usuarios)
+        .HasForeignKey(e => e.RolId)
+        .OnDelete(DeleteBehavior.Restrict);
 
+    // RELACIONES AUTO-REFERENCIALES CORREGIDAS
+    // Relación 1: Usuario que creó el registro
+    entity.HasOne(e => e.CreadoPorUsuario)
+        .WithMany() // SIN navegación inversa para evitar ambigüedad
+        .HasForeignKey(e => e.CreadoPor)
+        .OnDelete(DeleteBehavior.SetNull);
+
+    // Relación 2: Usuario que actualizó el registro
+    entity.HasOne(e => e.ActualizadoPorUsuario)
+        .WithMany() // SIN navegación inversa para evitar ambigüedad
+        .HasForeignKey(e => e.ActualizadoPor)
+        .OnDelete(DeleteBehavior.SetNull);
+});
             // Rol
             modelBuilder.Entity<Rol>(entity =>
             {
