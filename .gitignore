@@ -91,3 +91,31 @@ logs/audit/
 # Configuraciones de producción
 appsettings.Production.json
 appsettings.Staging.json
+
+# Electron build
+frontend/dist-electron/
+frontend/dist/
+*.dmg
+*.AppImage
+*.deb
+*.exe
+*.msi
+
+# Build artifacts
+backend/dist/
+backend/publish/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

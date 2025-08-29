@@ -1,0 +1,27 @@
+﻿{
+    "name": "gesco-desktop",
+    "version": "1.0.0",
+    "description": "GESCO Desktop - Sistema de Gestión de Actividades y Ventas",
+    "private": true,
+    "workspaces": [
+        "frontend"
+    ],
+    "scripts": {
+        "dev": "cd frontend && npm run dev:fullstack",
+        "dev:backend": "cd backend/src/Gesco.Desktop.UI && dotnet run",
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:electron": "cd frontend && npm run dev:electron",
+        "build": "cd frontend && npm run build:all",
+        "build:backend": "cd backend && dotnet publish src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj -c Release -o dist",
+        "build:frontend": "cd frontend && npm run build",
+        "electron:build": "cd frontend && npm run electron:build",
+        "electron:build:all": "cd frontend && npm run electron:build:all",
+        "migrate": "cd backend/src/Gesco.Desktop.Data && dotnet ef database update -s ../Gesco.Desktop.UI/Gesco.Desktop.UI.csproj",
+        "start": "cd frontend && npm run dev:fullstack",
+        "install:frontend": "cd frontend && npm install",
+        "clean": "cd frontend && rm -rf node_modules dist dist-electron && cd ../backend && dotnet clean"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
