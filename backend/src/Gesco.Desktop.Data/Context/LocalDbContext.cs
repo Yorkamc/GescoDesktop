@@ -721,7 +721,7 @@ namespace Gesco.Desktop.Data.Context
                     Correo = "admin@gesco.com",
                     NombreCompleto = "Administrador del Sistema",
                     Telefono = "8888-8888",
-                    Contrasena = "$2a$11$7qOV8ZE8hVjlNBHjw5GdAeO5LZvWHOPz8t2OYH.uZT8lGJeUpBJ5O", // admin123
+                    Contrasena = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", // admin123
                     OrganizacionId = 1,
                     RolId = 1,
                     Activo = true,
@@ -889,5 +889,6 @@ namespace Gesco.Desktop.Data.Context
         }
     }
 }
+
 
 

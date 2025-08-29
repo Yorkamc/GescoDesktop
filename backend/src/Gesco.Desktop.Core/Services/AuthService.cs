@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
 using Gesco.Desktop.Core.Interfaces;
 using Gesco.Desktop.Data.Context;
 using Gesco.Desktop.Shared.DTOs;
@@ -15,11 +16,13 @@ namespace Gesco.Desktop.Core.Services
     public class AuthService : IAuthService
     {
         private readonly LocalDbContext _context;
+        private readonly ILogger<AuthService> _logger;
         private readonly string _jwtSecret;
 
-        public AuthService(LocalDbContext context)
+        public AuthService(LocalDbContext context, ILogger<AuthService> logger)
         {
             _context = context;
+            _logger = logger;
             _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
         }
 
@@ -27,24 +30,57 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
+                _logger.LogInformation("Attempting login for user: {Usuario}", usuario);
+
                 // Buscar usuario por nombre de usuario o email
                 var user = await _context.Usuarios
                     .Include(u => u.Organizacion)
                     .Include(u => u.Rol)
                     .FirstOrDefaultAsync(u => u.NombreUsuario == usuario || u.Correo == usuario);
 
-                if (user == null || !user.Activo)
+                if (user == null)
                 {
+                    _logger.LogWarning("User not found: {Usuario}", usuario);
                     return new LoginResultDto
                     {
                         Success = false,
-                        Message = "Usuario no encontrado o inactivo"
+                        Message = "Usuario no encontrado"
                     };
                 }
 
-                // Verificar contraseña
-                if (!BCrypt.Net.BCrypt.Verify(password, user.Contrasena))
+                if (!user.Activo)
                 {
+                    _logger.LogWarning("User inactive: {Usuario}", usuario);
+                    return new LoginResultDto
+                    {
+                        Success = false,
+                        Message = "Usuario inactivo"
+                    };
+                }
+
+                // Log para debugging
+                _logger.LogDebug("Found user: {UserId}, Hash: {Hash}", user.Id, user.Contrasena?.Substring(0, 10) + "...");
+
+                // Verificar contraseña con BCrypt
+                bool passwordValid;
+                try
+                {
+                    passwordValid = BCrypt.Net.BCrypt.Verify(password, user.Contrasena);
+                    _logger.LogDebug("Password verification result: {Valid}", passwordValid);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error verifying password for user: {Usuario}", usuario);
+                    return new LoginResultDto
+                    {
+                        Success = false,
+                        Message = "Error al verificar credenciales"
+                    };
+                }
+
+                if (!passwordValid)
+                {
+                    _logger.LogWarning("Invalid password for user: {Usuario}", usuario);
                     return new LoginResultDto
                     {
                         Success = false,
@@ -58,6 +94,8 @@ namespace Gesco.Desktop.Core.Services
                 // Actualizar último login
                 user.UltimoLogin = DateTime.Now;
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successful login for user: {Usuario}", usuario);
 
                 return new LoginResultDto
                 {
@@ -80,6 +118,7 @@ namespace Gesco.Desktop.Core.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected error during login for user: {Usuario}", usuario);
                 return new LoginResultDto
                 {
                     Success = false,
