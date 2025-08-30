@@ -1,4 +1,4 @@
-﻿{
+{
     "name": "gesco-desktop-frontend",
     "version": "1.0.0",
     "description": "GESCO Desktop - Frontend Electron + React",
@@ -17,7 +17,7 @@
         "electron:dev": "npm run dev:electron",
         "electron:build": "npm run build && electron-builder",
         "electron:build:win": "npm run build && electron-builder --win",
-        "electron:build:mac": "npm run build && electron-builder --mac", 
+        "electron:build:mac": "npm run build && electron-builder --mac",
         "electron:build:linux": "npm run build && electron-builder --linux",
         "electron:build:all": "npm run build && electron-builder --mwl",
         "dist": "electron-builder",
@@ -45,16 +45,16 @@
         "@typescript-eslint/eslint-plugin": "^6.19.0",
         "@typescript-eslint/parser": "^6.19.0",
         "@vitejs/plugin-react": "^4.2.1",
-        "autoprefixer": "^10.4.17",
+        "autoprefixer": "^10.4.21",
         "concurrently": "^8.2.2",
         "electron": "^28.2.0",
         "electron-builder": "^24.9.1",
         "eslint": "^8.56.0",
         "eslint-plugin-react": "^7.33.2",
         "eslint-plugin-react-hooks": "^4.6.0",
-        "postcss": "^8.4.33",
+        "postcss": "^8.5.6",
         "prettier": "^3.2.4",
-        "tailwindcss": "^3.4.1",
+        "tailwindcss": "^3.4.17",
         "typescript": "^5.3.3",
         "vite": "^5.0.11",
         "wait-on": "^7.2.0"
@@ -78,11 +78,16 @@
             "target": [
                 {
                     "target": "nsis",
-                    "arch": ["x64", "arm64"]
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
                 },
                 {
                     "target": "portable",
-                    "arch": ["x64"]
+                    "arch": [
+                        "x64"
+                    ]
                 }
             ],
             "icon": "build/icon.ico"
@@ -98,11 +103,17 @@
             "target": [
                 {
                     "target": "dmg",
-                    "arch": ["x64", "arm64"]
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
                 },
                 {
                     "target": "zip",
-                    "arch": ["x64", "arm64"]
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
                 }
             ],
             "icon": "build/icon.icns",
@@ -112,11 +123,17 @@
             "target": [
                 {
                     "target": "AppImage",
-                    "arch": ["x64", "arm64"]
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
                 },
                 {
                     "target": "deb",
-                    "arch": ["x64", "arm64"]
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
                 }
             ],
             "icon": "build/icon.png",
