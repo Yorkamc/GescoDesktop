@@ -29,42 +29,38 @@
 
 ## 📂 Estructura del Proyecto
 
+```plaintext
 GescoDesktop/
 │
-├── backend/ # Backend en .NET Core (C#)
-│ ├── src/
-│ │ ├── Gesco.Desktop.Core/ # Lógica de negocio
-│ │ ├── Gesco.Desktop.Data/ # Acceso a datos (SQLite + EF Core)
-│ │ ├── Gesco.Desktop.Shared/ # Modelos y DTOs compartidos
-│ │ ├── Gesco.Desktop.Sync/ # Sincronización con Laravel
-│ │ └── Gesco.Desktop.UI/ # API mínima con ASP.NET Core
-│ ├── utils/ # Utilidades
-│ └── tests/ # Pruebas unitarias
+├── backend/                     # Backend en .NET Core (C#)
+│   ├── src/
+│   │   ├── Gesco.Desktop.Core/   # Lógica de negocio
+│   │   ├── Gesco.Desktop.Data/   # Acceso a datos (SQLite + EF Core)
+│   │   ├── Gesco.Desktop.Shared/ # Modelos y DTOs compartidos
+│   │   ├── Gesco.Desktop.Sync/   # Sincronización con Laravel
+│   │   └── Gesco.Desktop.UI/     # API mínima con ASP.NET Core
+│   ├── utils/                    # Utilidades
+│   └── tests/                    # Pruebas unitarias
 │
-├── frontend/ # Frontend React + TS + Electron
-│ ├── public/ # Archivos estáticos
-│ ├── src/
-│ │ ├── main/ # Proceso principal de Electron
-│ │ ├── renderer/ # React UI (pantallas)
-│ │ └── shared/ # Código compartido entre procesos
-│ ├── electron-main.cjs # Entry point de Electron
-│ ├── index.html # Página base
-│ ├── package.json
-│ └── tailwind.config.js
+├── frontend/                     # Frontend React + TS + Electron
+│   ├── public/                   # Archivos estáticos
+│   ├── src/
+│   │   ├── main/                 # Proceso principal de Electron
+│   │   ├── renderer/             # React UI (pantallas)
+│   │   └── shared/               # Código compartido entre procesos
+│   ├── electron-main.cjs         # Entry point de Electron
+│   ├── index.html                # Página base
+│   ├── package.json
+│   └── tailwind.config.js
 │
-├── .env / .env.example # Variables de entorno
-├── .prettierrc # Configuración de estilos
-├── GescoDesktop.sln # Solución .NET
-├── start-dev.ps1 # Script arranque dev
-├── build-prod.ps1 # Script build producción
-├── build-release.ps1 # Script release
-├── create-migration.ps1 # Script para EF migrations
-└── LICENSE # Licencia MIT
-
-yaml
-Copiar código
-
----
+├── .env / .env.example           # Variables de entorno
+├── .prettierrc                   # Configuración de estilos
+├── GescoDesktop.sln              # Solución .NET
+├── start-dev.ps1                 # Script arranque dev
+├── build-prod.ps1                # Script build producción
+├── build-release.ps1             # Script release
+├── create-migration.ps1          # Script para EF migrations
+└── LICENSE                       # Licencia MIT
 
 ## 🛠️ Tecnologías
 
