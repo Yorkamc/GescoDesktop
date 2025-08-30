@@ -18,9 +18,13 @@ export const Login: React.FC = () => {
       const result = await authService.login(username, password);
       
       if (result.success) {
-        // Guardar datos del usuario
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('user', JSON.stringify(result.usuario));
+        // Guardar datos del usuario - corregido con verificación
+        if (result.token) {
+          localStorage.setItem('token', result.token);
+        }
+        if (result.usuario) {
+          localStorage.setItem('user', JSON.stringify(result.usuario));
+        }
         
         // Redirigir al dashboard
         navigate('/dashboard');
