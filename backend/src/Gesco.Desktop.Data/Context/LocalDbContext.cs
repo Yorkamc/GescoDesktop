@@ -711,8 +711,11 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // Usuario administrador por defecto
-            // Password: admin123 (hash BCrypt)
+           var correctHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a";
+    
+    // Si no funciona el anterior, generar uno nuevo:
+    // var correctHash = BCrypt.Net.BCrypt.HashPassword("admin123", 12);
+            
             modelBuilder.Entity<Usuario>().HasData(
                 new Usuario
                 {
@@ -721,7 +724,7 @@ namespace Gesco.Desktop.Data.Context
                     Correo = "admin@gesco.com",
                     NombreCompleto = "Administrador del Sistema",
                     Telefono = "8888-8888",
-                    Contrasena = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", // admin123
+                    Contrasena = correctHash, // ✅ Hash correcto
                     OrganizacionId = 1,
                     RolId = 1,
                     Activo = true,

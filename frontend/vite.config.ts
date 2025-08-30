@@ -12,14 +12,25 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    // Generar archivos con rutas relativas
     assetsDir: 'assets',
+    // Configuración adicional para Electron
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      }
+    }
   },
   
   server: {
     port: 5173,
     host: '127.0.0.1',
     strictPort: true,
+    // CORS para desarrollo
+    cors: true,
+    // Configuración adicional para desarrollo
+    hmr: {
+      port: 5174
+    }
   },
   
   resolve: {
@@ -28,11 +39,16 @@ export default defineConfig({
     },
   },
   
-  // Optimizaciones para Electron
+  // Variables de entorno
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
   
-  // No limpiar la pantalla para ver logs de Electron
+  // Optimización para Electron
   clearScreen: false,
+  
+  // Configuración CSS
+  css: {
+    postcss: './postcss.config.cjs'
+  }
 })
