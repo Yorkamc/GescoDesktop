@@ -85,10 +85,20 @@ interface LicenseStatus {
   organizacionId?: number;
 }
 
-interface Stats {
+interface DashboardStats {
   actividades: number;
+  actividadesActivas: number;
   ventasHoy: number;
   transacciones: number;
+  ventasMes: number;
+  transaccionesMes: number;
+  totalUsuarios: number;
+  usuariosActivos: number;
+  totalProductos: number;
+  productosActivos: number;
+  productosAgotados: number;
+  fechaConsulta: string;
+  periodoReporte: string;
 }
 
 // =====================================================
@@ -110,12 +120,16 @@ export const authService = {
       console.error('❌ Login error:', error);
       
       // Manejar errores específicos
-      if (error.code === 'ECONNREFUSED') {
-        throw new Error('No se puede conectar al servidor. Verifica que el backend esté ejecutándose.');
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('No se puede conectar al servidor. Verifica que el backend esté ejecutándose en http://localhost:5100');
       }
       
       if (error.response?.status === 401) {
         throw new Error('Usuario o contraseña incorrectos');
+      }
+      
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Datos de login inválidos');
       }
       
       throw new Error(error.response?.data?.message || 'Error de conexión con el servidor');
@@ -192,13 +206,29 @@ export const licenseService = {
 };
 
 // =====================================================
-// STATS SERVICE
+// STATS SERVICE (CORREGIDO)
 // =====================================================
 export const statsService = {
-  async getStats(): Promise<Stats> {
+  async getStats(): Promise<DashboardStats> {
     try {
       const response = await api.get('/stats');
-      return response.data;
+      
+      // Mapear las propiedades del backend al frontend
+      return {
+        actividades: response.data.actividades || 0,
+        actividadesActivas: response.data.actividadesActivas || 0,
+        ventasHoy: response.data.ventasHoy || 0,
+        transacciones: response.data.transacciones || 0,
+        ventasMes: response.data.ventasMes || 0,
+        transaccionesMes: response.data.transaccionesMes || 0,
+        totalUsuarios: response.data.totalUsuarios || 0,
+        usuariosActivos: response.data.usuariosActivos || 0,
+        totalProductos: response.data.totalProductos || 0,
+        productosActivos: response.data.productosActivos || 0,
+        productosAgotados: response.data.productosAgotados || 0,
+        fechaConsulta: response.data.fechaConsulta || new Date().toISOString(),
+        periodoReporte: response.data.periodoReporte || 'Período actual'
+      };
     } catch (error: any) {
       console.error('❌ Error obteniendo estadísticas:', error);
       
@@ -206,27 +236,66 @@ export const statsService = {
         throw new Error('Sesión expirada');
       }
       
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('No se puede conectar al servidor de estadísticas');
+      }
+      
       throw new Error('Error al cargar las estadísticas');
     }
   },
 
-  async getTodaySales(): Promise<{ date: string; total: number }> {
+  async getSalesSummary(dias: number = 7): Promise<any[]> {
     try {
-      const response = await api.get('/sales/today');
+      const response = await api.get(`/stats/sales-summary?dias=${dias}`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error obteniendo ventas del día:', error);
-      throw new Error('Error al cargar las ventas del día');
+      console.error('❌ Error obteniendo resumen de ventas:', error);
+      throw new Error('Error al cargar el resumen de ventas');
     }
   },
 
-  async getActivities(): Promise<any[]> {
+  async getRecentActivities(limite: number = 10): Promise<any[]> {
     try {
-      const response = await api.get('/activities');
+      const response = await api.get(`/stats/recent-activities?limite=${limite}`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error obteniendo actividades:', error);
-      throw new Error('Error al cargar las actividades');
+      console.error('❌ Error obteniendo actividades recientes:', error);
+      throw new Error('Error al cargar las actividades recientes');
+    }
+  }
+};
+
+// =====================================================
+// SYSTEM SERVICE
+// =====================================================
+export const systemService = {
+  async getHealth(): Promise<any> {
+    try {
+      const response = await api.get('/system/health');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error verificando salud del sistema:', error);
+      throw new Error('Error en health check del sistema');
+    }
+  },
+
+  async getSystemStats(): Promise<any> {
+    try {
+      const response = await api.get('/system/stats');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error obteniendo estadísticas del sistema:', error);
+      throw new Error('Error al cargar estadísticas del sistema');
+    }
+  },
+
+  async getSystemInfo(): Promise<any> {
+    try {
+      const response = await api.get('/system/info');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error obteniendo información del sistema:', error);
+      throw new Error('Error al cargar información del sistema');
     }
   }
 };
@@ -237,12 +306,71 @@ export const statsService = {
 export const healthService = {
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await api.get('/health');
+      const response = await api.get('/system/health');
       return response.data.status === 'healthy';
     } catch (error) {
       console.error('❌ Backend no disponible:', error);
       return false;
     }
+  },
+
+  async checkBackendConnection(): Promise<{ 
+    connected: boolean; 
+    message: string; 
+    latency?: number 
+  }> {
+    const startTime = Date.now();
+    try {
+      const response = await api.get('/system/health');
+      const latency = Date.now() - startTime;
+      
+      return {
+        connected: response.data.status === 'healthy',
+        message: 'Conectado al backend',
+        latency
+      };
+    } catch (error: any) {
+      return {
+        connected: false,
+        message: error.code === 'ECONNREFUSED' 
+          ? 'Backend no disponible en http://localhost:5100' 
+          : 'Error de conexión con el backend'
+      };
+    }
+  }
+};
+
+// =====================================================
+// UTILITIES
+// =====================================================
+export const apiUtils = {
+  formatError(error: any): string {
+    if (error.response?.data?.message) {
+      return error.response.data.message;
+    }
+    
+    if (error.message) {
+      return error.message;
+    }
+    
+    switch (error.code) {
+      case 'ECONNREFUSED':
+        return 'No se puede conectar al servidor. Verifica que esté ejecutándose.';
+      case 'ERR_NETWORK':
+        return 'Error de red. Verifica tu conexión.';
+      case 'TIMEOUT':
+        return 'La petición tardó demasiado. Intenta de nuevo.';
+      default:
+        return 'Error desconocido del servidor.';
+    }
+  },
+
+  isNetworkError(error: any): boolean {
+    return ['ECONNREFUSED', 'ERR_NETWORK', 'TIMEOUT'].includes(error.code);
+  },
+
+  isAuthError(error: any): boolean {
+    return error.response?.status === 401;
   }
 };
 
