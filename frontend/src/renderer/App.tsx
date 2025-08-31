@@ -1,5 +1,4 @@
-﻿import React from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+﻿import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Login } from './pages/Login/Login';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { LicenseActivation } from './pages/LicenseActivation/LicenseActivation';
