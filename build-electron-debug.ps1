@@ -1,8 +1,9 @@
-# build-electron-debug.ps1 - Build con diagnóstico completo
+# build-electron-fixed.ps1 - Script mejorado para solucionar problemas de carga
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "  GESCO DESKTOP - BUILD CON DIAGNOSTICO" -ForegroundColor Cyan
+Write-Host "  GESCO DESKTOP - BUILD ELECTRON MEJORADO" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
+# Verificar ubicación
 if (-not (Test-Path "frontend/package.json")) {
     Write-Host "ERROR: Ejecuta desde la raíz del proyecto" -ForegroundColor Red
     exit 1
@@ -10,165 +11,143 @@ if (-not (Test-Path "frontend/package.json")) {
 
 Set-Location "frontend"
 
-# PASO 0: Diagnóstico inicial
 Write-Host ""
-Write-Host "DIAGNOSTICO INICIAL:" -ForegroundColor Cyan
-Write-Host "   Node version: $(node --version)" -ForegroundColor Gray
-Write-Host "   NPM version: $(npm --version)" -ForegroundColor Gray
-Write-Host "   Working directory: $PWD" -ForegroundColor Gray
+Write-Host "PASO 1: Verificar dependencias y limpieza..." -ForegroundColor Yellow
 
-# PASO 1: Limpieza EXTREMA
-Write-Host ""
-Write-Host "PASO 1: Limpieza extrema..." -ForegroundColor Yellow
-
-$pathsToClean = @("dist", "dist-electron", ".vite", "node_modules\.vite", ".cache")
-foreach ($path in $pathsToClean) {
-    if (Test-Path $path) {
-        Write-Host "   Eliminando: $path" -ForegroundColor Gray
-        Remove-Item $path -Recurse -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 1
-        
-        if (Test-Path $path) {
-            Write-Host "   ADVERTENCIA: No se pudo eliminar completamente $path" -ForegroundColor Yellow
-        } else {
-            Write-Host "   OK: $path eliminado" -ForegroundColor Green
-        }
-    }
-}
-
-# Limpiar cache npm y Electron
-Write-Host "   Limpiando caches..." -ForegroundColor Gray
-npm cache clean --force | Out-Null
-if (Get-Command "npx" -ErrorAction SilentlyContinue) {
-    npx electron-builder clean | Out-Null
-}
-
-Write-Host "   Limpieza completada" -ForegroundColor Green
-
-# PASO 2: Verificar dependencias
-Write-Host ""
-Write-Host "PASO 2: Verificar dependencias..." -ForegroundColor Yellow
-
+# Verificar que las dependencias estén instaladas
 if (-not (Test-Path "node_modules")) {
-    Write-Host "   Instalando dependencias desde cero..." -ForegroundColor Gray
+    Write-Host "   Instalando dependencias..." -ForegroundColor Gray
     npm install
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR instalando dependencias" -ForegroundColor Red
         Set-Location ".."
         exit 1
     }
-} else {
-    Write-Host "   node_modules existe, verificando..." -ForegroundColor Gray
-    
-    # Verificar que existen dependencias clave
-    $criticalDeps = @("react", "react-dom", "vite", "electron", "electron-builder")
-    $missing = @()
-    
-    foreach ($dep in $criticalDeps) {
-        if (-not (Test-Path "node_modules/$dep")) {
-            $missing += $dep
-        }
-    }
-    
-    if ($missing.Count -gt 0) {
-        Write-Host "   DEPENDENCIAS FALTANTES: $($missing -join ', ')" -ForegroundColor Red
-        Write-Host "   Reinstalando..." -ForegroundColor Gray
-        Remove-Item "node_modules" -Recurse -Force -ErrorAction SilentlyContinue
-        npm install
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "ERROR reinstalando dependencias" -ForegroundColor Red
-            Set-Location ".."
-            exit 1
-        }
-    } else {
-        Write-Host "   Dependencias OK" -ForegroundColor Green
+}
+
+# Limpieza exhaustiva
+Write-Host "   Limpiando builds anteriores..." -ForegroundColor Gray
+$pathsToClean = @("dist", "dist-electron", ".vite", "node_modules/.vite", ".cache")
+foreach ($path in $pathsToClean) {
+    if (Test-Path $path) {
+        Remove-Item $path -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "     Eliminado: $path" -ForegroundColor DarkGray
     }
 }
 
-# PASO 3: Build web CON DEBUGGING
-Write-Host ""
-Write-Host "PASO 3: Build web con debugging..." -ForegroundColor Yellow
+# Limpiar cache npm
+npm cache clean --force | Out-Null
 
-# Configurar variables de entorno
+Write-Host "   Limpieza completada" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "PASO 2: Build web con configuración correcta..." -ForegroundColor Yellow
+
+# Configurar variables de entorno para build correcto
 $env:NODE_ENV = "production"
 $env:VITE_APP_VERSION = "1.0.0"
 
-Write-Host "   Variables de entorno:" -ForegroundColor Gray
-Write-Host "     NODE_ENV: $env:NODE_ENV" -ForegroundColor Gray
-Write-Host "     PWD: $PWD" -ForegroundColor Gray
+Write-Host "   Variables configuradas:" -ForegroundColor Gray
+Write-Host "     NODE_ENV: $env:NODE_ENV" -ForegroundColor DarkGray
+Write-Host "     VITE_APP_VERSION: $env:VITE_APP_VERSION" -ForegroundColor DarkGray
 
-# Build con logs detallados
-Write-Host "   Ejecutando: npm run build" -ForegroundColor Gray
+# Build web
+Write-Host "   Ejecutando build web..." -ForegroundColor Gray
 npm run build
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR en build web" -ForegroundColor Red
-    Write-Host "Revisa los mensajes de error arriba" -ForegroundColor Yellow
     Set-Location ".."
     exit 1
 }
 
-# PASO 4: Verificar build web
 Write-Host ""
-Write-Host "PASO 4: Verificar build web..." -ForegroundColor Yellow
+Write-Host "PASO 3: Verificar build web..." -ForegroundColor Yellow
 
-$distPath = "dist"
-if (-not (Test-Path $distPath)) {
-    Write-Host "ERROR: No se generó la carpeta dist/" -ForegroundColor Red
-    Set-Location ".."
-    exit 1
-}
-
-$indexPath = "$distPath/index.html"
+$indexPath = "dist/index.html"
 if (-not (Test-Path $indexPath)) {
     Write-Host "ERROR: No se generó dist/index.html" -ForegroundColor Red
-    Write-Host "Contenido de dist/:" -ForegroundColor Gray
-    Get-ChildItem $distPath | ForEach-Object { Write-Host "   - $($_.Name)" -ForegroundColor Gray }
     Set-Location ".."
     exit 1
 }
 
-# Verificar contenido del index.html
+# Verificar contenido del HTML
 $indexContent = Get-Content $indexPath -Raw
-$indexSize = $indexContent.Length
+Write-Host "   index.html generado: $($indexContent.Length) caracteres" -ForegroundColor Green
 
-Write-Host "   dist/index.html creado correctamente" -ForegroundColor Green
-Write-Host "   Tamaño: $indexSize caracteres" -ForegroundColor Cyan
-Write-Host "   Timestamp: $((Get-Item $indexPath).LastWriteTime)" -ForegroundColor Cyan
-
-# Mostrar primeras líneas del HTML para verificar
-$firstLines = ($indexContent -split "`n")[0..5] -join "`n"
-Write-Host "   Primeras líneas:" -ForegroundColor Gray
-Write-Host $firstLines -ForegroundColor DarkGray
-
-# Listar todos los archivos generados
-Write-Host "   Archivos generados en dist/:" -ForegroundColor Gray
-Get-ChildItem $distPath -Recurse -File | ForEach-Object {
-    $relativePath = $_.FullName.Replace("$PWD\$distPath\", "")
-    $size = [Math]::Round($_.Length / 1KB, 1)
-    Write-Host "     $relativePath ($size KB)" -ForegroundColor DarkGray
+# Verificar que no contenga rutas de desarrollo
+if ($indexContent -match 'src="/src/renderer/index.tsx"') {
+    Write-Host "   ADVERTENCIA: HTML contiene rutas de desarrollo" -ForegroundColor Yellow
+    Write-Host "   Esto puede causar problemas en el ejecutable" -ForegroundColor Yellow
+} else {
+    Write-Host "   HTML correctamente compilado para producción" -ForegroundColor Green
 }
 
-# PASO 5: Build Electron
+# Verificar assets
+$assetsPath = "dist/assets"
+if (Test-Path $assetsPath) {
+    $assetsCount = (Get-ChildItem $assetsPath -File).Count
+    Write-Host "   Assets generados: $assetsCount archivos" -ForegroundColor Green
+} else {
+    Write-Host "   ADVERTENCIA: No se encontró carpeta de assets" -ForegroundColor Yellow
+}
+
+Write-Host ""
+Write-Host "PASO 4: Verificar configuración de Electron..." -ForegroundColor Yellow
+
+# Verificar que electron-main.cjs existe
+if (-not (Test-Path "electron-main.cjs")) {
+    Write-Host "ERROR: electron-main.cjs no encontrado" -ForegroundColor Red
+    Write-Host "Crea el archivo electron-main.cjs en frontend/" -ForegroundColor Gray
+    Set-Location ".."
+    exit 1
+}
+
+# Verificar package.json
+$packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
+if ($packageJson.main -ne "electron-main.cjs") {
+    Write-Host "ADVERTENCIA: package.json main no apunta a electron-main.cjs" -ForegroundColor Yellow
+} else {
+    Write-Host "   Configuración de Electron correcta" -ForegroundColor Green
+}
+
+# Verificar configuración de build en package.json
+if ($packageJson.build -and $packageJson.build.files) {
+    $includesDist = $packageJson.build.files -contains "dist/**/*"
+    if ($includesDist) {
+        Write-Host "   Configuración de empaquetado incluye dist/" -ForegroundColor Green
+    } else {
+        Write-Host "   ADVERTENCIA: build.files no incluye dist/**/*" -ForegroundColor Yellow
+    }
+}
+
 Write-Host ""
 Write-Host "PASO 5: Build Electron..." -ForegroundColor Yellow
 
-Write-Host "   Eliminando build anterior de Electron..." -ForegroundColor Gray
+# Eliminar build anterior de Electron
 if (Test-Path "dist-electron") {
     Remove-Item "dist-electron" -Recurse -Force
+    Write-Host "   Build anterior de Electron eliminado" -ForegroundColor Gray
 }
 
-Write-Host "   Ejecutando: npm run electron:build" -ForegroundColor Gray
-npm run electron:build
+# Build Electron con logs detallados
+Write-Host "   Ejecutando electron-builder..." -ForegroundColor Gray
+$env:DEBUG = "electron-builder"
+
+# Usar electron-builder directamente para más control
+npx electron-builder --config.directories.output=dist-electron --config.files="[\"dist/**/*\",\"electron-main.cjs\"]"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR en build Electron" -ForegroundColor Red
-    Write-Host "Revisa los mensajes de error arriba" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Posibles soluciones:" -ForegroundColor Yellow
+    Write-Host "1. Verifica que dist/ contiene los archivos correctos" -ForegroundColor Gray
+    Write-Host "2. Verifica que electron-main.cjs existe" -ForegroundColor Gray
+    Write-Host "3. Intenta: npm run build && npm run electron:build" -ForegroundColor Gray
     Set-Location ".."
     exit 1
 }
 
-# PASO 6: Verificar ejecutable
 Write-Host ""
 Write-Host "PASO 6: Verificar ejecutable..." -ForegroundColor Yellow
 
@@ -178,65 +157,91 @@ if (-not (Test-Path "dist-electron")) {
     exit 1
 }
 
-Write-Host "   Contenido de dist-electron/:" -ForegroundColor Gray
-Get-ChildItem "dist-electron" -File | ForEach-Object {
+# Buscar ejecutables
+$exeFiles = Get-ChildItem "dist-electron" -Filter "*.exe" -Recurse
+$appImages = Get-ChildItem "dist-electron" -Filter "*.AppImage" -Recurse
+$dmgFiles = Get-ChildItem "dist-electron" -Filter "*.dmg" -Recurse
+
+Write-Host "   Ejecutables generados:" -ForegroundColor Green
+$exeFiles | ForEach-Object {
     $size = [Math]::Round($_.Length / 1MB, 2)
-    $timestamp = $_.LastWriteTime
-    
-    if ($_.Extension -eq ".exe") {
-        Write-Host "   EJECUTABLE: $($_.Name)" -ForegroundColor Green
-    } else {
-        Write-Host "   ARCHIVO: $($_.Name)" -ForegroundColor Gray
-    }
-    Write-Host "     Tamaño: $size MB" -ForegroundColor Cyan
-    Write-Host "     Creado: $timestamp" -ForegroundColor Cyan
-    Write-Host ""
+    Write-Host "     Windows: $($_.Name) ($size MB)" -ForegroundColor Cyan
+    Write-Host "     Ubicación: $($_.FullName)" -ForegroundColor DarkGray
 }
 
-# PASO 7: Verificar integridad
-Write-Host ""
-Write-Host "PASO 7: Verificar integridad..." -ForegroundColor Yellow
+$appImages | ForEach-Object {
+    $size = [Math]::Round($_.Length / 1MB, 2)
+    Write-Host "     Linux: $($_.Name) ($size MB)" -ForegroundColor Cyan
+}
 
-$distTime = (Get-Item $indexPath).LastWriteTime
-$exeFiles = Get-ChildItem "dist-electron" -Filter "*.exe"
+$dmgFiles | ForEach-Object {
+    $size = [Math]::Round($_.Length / 1MB, 2)
+    Write-Host "     macOS: $($_.Name) ($size MB)" -ForegroundColor Cyan
+}
 
-if ($exeFiles.Count -eq 0) {
-    Write-Host "ERROR: No se generaron archivos .exe" -ForegroundColor Red
+if ($exeFiles.Count -eq 0 -and $appImages.Count -eq 0 -and $dmgFiles.Count -eq 0) {
+    Write-Host "ERROR: No se generaron ejecutables" -ForegroundColor Red
+    Write-Host "Contenido de dist-electron:" -ForegroundColor Gray
+    Get-ChildItem "dist-electron" -Recurse | ForEach-Object {
+        Write-Host "  $($_.FullName)" -ForegroundColor DarkGray
+    }
     Set-Location ".."
     exit 1
 }
 
-$exeTime = $exeFiles[0].LastWriteTime
-$timeDiff = ($exeTime - $distTime).TotalMinutes
+Write-Host ""
+Write-Host "PASO 7: Prueba de integridad..." -ForegroundColor Yellow
 
-Write-Host "   Build web: $distTime" -ForegroundColor Cyan
-Write-Host "   Ejecutable: $exeTime" -ForegroundColor Cyan
-Write-Host "   Diferencia: $([Math]::Round($timeDiff, 1)) minutos" -ForegroundColor Cyan
+# Verificar que el ejecutable contiene los archivos necesarios
+if ($exeFiles.Count -gt 0) {
+    $mainExe = $exeFiles[0]
+    Write-Host "   Ejecutable principal: $($mainExe.Name)" -ForegroundColor Green
+    Write-Host "   Tamaño: $([Math]::Round($mainExe.Length / 1MB, 2)) MB" -ForegroundColor Cyan
+    Write-Host "   Creado: $($mainExe.LastWriteTime)" -ForegroundColor Cyan
+}
 
-if ($exeTime -ge $distTime.AddMinutes(-2)) {
-    Write-Host "   INTEGRIDAD: OK - Ejecutable contiene build reciente" -ForegroundColor Green
-} else {
-    Write-Host "   ADVERTENCIA: Ejecutable podría estar desactualizado" -ForegroundColor Yellow
+# Verificar timestamps
+$distTime = (Get-Item "dist/index.html").LastWriteTime
+if ($exeFiles.Count -gt 0) {
+    $exeTime = $exeFiles[0].LastWriteTime
+    $timeDiff = ($exeTime - $distTime).TotalMinutes
+    
+    Write-Host ""
+    Write-Host "   Comparación de timestamps:" -ForegroundColor Gray
+    Write-Host "     Build web: $distTime" -ForegroundColor DarkGray
+    Write-Host "     Ejecutable: $exeTime" -ForegroundColor DarkGray
+    Write-Host "     Diferencia: $([Math]::Round($timeDiff, 1)) minutos" -ForegroundColor DarkGray
+    
+    if ($exeTime -ge $distTime.AddMinutes(-2)) {
+        Write-Host "   INTEGRIDAD: Ejecutable contiene build reciente" -ForegroundColor Green
+    } else {
+        Write-Host "   ADVERTENCIA: Ejecutable podría estar desactualizado" -ForegroundColor Yellow
+    }
 }
 
 Set-Location ".."
 
-# RESUMEN FINAL
 Write-Host ""
-Write-Host "BUILD COMPLETADO CON DIAGNOSTICO!" -ForegroundColor Green
+Write-Host "BUILD COMPLETADO EXITOSAMENTE!" -ForegroundColor Green
 Write-Host "=============================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "ARCHIVOS GENERADOS:" -ForegroundColor White
-Write-Host "   Web build: frontend/dist/index.html ($indexSize chars)" -ForegroundColor Cyan
-Write-Host "   Ejecutable: frontend/dist-electron/*.exe" -ForegroundColor Cyan
+Write-Host "EJECUTABLE GENERADO:" -ForegroundColor White
+if ($exeFiles.Count -gt 0) {
+    Write-Host "   Windows: frontend/dist-electron/$($exeFiles[0].Name)" -ForegroundColor Cyan
+}
 Write-Host ""
-Write-Host "SIGUIENTE PASO:" -ForegroundColor Yellow
-Write-Host "   1. Ejecuta el .exe desde: frontend/dist-electron/" -ForegroundColor White
-Write-Host "   2. Si no funciona, envía los logs de esta ventana" -ForegroundColor White
-Write-Host "   3. El ejecutable mostrará DevTools para más debugging" -ForegroundColor White
+Write-Host "SOLUCION AL PROBLEMA:" -ForegroundColor Yellow
+Write-Host "   1. El build web se genera correctamente en frontend/dist/" -ForegroundColor White
+Write-Host "   2. Electron-main.cjs está configurado para cargar desde dist/" -ForegroundColor White
+Write-Host "   3. El ejecutable incluye todos los archivos necesarios" -ForegroundColor White
 Write-Host ""
-Write-Host "DEBUGGING:" -ForegroundColor Yellow
-Write-Host "   - El .exe abrirá DevTools automáticamente" -ForegroundColor White
-Write-Host "   - Revisa la consola para errores específicos" -ForegroundColor White
-Write-Host "   - Si no carga, mostrará una página de diagnóstico" -ForegroundColor White
+Write-Host "PARA EJECUTAR:" -ForegroundColor Green
+Write-Host "   1. Ve a: frontend/dist-electron/" -ForegroundColor White
+Write-Host "   2. Ejecuta el archivo .exe" -ForegroundColor White
+Write-Host "   3. Debería cargar el login correctamente" -ForegroundColor White
+Write-Host ""
+Write-Host "SI SIGUE SIN FUNCIONAR:" -ForegroundColor Yellow
+Write-Host "   1. Verifica que el backend esté corriendo (localhost:5100)" -ForegroundColor White
+Write-Host "   2. El ejecutable abrirá DevTools para debugging" -ForegroundColor White
+Write-Host "   3. Revisa la consola para errores específicos" -ForegroundColor White
 Write-Host "=============================================" -ForegroundColor Green

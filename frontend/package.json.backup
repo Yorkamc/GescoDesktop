@@ -1,0 +1,130 @@
+﻿{
+    "name":  "gesco-desktop-frontend",
+    "version":  "1.0.0",
+    "description":  "GESCO Desktop - Frontend Electron + React",
+    "main":  "electron-main.cjs",
+    "author":  "GESCO Team",
+    "type":  "module",
+    "scripts":  {
+                    "dev":  "vite",
+                    "dev:backend":  "cd ../backend/src/Gesco.Desktop.UI \u0026\u0026 dotnet run",
+                    "dev:fullstack":  "concurrently \"npm run dev:backend\" \"npm run dev\"",
+                    "dev:electron":  "concurrently \"npm run dev\" \"wait-on http://localhost:5173 \u0026\u0026 electron .\"",
+                    "build":  "tsc \u0026\u0026 vite build",
+                    "build:backend":  "cd ../backend \u0026\u0026 dotnet publish src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj -c Release -o ../dist/backend",
+                    "build:all":  "npm run build:backend \u0026\u0026 npm run build",
+                    "preview":  "vite preview",
+                    "electron":  "electron .",
+                    "electron:dev":  "npm run dev:electron",
+                    "electron:build":  "npm run build \u0026\u0026 electron-builder",
+                    "electron:build:win":  "npm run build \u0026\u0026 electron-builder --win",
+                    "electron:build:mac":  "npm run build \u0026\u0026 electron-builder --mac",
+                    "electron:build:linux":  "npm run build \u0026\u0026 electron-builder --linux",
+                    "electron:build:all":  "npm run build \u0026\u0026 electron-builder --mwl",
+                    "dist":  "electron-builder",
+                    "dist:all":  "electron-builder --mwl",
+                    "lint":  "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+                },
+    "dependencies":  {
+                         "@tanstack/react-query":  "^5.17.0",
+                         "axios":  "^1.6.5",
+                         "clsx":  "^2.1.0",
+                         "date-fns":  "^3.3.1",
+                         "electron-store":  "^8.1.0",
+                         "electron-updater":  "^6.1.7",
+                         "react":  "^18.2.0",
+                         "react-dom":  "^18.2.0",
+                         "react-hook-form":  "^7.49.3",
+                         "react-router-dom":  "^6.21.3",
+                         "recharts":  "^2.10.4",
+                         "zustand":  "^4.5.0"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^20.11.5",
+                            "@types/react":  "^18.2.48",
+                            "@types/react-dom":  "^18.2.18",
+                            "@typescript-eslint/eslint-plugin":  "^6.19.0",
+                            "@typescript-eslint/parser":  "^6.19.0",
+                            "@vitejs/plugin-react":  "^4.2.1",
+                            "autoprefixer":  "^10.4.21",
+                            "concurrently":  "^8.2.2",
+                            "electron":  "^28.2.0",
+                            "electron-builder":  "^24.9.1",
+                            "eslint":  "^8.56.0",
+                            "eslint-plugin-react":  "^7.33.2",
+                            "eslint-plugin-react-hooks":  "^4.6.0",
+                            "postcss":  "^8.5.6",
+                            "prettier":  "^3.2.4",
+                            "tailwindcss":  "^3.4.17",
+                            "typescript":  "^5.3.3",
+                            "vite":  "^5.0.11",
+                            "wait-on":  "^7.2.0"
+                        },
+    "build":  {
+                  "appId":  "com.gesco.desktop",
+                  "productName":  "GESCO Desktop",
+                  "copyright":  "Â© 2025 GESCO",
+                  "directories":  {
+                                      "buildResources":  "build",
+                                      "output":  "dist-electron"
+                                  },
+                  "files":  [
+                                "dist/**/*",
+                                "electron-main.cjs",
+                                "package.json",
+                                "!src/**/*",
+                                "!public/**/*",
+                                "!**/*.ts",
+                                "!**/*.map"
+                            ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "build/icon.ico"
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "displayLanguageSelector":  true
+                           },
+                  "mac":  {
+                              "target":  [
+                                             {
+                                                 "target":  "dmg",
+                                                 "arch":  [
+                                                              "x64",
+                                                              "arm64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "build/icon.icns",
+                              "category":  "public.app-category.business"
+                          },
+                  "linux":  {
+                                "target":  [
+                                               {
+                                                   "target":  "AppImage",
+                                                   "arch":  [
+                                                                "x64"
+                                                            ]
+                                               },
+                                               {
+                                                   "target":  "deb",
+                                                   "arch":  [
+                                                                "x64"
+                                                            ]
+                                               }
+                                           ],
+                                "icon":  "build/icon.png",
+                                "category":  "Office"
+                            }
+              }
+}
