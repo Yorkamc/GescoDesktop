@@ -1,40 +1,37 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { existsSync } = require('fs');
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 let mainWindow;
 
-console.log('=== GESCO DESKTOP ELECTRON DEBUG ===');
+console.log('=== GESCO DESKTOP ELECTRON TEST ===');
 console.log('isDev:', isDev);
-console.log('app.isPackaged:', app.isPackaged);
 console.log('__dirname:', __dirname);
-console.log('process.resourcesPath:', process.resourcesPath);
 
 function createWindow() {
-  console.log('Creando ventana...');
-  
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1400,
+    height: 900,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       devTools: true,
-      webSecurity: false
+      webSecurity: false,  // TEMPORAL: para debugging
+      allowRunningInsecureContent: true
     },
     show: false,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#f8fafc'
   });
 
-  // Siempre abrir DevTools para debugging
+  // SIEMPRE abrir DevTools para ver errores
   mainWindow.webContents.openDevTools();
 
   let urlToLoad;
   
   if (isDev) {
     urlToLoad = 'http://localhost:5173';
-    console.log('MODO DESARROLLO - URL:', urlToLoad);
+    console.log('MODO DESARROLLO');
   } else {
     console.log('MODO PRODUCCION - Buscando archivos...');
     
@@ -47,62 +44,87 @@ function createWindow() {
     
     let indexPath = null;
     for (const testPath of possiblePaths) {
-      console.log('Probando ruta:', testPath);
+      console.log('Probando:', testPath);
       if (existsSync(testPath)) {
         indexPath = testPath;
-        console.log('ARCHIVO ENCONTRADO:', indexPath);
+        console.log('ENCONTRADO:', indexPath);
         break;
-      } else {
-        console.log('No existe:', testPath);
       }
     }
     
     if (indexPath) {
       urlToLoad = 'file://' + indexPath.replace(/\\/g, '/');
-      console.log('URL final:', urlToLoad);
     } else {
-      console.error('ERROR: No se encontro index.html');
-      urlToLoad = createErrorPage();
+      console.error('ERROR: index.html no encontrado');
+      urlToLoad = 'data:text/html,<h1>Error: index.html no encontrado</h1>';
     }
   }
 
-  // Eventos de debugging detallados
+  console.log('URL a cargar:', urlToLoad);
+
+  // Eventos detallados de debugging
   mainWindow.webContents.on('did-start-loading', () => {
-    console.log('INICIANDO CARGA...');
+    console.log('>>> CARGA INICIADA');
   });
 
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('CARGA COMPLETADA');
+    console.log('>>> CARGA TERMINADA');
+    
+    // Inyectar script de prueba
+    mainWindow.webContents.executeJavaScript(`
+      console.log('=== TEST DE CONECTIVIDAD ===');
+      
+      // Probar fetch al backend
+      fetch('http://localhost:5100/api/system/health')
+        .then(response => response.json())
+        .then(data => {
+          console.log('âœ… Backend conectado:', data);
+        })
+        .catch(error => {
+          console.error('âŒ Error conectando backend:', error);
+        });
+        
+      // Verificar que React esta cargado
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        console.log('Root element:', root);
+        console.log('Root content:', root ? root.innerHTML.substring(0, 200) : 'NO ENCONTRADO');
+        
+        if (!root || root.innerHTML.trim() === '') {
+          console.error('âŒ React no se cargo correctamente');
+        } else {
+          console.log('âœ… React parece estar cargado');
+        }
+      }, 2000);
+    `);
+    
     mainWindow.show();
   });
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    console.error('FALLO EN CARGA:');
-    console.error('  Codigo:', errorCode);
-    console.error('  Descripcion:', errorDescription);
-    console.error('  URL:', validatedURL);
+    console.error('>>> FALLO EN CARGA');
+    console.error('Codigo:', errorCode);
+    console.error('Descripcion:', errorDescription);
+    console.error('URL:', validatedURL);
     mainWindow.show();
   });
 
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    console.log('[RENDERER ' + level.toUpperCase() + ']', message, '(' + sourceId + ':' + line + ')');
+    const prefix = level === 1 ? '[WARN]' : level === 2 ? '[ERROR]' : '[LOG]';
+    console.log(`${prefix} ${message} (${sourceId}:${line})`);
   });
 
-  mainWindow.webContents.on('dom-ready', () => {
-    console.log('DOM LISTO');
-    
-    // Inyectar script para verificar el estado de React
-    mainWindow.webContents.executeJavaScript(
-      console.log('=== ESTADO DEL DOM ===');
-      console.log('Elemento root:', document.getElementById('root'));
-      console.log('Contenido root:', document.getElementById('root')?.innerHTML?.substring(0, 200));
-      console.log('Scripts cargados:', document.scripts.length);
-      console.log('Hojas de estilo:', document.styleSheets.length);
-      console.log('=== FIN ESTADO ===');
-    );
+  // Interceptar requests de red
+  mainWindow.webContents.session.webRequest.onBeforeRequest((details, callback) => {
+    console.log('>>> REQUEST:', details.method, details.url);
+    callback({});
   });
 
-  console.log('Cargando URL:', urlToLoad);
+  mainWindow.webContents.session.webRequest.onErrorOccurred((details) => {
+    console.error('>>> REQUEST ERROR:', details.url, details.error);
+  });
+
+  // Cargar la pagina
   mainWindow.loadURL(urlToLoad).catch(error => {
     console.error('Error en loadURL:', error);
   });
@@ -112,18 +134,9 @@ function createWindow() {
   });
 }
 
-function createErrorPage() {
-  const errorHtml = '<!DOCTYPE html><html><head><title>Debug - GESCO Desktop</title><style>body{font-family:monospace;padding:20px;background:#f0f0f0;}pre{background:#fff;padding:10px;border:1px solid #ccc;}</style></head><body><h1>Debug Info</h1><pre>__dirname: ' + __dirname + '\napp.isPackaged: ' + app.isPackaged + '\nprocess.resourcesPath: ' + process.resourcesPath + '</pre><button onclick="location.reload()">Reload</button></body></html>';
-  return 'data:text/html;charset=utf-8,' + encodeURIComponent(errorHtml);
-}
-
-app.whenReady().then(() => {
-  console.log('ELECTRON LISTO');
-  createWindow();
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  console.log('TODAS LAS VENTANAS CERRADAS');
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -134,5 +147,3 @@ app.on('activate', () => {
     createWindow();
   }
 });
-
-console.log('Electron main script cargado');
