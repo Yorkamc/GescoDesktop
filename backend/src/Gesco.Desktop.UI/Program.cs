@@ -28,12 +28,10 @@ builder.WebHost.UseUrls("http://localhost:5100");
 // Servicios básicos
 builder.Services.AddControllers(options =>
 {
-    // Configuración global de controladores
     options.SuppressAsyncSuffixInActionNames = false;
 })
 .AddJsonOptions(options =>
 {
-    // Configuración JSON para APIs
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.WriteIndented = true;
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
@@ -55,7 +53,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
     
-    // Configuración JWT para Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
@@ -81,7 +78,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Incluir comentarios XML si existen
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
     if (File.Exists(xmlPath))
@@ -128,7 +124,7 @@ var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ??
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false; // Solo para desarrollo
+        options.RequireHttpsMetadata = false;
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -141,7 +137,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// CORS - Configuración para desarrollo y producción
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
@@ -152,7 +148,7 @@ builder.Services.AddCors(options =>
                 "http://localhost:5174",
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:3000",
-                "file://",  // Agregar esta línea
+                "file://",
                 "null"
               )
               .SetIsOriginAllowed(_ => true)
@@ -160,18 +156,9 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowCredentials();
     });
-
-    // Política más restrictiva para producción
-    options.AddPolicy("Production", policy =>
-    {
-        policy.WithOrigins("https://yourdomain.com")
-              .WithMethods("GET", "POST", "PUT", "DELETE")
-              .WithHeaders("Authorization", "Content-Type")
-              .AllowCredentials();
-    });
 });
 
-// Logging personalizado
+// Logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
@@ -183,11 +170,7 @@ if (builder.Environment.IsDevelopment())
 else
 {
     builder.Logging.SetMinimumLevel(LogLevel.Warning);
-    // TODO: Agregar Serilog para logging en producción
 }
-
-// Servicios de background (opcional)
-// builder.Services.AddHostedService<BackupHostedService>();
 
 var app = builder.Build();
 
@@ -204,11 +187,9 @@ using (var scope = app.Services.CreateScope())
         dbLogger.LogInformation("Initializing database...");
         await context.Database.EnsureCreatedAsync();
         
-        // Verificar datos semilla
         var userCount = await context.Usuarios.CountAsync();
         dbLogger.LogInformation("Database initialized successfully. Users: {UserCount}", userCount);
         
-        // Si no hay usuarios, verificar que los datos semilla se crearon
         if (userCount == 0)
         {
             dbLogger.LogWarning("No users found in database. Check seed data configuration.");
@@ -216,9 +197,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Error inicializando base de datos: {ex.Message}");
-        Console.WriteLine($"Stack trace: {ex.StackTrace}");
-        throw; // Re-lanzar para que la aplicación no se inicie con DB corrupta
+        Console.WriteLine($"Error inicializando base de datos: {ex.Message}");
+        throw;
     }
 }
 
@@ -226,7 +206,6 @@ using (var scope = app.Services.CreateScope())
 // CONFIGURACIÓN DEL PIPELINE DE MIDDLEWARE
 // =====================================================
 
-// FORZAR Swagger siempre (para desarrollo y pruebas)
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -237,36 +216,26 @@ app.UseSwaggerUI(c =>
     c.DocumentTitle = "GESCO Desktop API";
 });
 
-// CORS debe ir temprano en el pipeline
-app.UseCors(app.Environment.IsDevelopment() ? "ReactApp" : "Production");
-
-// Middlewares de seguridad
+app.UseCors("ReactApp");
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
-// Solo agregar rate limiting en producción
 if (!app.Environment.IsDevelopment())
 {
     app.UseMiddleware<RateLimitingMiddleware>();
 }
 
-// Request logging solo en desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseMiddleware<RequestLoggingMiddleware>();
 }
 
-// Middlewares estándar de ASP.NET Core
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Mapear controladores
 app.MapControllers();
 
-// Endpoint de redirección para la raíz
 app.MapGet("/", () => Results.Redirect("/swagger"))
    .ExcludeFromDescription();
 
-// Endpoint adicional para verificar que la API está funcionando
 app.MapGet("/ping", () => Results.Ok(new { 
     message = "pong", 
     timestamp = DateTime.UtcNow 
@@ -276,7 +245,7 @@ app.MapGet("/ping", () => Results.Ok(new {
 .ExcludeFromDescription();
 
 // =====================================================
-// MANEJO GLOBAL DE ERRORES (opcional)
+// MANEJO GLOBAL DE ERRORES
 // =====================================================
 app.UseExceptionHandler(errorApp =>
 {
@@ -302,35 +271,34 @@ app.UseExceptionHandler(errorApp =>
 });
 
 // =====================================================
-// MENSAJES DE INICIO
+// MENSAJES DE INICIO Y EJECUCIÓN
 // =====================================================
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 logger.LogInformation("Starting GESCO Desktop API...");
 
 Console.WriteLine("=========================================");
-Console.WriteLine("🚀 GESCO DESKTOP API - INICIADO");
+Console.WriteLine("GESCO DESKTOP API - INICIADO");
 Console.WriteLine("=========================================");
-Console.WriteLine($"🌐 Environment: {app.Environment.EnvironmentName}");
-Console.WriteLine($"📡 API Base URL: http://localhost:5100");
-Console.WriteLine($"📚 Swagger UI: http://localhost:5100/swagger");
-Console.WriteLine($"✅ Health Check: http://localhost:5100/api/system/health");
-Console.WriteLine($"🔐 Auth: http://localhost:5100/api/auth");
-Console.WriteLine($"📄 License: http://localhost:5100/api/license");
-Console.WriteLine($"📊 Stats: http://localhost:5100/api/system/stats");
-Console.WriteLine($"🛡️ Security: Headers de seguridad activos");
+Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
+Console.WriteLine($"API Base URL: http://localhost:5100");
+Console.WriteLine($"Swagger UI: http://localhost:5100/swagger");
+Console.WriteLine($"Health Check: http://localhost:5100/api/system/health");
+Console.WriteLine($"Auth: http://localhost:5100/api/auth");
+Console.WriteLine($"License: http://localhost:5100/api/license");
+Console.WriteLine($"Stats: http://localhost:5100/api/system/stats");
+Console.WriteLine($"Security: Headers de seguridad activos");
 
 if (app.Environment.IsDevelopment())
 {
-    Console.WriteLine($"🔍 Debug Mode: Logging detallado activado");
-    Console.WriteLine($"📝 Request Logging: Activo");
+    Console.WriteLine($"Debug Mode: Logging detallado activado");
+    Console.WriteLine($"Request Logging: Activo");
 }
 
+Console.WriteLine("=========================================");
+Console.WriteLine("Credenciales: admin / admin123");
 Console.WriteLine("=========================================");
 
 logger.LogInformation("GESCO Desktop API started successfully");
 
-// =====================================================
-// EJECUTAR LA APLICACIÓN
-// =====================================================
 app.Run();

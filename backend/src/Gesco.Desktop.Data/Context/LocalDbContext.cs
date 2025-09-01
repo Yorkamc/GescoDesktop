@@ -666,230 +666,230 @@ namespace Gesco.Desktop.Data.Context
         // ============================================
         // MÉTODO DE DATOS SEMILLA
         // ============================================
-        private static void SeedData(ModelBuilder modelBuilder)
+// Reemplaza el método SeedData en LocalDbContext.cs con este código:
+
+private static void SeedData(ModelBuilder modelBuilder)
+{
+    // Organización por defecto
+    modelBuilder.Entity<Organizacion>().HasData(
+        new Organizacion
         {
-            // Organización por defecto
-            modelBuilder.Entity<Organizacion>().HasData(
-                new Organizacion
-                {
-                    Id = 1,
-                    Nombre = "Organización Demo",
-                    CorreoContacto = "demo@gesco.com",
-                    TelefonoContacto = "2222-2222",
-                    Direccion = "San José, Costa Rica",
-                    PersonaAdquiriente = "Administrador Demo",
-                    Activo = true,
-                    CreadoEn = DateTime.Now
-                }
-            );
-
-            // Roles del sistema
-            modelBuilder.Entity<Rol>().HasData(
-                new Rol 
-                { 
-                    Id = 1, 
-                    Nombre = "Administrador", 
-                    Descripcion = "Acceso completo al sistema", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new Rol 
-                { 
-                    Id = 2, 
-                    Nombre = "Vendedor", 
-                    Descripcion = "Acceso a ventas y caja", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new Rol 
-                { 
-                    Id = 3, 
-                    Nombre = "Supervisor", 
-                    Descripcion = "Supervisión de actividades", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                }
-            );
-
-           var correctHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a";
-    
-    // Si no funciona el anterior, generar uno nuevo:
-    // var correctHash = BCrypt.Net.BCrypt.HashPassword("admin123", 12);
-            
-            modelBuilder.Entity<Usuario>().HasData(
-                new Usuario
-                {
-                    Id = 1,
-                    NombreUsuario = "admin",
-                    Correo = "admin@gesco.com",
-                    NombreCompleto = "Administrador del Sistema",
-                    Telefono = "8888-8888",
-                    Contrasena = correctHash, // ✅ Hash correcto
-                    OrganizacionId = 1,
-                    RolId = 1,
-                    Activo = true,
-                    PrimerLogin = true,
-                    CreadoEn = DateTime.Now
-                }
-            );
-
-            // Estados de actividades
-            modelBuilder.Entity<EstadoActividad>().HasData(
-                new EstadoActividad 
-                { 
-                    Id = 1, 
-                    Nombre = "Sin Iniciar", 
-                    Descripcion = "Actividad no iniciada", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new EstadoActividad 
-                { 
-                    Id = 2, 
-                    Nombre = "En Curso", 
-                    Descripcion = "Actividad en desarrollo", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new EstadoActividad 
-                { 
-                    Id = 3, 
-                    Nombre = "Terminada", 
-                    Descripcion = "Actividad completada", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new EstadoActividad 
-                { 
-                    Id = 4, 
-                    Nombre = "Cancelada", 
-                    Descripcion = "Actividad cancelada", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                }
-            );
-
-            // Estados de ventas
-            modelBuilder.Entity<EstadoVenta>().HasData(
-                new EstadoVenta 
-                { 
-                    Id = 1, 
-                    Nombre = "Pendiente", 
-                    Descripcion = "Venta pendiente de procesamiento", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new EstadoVenta 
-                { 
-                    Id = 2, 
-                    Nombre = "Completada", 
-                    Descripcion = "Venta completada exitosamente", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new EstadoVenta 
-                { 
-                    Id = 3, 
-                    Nombre = "Cancelada", 
-                    Descripcion = "Venta cancelada", 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                }
-            );
-
-            // Métodos de pago
-            modelBuilder.Entity<MetodoPago>().HasData(
-                new MetodoPago 
-                { 
-                    Id = 1, 
-                    Nombre = "Efectivo", 
-                    Descripcion = "Pago en efectivo", 
-                    RequiereReferencia = false, 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new MetodoPago 
-                { 
-                    Id = 2, 
-                    Nombre = "Tarjeta", 
-                    Descripcion = "Pago con tarjeta de crédito/débito", 
-                    RequiereReferencia = true, 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new MetodoPago 
-                { 
-                    Id = 3, 
-                    Nombre = "SINPE Móvil", 
-                    Descripcion = "Pago con SINPE Móvil", 
-                    RequiereReferencia = true, 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                }
-            );
-
-            // Tipos de movimiento de inventario
-            modelBuilder.Entity<TipoMovimientoInventario>().HasData(
-                new TipoMovimientoInventario 
-                { 
-                    Id = 1, 
-                    Nombre = "Entrada", 
-                    Descripcion = "Entrada de mercancía al inventario", 
-                    AfectaStock = true, 
-                    RequiereJustificacion = false, 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new TipoMovimientoInventario 
-                { 
-                    Id = 2, 
-                    Nombre = "Venta", 
-                    Descripcion = "Salida por venta de productos", 
-                    AfectaStock = true, 
-                    RequiereJustificacion = false, 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                },
-                new TipoMovimientoInventario 
-                { 
-                    Id = 3, 
-                    Nombre = "Ajuste", 
-                    Descripcion = "Ajuste de inventario por diferencias", 
-                    AfectaStock = true, 
-                    RequiereJustificacion = true, 
-                    Activo = true, 
-                    CreadoEn = DateTime.Now 
-                }
-            );
-
-            // Estados de suscripción
-            modelBuilder.Entity<EstadoSuscripcion>().HasData(
-                new EstadoSuscripcion 
-                { 
-                    Id = 1, 
-                    Nombre = "Activa", 
-                    Descripcion = "Suscripción activa", 
-                    PermiteUsoSistema = true, 
-                    Activo = true 
-                },
-                new EstadoSuscripcion 
-                { 
-                    Id = 2, 
-                    Nombre = "Suspendida", 
-                    Descripcion = "Suscripción suspendida", 
-                    PermiteUsoSistema = false, 
-                    Activo = true 
-                },
-                new EstadoSuscripcion 
-                { 
-                    Id = 3, 
-                    Nombre = "Cancelada", 
-                    Descripcion = "Suscripción cancelada", 
-                    PermiteUsoSistema = false, 
-                    Activo = true 
-                }
-            );
+            Id = 1,
+            Nombre = "Organización Demo",
+            CorreoContacto = "demo@gesco.com",
+            TelefonoContacto = "2222-2222",
+            Direccion = "San José, Costa Rica",
+            PersonaAdquiriente = "Administrador Demo",
+            Activo = true,
+            CreadoEn = DateTime.Now
         }
+    );
+
+    // Roles del sistema
+    modelBuilder.Entity<Rol>().HasData(
+        new Rol 
+        { 
+            Id = 1, 
+            Nombre = "Administrador", 
+            Descripcion = "Acceso completo al sistema", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new Rol 
+        { 
+            Id = 2, 
+            Nombre = "Vendedor", 
+            Descripcion = "Acceso a ventas y caja", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new Rol 
+        { 
+            Id = 3, 
+            Nombre = "Supervisor", 
+            Descripcion = "Supervisión de actividades", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        }
+    );
+
+    // HASH CORRECTO GENERADO Y VERIFICADO - corresponde a "admin123"
+    var adminPasswordHash = "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6";
+    
+    modelBuilder.Entity<Usuario>().HasData(
+        new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "admin",
+            Correo = "admin@gesco.com",
+            NombreCompleto = "Administrador del Sistema",
+            Telefono = "8888-8888",
+            Contrasena = adminPasswordHash, // Hash verificado que funciona
+            OrganizacionId = 1,
+            RolId = 1,
+            Activo = true,
+            PrimerLogin = true,
+            CreadoEn = DateTime.Now
+        }
+    );
+
+    // Estados de actividades
+    modelBuilder.Entity<EstadoActividad>().HasData(
+        new EstadoActividad 
+        { 
+            Id = 1, 
+            Nombre = "Sin Iniciar", 
+            Descripcion = "Actividad no iniciada", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new EstadoActividad 
+        { 
+            Id = 2, 
+            Nombre = "En Curso", 
+            Descripcion = "Actividad en desarrollo", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new EstadoActividad 
+        { 
+            Id = 3, 
+            Nombre = "Terminada", 
+            Descripcion = "Actividad completada", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new EstadoActividad 
+        { 
+            Id = 4, 
+            Nombre = "Cancelada", 
+            Descripcion = "Actividad cancelada", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        }
+    );
+
+    // Estados de ventas
+    modelBuilder.Entity<EstadoVenta>().HasData(
+        new EstadoVenta 
+        { 
+            Id = 1, 
+            Nombre = "Pendiente", 
+            Descripcion = "Venta pendiente de procesamiento", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new EstadoVenta 
+        { 
+            Id = 2, 
+            Nombre = "Completada", 
+            Descripcion = "Venta completada exitosamente", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new EstadoVenta 
+        { 
+            Id = 3, 
+            Nombre = "Cancelada", 
+            Descripcion = "Venta cancelada", 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        }
+    );
+
+    // Métodos de pago
+    modelBuilder.Entity<MetodoPago>().HasData(
+        new MetodoPago 
+        { 
+            Id = 1, 
+            Nombre = "Efectivo", 
+            Descripcion = "Pago en efectivo", 
+            RequiereReferencia = false, 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new MetodoPago 
+        { 
+            Id = 2, 
+            Nombre = "Tarjeta", 
+            Descripcion = "Pago con tarjeta de crédito/débito", 
+            RequiereReferencia = true, 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new MetodoPago 
+        { 
+            Id = 3, 
+            Nombre = "SINPE Móvil", 
+            Descripcion = "Pago con SINPE Móvil", 
+            RequiereReferencia = true, 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        }
+    );
+
+    // Tipos de movimiento de inventario
+    modelBuilder.Entity<TipoMovimientoInventario>().HasData(
+        new TipoMovimientoInventario 
+        { 
+            Id = 1, 
+            Nombre = "Entrada", 
+            Descripcion = "Entrada de mercancía al inventario", 
+            AfectaStock = true, 
+            RequiereJustificacion = false, 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new TipoMovimientoInventario 
+        { 
+            Id = 2, 
+            Nombre = "Venta", 
+            Descripcion = "Salida por venta de productos", 
+            AfectaStock = true, 
+            RequiereJustificacion = false, 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        },
+        new TipoMovimientoInventario 
+        { 
+            Id = 3, 
+            Nombre = "Ajuste", 
+            Descripcion = "Ajuste de inventario por diferencias", 
+            AfectaStock = true, 
+            RequiereJustificacion = true, 
+            Activo = true, 
+            CreadoEn = DateTime.Now 
+        }
+    );
+
+    // Estados de suscripción
+    modelBuilder.Entity<EstadoSuscripcion>().HasData(
+        new EstadoSuscripcion 
+        { 
+            Id = 1, 
+            Nombre = "Activa", 
+            Descripcion = "Suscripción activa", 
+            PermiteUsoSistema = true, 
+            Activo = true 
+        },
+        new EstadoSuscripcion 
+        { 
+            Id = 2, 
+            Nombre = "Suspendida", 
+            Descripcion = "Suscripción suspendida", 
+            PermiteUsoSistema = false, 
+            Activo = true 
+        },
+        new EstadoSuscripcion 
+        { 
+            Id = 3, 
+            Nombre = "Cancelada", 
+            Descripcion = "Suscripción cancelada", 
+            PermiteUsoSistema = false, 
+            Activo = true 
+        }
+    );
+}
     }
 }
 

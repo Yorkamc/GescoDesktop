@@ -893,10 +893,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "Id", "Activo", "CreadoEn", "Descripcion", "Nombre" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4400), "Actividad no iniciada", "Sin Iniciar" },
-                    { 2, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4404), "Actividad en desarrollo", "En Curso" },
-                    { 3, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4407), "Actividad completada", "Terminada" },
-                    { 4, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4410), "Actividad cancelada", "Cancelada" }
+                    { 1, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7233), "Actividad no iniciada", "Sin Iniciar" },
+                    { 2, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7236), "Actividad en desarrollo", "En Curso" },
+                    { 3, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7238), "Actividad completada", "Terminada" },
+                    { 4, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7240), "Actividad cancelada", "Cancelada" }
                 });
 
             migrationBuilder.InsertData(
@@ -914,9 +914,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "Id", "Activo", "CreadoEn", "Descripcion", "Nombre" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4474), "Venta pendiente de procesamiento", "Pendiente" },
-                    { 2, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4478), "Venta completada exitosamente", "Completada" },
-                    { 3, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4481), "Venta cancelada", "Cancelada" }
+                    { 1, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7284), "Venta pendiente de procesamiento", "Pendiente" },
+                    { 2, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7287), "Venta completada exitosamente", "Completada" },
+                    { 3, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7288), "Venta cancelada", "Cancelada" }
                 });
 
             migrationBuilder.InsertData(
@@ -924,24 +924,24 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "Id", "Activo", "CreadoEn", "Descripcion", "Nombre", "RequiereReferencia" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4543), "Pago en efectivo", "Efectivo", false },
-                    { 2, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4548), "Pago con tarjeta de crédito/débito", "Tarjeta", true },
-                    { 3, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4552), "Pago con SINPE Móvil", "SINPE Móvil", true }
+                    { 1, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7328), "Pago en efectivo", "Efectivo", false },
+                    { 2, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7331), "Pago con tarjeta de crédito/débito", "Tarjeta", true },
+                    { 3, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7333), "Pago con SINPE Móvil", "SINPE Móvil", true }
                 });
 
             migrationBuilder.InsertData(
                 table: "Organizaciones",
                 columns: new[] { "Id", "Activo", "CorreoContacto", "CreadoEn", "Direccion", "Nombre", "PersonaAdquiriente", "TelefonoContacto" },
-                values: new object[] { 1, true, "demo@gesco.com", new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(3742), "San José, Costa Rica", "Organización Demo", "Administrador Demo", "2222-2222" });
+                values: new object[] { 1, true, "demo@gesco.com", new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(6912), "San José, Costa Rica", "Organización Demo", "Administrador Demo", "2222-2222" });
 
             migrationBuilder.InsertData(
                 table: "Roles",
                 columns: new[] { "Id", "Activo", "CreadoEn", "Descripcion", "Nombre" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4232), "Acceso completo al sistema", "Administrador" },
-                    { 2, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4243), "Acceso a ventas y caja", "Vendedor" },
-                    { 3, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4260), "Supervisión de actividades", "Supervisor" }
+                    { 1, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7118), "Acceso completo al sistema", "Administrador" },
+                    { 2, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7125), "Acceso a ventas y caja", "Vendedor" },
+                    { 3, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7133), "Supervisión de actividades", "Supervisor" }
                 });
 
             migrationBuilder.InsertData(
@@ -949,15 +949,15 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "Id", "Activo", "AfectaStock", "CreadoEn", "Descripcion", "Nombre", "RequiereJustificacion" },
                 values: new object[,]
                 {
-                    { 1, true, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4658), "Entrada de mercancía al inventario", "Entrada", false },
-                    { 2, true, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4663), "Salida por venta de productos", "Venta", false },
-                    { 3, true, true, new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4667), "Ajuste de inventario por diferencias", "Ajuste", true }
+                    { 1, true, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7377), "Entrada de mercancía al inventario", "Entrada", false },
+                    { 2, true, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7379), "Salida por venta de productos", "Venta", false },
+                    { 3, true, true, new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7381), "Ajuste de inventario por diferencias", "Ajuste", true }
                 });
 
             migrationBuilder.InsertData(
                 table: "Usuarios",
                 columns: new[] { "Id", "Activo", "ActualizadoEn", "ActualizadoPor", "Contrasena", "Correo", "CreadoEn", "CreadoPor", "NombreCompleto", "NombreUsuario", "OrganizacionId", "PrimerLogin", "PrimerLoginEn", "RolId", "Telefono", "UltimoLogin" },
-                values: new object[] { 1, true, null, null, "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "admin@gesco.com", new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4337), null, "Administrador del Sistema", "admin", 1, true, null, 1, "8888-8888", null });
+                values: new object[] { 1, true, null, null, "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6", "admin@gesco.com", new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7189), null, "Administrador del Sistema", "admin", 1, true, null, 1, "8888-8888", null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ActividadCategorias_ActividadId",

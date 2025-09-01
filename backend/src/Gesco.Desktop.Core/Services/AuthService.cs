@@ -3,11 +3,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using Gesco.Desktop.Core.Interfaces;
+using Gesco.Desktop.Core.Utils;
 using Gesco.Desktop.Data.Context;
 using Gesco.Desktop.Shared.DTOs;
 
@@ -23,7 +23,8 @@ namespace Gesco.Desktop.Core.Services
         {
             _context = context;
             _logger = logger;
-            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
+            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? 
+                        "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
         }
 
         public async Task<LoginResultDto> LoginAsync(string usuario, string password)
@@ -58,29 +59,48 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
-                // Log para debugging
-                _logger.LogDebug("Found user: {UserId}, Hash: {Hash}", user.Id, user.Contrasena?.Substring(0, 10) + "...");
+                // Debug logging
+                _logger.LogDebug("Found user: {UserId}, checking password...", user.Id);
+                _logger.LogDebug("Stored hash starts with: {HashPrefix}...", 
+                    user.Contrasena?.Substring(0, Math.Min(10, user.Contrasena != null ? user.Contrasena.Length : 0)));
 
-                // Verificar contraseña con BCrypt
-                bool passwordValid;
+                // Verificar contraseña con BCrypt usando PasswordHelper
+                bool passwordValid = false;
                 try
                 {
-                    passwordValid = BCrypt.Net.BCrypt.Verify(password, user.Contrasena);
-                    _logger.LogDebug("Password verification result: {Valid}", passwordValid);
+                    passwordValid = PasswordHelper.VerifyPassword(password, user.Contrasena);
+                    _logger.LogDebug("Password verification result: {Valid} for user: {Usuario}", 
+                        passwordValid, usuario);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error verifying password for user: {Usuario}", usuario);
-                    return new LoginResultDto
+                    
+                    // En caso de error, intentar verificación directa como fallback
+                    try
                     {
-                        Success = false,
-                        Message = "Error al verificar credenciales"
-                    };
+                        passwordValid = BCrypt.Net.BCrypt.Verify(password, user.Contrasena);
+                        _logger.LogDebug("Fallback BCrypt verification result: {Valid}", passwordValid);
+                    }
+                    catch (Exception fallbackEx)
+                    {
+                        _logger.LogError(fallbackEx, "Fallback password verification also failed");
+                        return new LoginResultDto
+                        {
+                            Success = false,
+                            Message = "Error al verificar credenciales"
+                        };
+                    }
                 }
 
                 if (!passwordValid)
                 {
                     _logger.LogWarning("Invalid password for user: {Usuario}", usuario);
+                    
+                    // Log adicional para debugging
+                    _logger.LogDebug("Password check failed - Input: '{Password}', Hash: '{Hash}'", 
+                        password, user.Contrasena);
+                    
                     return new LoginResultDto
                     {
                         Success = false,
@@ -129,7 +149,6 @@ namespace Gesco.Desktop.Core.Services
 
         public async Task LogoutAsync()
         {
-            // En una implementación más completa, aquí se invalidarían los tokens
             await Task.CompletedTask;
         }
 
@@ -159,7 +178,6 @@ namespace Gesco.Desktop.Core.Services
 
         public async Task<UsuarioDto?> GetCurrentUserAsync()
         {
-            // Esta implementación sería más completa con el contexto de la request HTTP
             await Task.CompletedTask;
             return null;
         }
@@ -180,7 +198,9 @@ namespace Gesco.Desktop.Core.Services
                     new Claim("rol_id", user.RolId.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(24),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key), 
+                    SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);

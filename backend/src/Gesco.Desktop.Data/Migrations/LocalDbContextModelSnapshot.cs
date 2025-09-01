@@ -751,7 +751,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4400),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7233),
                             Descripcion = "Actividad no iniciada",
                             Nombre = "Sin Iniciar"
                         },
@@ -759,7 +759,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4404),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7236),
                             Descripcion = "Actividad en desarrollo",
                             Nombre = "En Curso"
                         },
@@ -767,7 +767,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4407),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7238),
                             Descripcion = "Actividad completada",
                             Nombre = "Terminada"
                         },
@@ -775,7 +775,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4410),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7240),
                             Descripcion = "Actividad cancelada",
                             Nombre = "Cancelada"
                         });
@@ -865,7 +865,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4474),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7284),
                             Descripcion = "Venta pendiente de procesamiento",
                             Nombre = "Pendiente"
                         },
@@ -873,7 +873,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4478),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7287),
                             Descripcion = "Venta completada exitosamente",
                             Nombre = "Completada"
                         },
@@ -881,7 +881,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4481),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7288),
                             Descripcion = "Venta cancelada",
                             Nombre = "Cancelada"
                         });
@@ -1009,7 +1009,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4543),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7328),
                             Descripcion = "Pago en efectivo",
                             Nombre = "Efectivo",
                             RequiereReferencia = false
@@ -1018,7 +1018,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4548),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7331),
                             Descripcion = "Pago con tarjeta de crédito/débito",
                             Nombre = "Tarjeta",
                             RequiereReferencia = true
@@ -1027,7 +1027,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4552),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7333),
                             Descripcion = "Pago con SINPE Móvil",
                             Nombre = "SINPE Móvil",
                             RequiereReferencia = true
@@ -1239,7 +1239,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 1,
                             Activo = true,
                             CorreoContacto = "demo@gesco.com",
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(3742),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(6912),
                             Direccion = "San José, Costa Rica",
                             Nombre = "Organización Demo",
                             PersonaAdquiriente = "Administrador Demo",
@@ -1390,7 +1390,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4232),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7118),
                             Descripcion = "Acceso completo al sistema",
                             Nombre = "Administrador"
                         },
@@ -1398,7 +1398,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4243),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7125),
                             Descripcion = "Acceso a ventas y caja",
                             Nombre = "Vendedor"
                         },
@@ -1406,7 +1406,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3,
                             Activo = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4260),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7133),
                             Descripcion = "Supervisión de actividades",
                             Nombre = "Supervisor"
                         });
@@ -1535,7 +1535,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 1,
                             Activo = true,
                             AfectaStock = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4658),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7377),
                             Descripcion = "Entrada de mercancía al inventario",
                             Nombre = "Entrada",
                             RequiereJustificacion = false
@@ -1545,7 +1545,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 2,
                             Activo = true,
                             AfectaStock = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4663),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7379),
                             Descripcion = "Salida por venta de productos",
                             Nombre = "Venta",
                             RequiereJustificacion = false
@@ -1555,7 +1555,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 3,
                             Activo = true,
                             AfectaStock = true,
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4667),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7381),
                             Descripcion = "Ajuste de inventario por diferencias",
                             Nombre = "Ajuste",
                             RequiereJustificacion = true
@@ -1702,9 +1702,9 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            Contrasena = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a",
+                            Contrasena = "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6",
                             Correo = "admin@gesco.com",
-                            CreadoEn = new DateTime(2025, 8, 31, 21, 19, 8, 204, DateTimeKind.Local).AddTicks(4337),
+                            CreadoEn = new DateTime(2025, 8, 31, 22, 52, 18, 579, DateTimeKind.Local).AddTicks(7189),
                             NombreCompleto = "Administrador del Sistema",
                             NombreUsuario = "admin",
                             OrganizacionId = 1,
