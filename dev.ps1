@@ -1,80 +1,124 @@
-# dev.ps1 - Script principal para desarrollo (SIN EMOJIS)
-Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "  GESCO DESKTOP - DESARROLLO" -ForegroundColor Cyan
-Write-Host "=============================================" -ForegroundColor Cyan
+# dev.ps1 - Script de desarrollo limpio
+Write-Host "Iniciando GESCO Desktop - Desarrollo" -ForegroundColor Green
 
-# Funcion para verificar puerto
-function Test-Port {
-    param([int]$Port)
-    try {
-        $tcpClient = New-Object System.Net.Sockets.TcpClient
-        $tcpClient.Connect("127.0.0.1", $Port)
-        $tcpClient.Close()
-        return $true
-    } catch { 
-        return $false 
-    }
-}
-
-# Verificaciones basicas
 if (-not (Test-Path "frontend/package.json")) {
-    Write-Host "ERROR: Ejecuta desde la raiz del proyecto" -ForegroundColor Red
+    Write-Host "Error: Ejecuta desde la raíz del proyecto" -ForegroundColor Red
     exit 1
 }
 
-# Mostrar informacion
-Write-Host ""
-Write-Host "Iniciando servicios de desarrollo..." -ForegroundColor Yellow
-Write-Host "   Backend:  http://localhost:5100" -ForegroundColor Cyan
-Write-Host "   Frontend: http://localhost:5173" -ForegroundColor Cyan
-Write-Host "   Swagger:  http://localhost:5100/swagger" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "Backend: http://localhost:5100" -ForegroundColor Cyan
+Write-Host "Frontend: http://localhost:5173" -ForegroundColor Cyan
 Write-Host "Credenciales: admin / admin123" -ForegroundColor Yellow
-Write-Host ""
-
-# Abrir terminales separadas para cada servicio
-Write-Host "Abriendo terminales..." -ForegroundColor Green
 
 # Terminal Backend
 Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
-Write-Host 'BACKEND - GESCO DESKTOP' -ForegroundColor Green;
-Write-Host 'Puerto: 5100' -ForegroundColor Yellow;
-Write-Host '';
+Write-Host 'BACKEND GESCO' -ForegroundColor Green;
 cd '$PWD\backend';
 dotnet run --project src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj
 "@
 
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 2
 
 # Terminal Frontend
 Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
-Write-Host 'FRONTEND - GESCO DESKTOP' -ForegroundColor Blue;
-Write-Host 'Puerto: 5173' -ForegroundColor Yellow;
-Write-Host '';
+Write-Host 'FRONTEND GESCO' -ForegroundColor Blue;
 cd '$PWD\frontend';
 npm run dev
 "@
 
-Start-Sleep -Seconds 5
+Write-Host "Servicios iniciados en terminales separadas" -ForegroundColor Green
 
-# Terminal Electron (opcional)
-$openElectron = Read-Host "Abrir Electron automaticamente? (y/n)"
-if ($openElectron -eq 'y' -or $openElectron -eq 'Y') {
-    Start-Sleep -Seconds 5
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
-Write-Host 'ELECTRON - GESCO DESKTOP' -ForegroundColor Magenta;
-Write-Host 'Esperando servicios...' -ForegroundColor Yellow;
-cd '$PWD\frontend';
-Start-Sleep -Seconds 10;
-Write-Host 'Iniciando Electron...' -ForegroundColor Green;
-npm run electron
-"@
+# =============================================================================
+
+# clean.ps1 - Script de limpieza limpio
+Write-Host "Limpiando proyecto GESCO Desktop..." -ForegroundColor Green
+
+Write-Host "Limpiando backend..." -ForegroundColor Yellow
+if (Test-Path "backend") {
+    Set-Location "backend"
+    dotnet clean --verbosity quiet | Out-Null
+    Set-Location ".."
 }
 
-Write-Host ""
-Write-Host "Servicios iniciados en terminales separadas!" -ForegroundColor Green
-Write-Host ""
-Write-Host "Para Electron manual:" -ForegroundColor Yellow
-Write-Host "   cd frontend && npm run electron" -ForegroundColor Gray
-Write-Host ""
-Write-Host "Para detener servicios: cierra las ventanas de terminal" -ForegroundColor Gray
+Write-Host "Limpiando frontend..." -ForegroundColor Yellow
+if (Test-Path "frontend") {
+    Set-Location "frontend"
+    
+    @("node_modules", "dist", "dist-electron", ".vite") | ForEach-Object {
+        if (Test-Path $_) {
+            Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "  Eliminado: $_" -ForegroundColor Gray
+        }
+    }
+    
+    Set-Location ".."
+}
+
+if (Test-Path "dist") {
+    Remove-Item "dist" -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "  Eliminado: dist/" -ForegroundColor Gray
+}
+
+Write-Host "Reinstalando dependencias..." -ForegroundColor Yellow
+Set-Location "frontend"
+npm install | Out-Null
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Dependencias reinstaladas" -ForegroundColor Green
+}
+Set-Location ".."
+
+Write-Host "Limpieza completada" -ForegroundColor Green
+
+# =============================================================================
+
+# reset-database.ps1 - Script de base de datos limpio
+Write-Host "Regenerando base de datos GESCO..." -ForegroundColor Green
+
+Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
+
+$dbPath = "backend/src/Gesco.Desktop.UI/data/gesco_local.db"
+$dataDir = "backend/src/Gesco.Desktop.UI/data"
+
+Write-Host "Eliminando base de datos anterior..." -ForegroundColor Yellow
+@($dbPath, "$dbPath-wal", "$dbPath-shm") | ForEach-Object {
+    if (Test-Path $_) {
+        Remove-Item $_ -Force -ErrorAction SilentlyContinue
+    }
+}
+
+if (-not (Test-Path $dataDir)) {
+    New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+}
+
+Write-Host "Regenerando base de datos..." -ForegroundColor Yellow
+Set-Location "backend"
+
+try {
+    $migrationsPath = "src/Gesco.Desktop.Data/Migrations"
+    if (Test-Path $migrationsPath) {
+        Remove-Item $migrationsPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    dotnet ef migrations add "InitialCreate" -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Error creando migración" }
+
+    dotnet ef database update -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Error aplicando migración" }
+
+    Write-Host "Base de datos regenerada exitosamente" -ForegroundColor Green
+
+} catch {
+    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+    Set-Location ".."
+    exit 1
+}
+
+Set-Location ".."
+
+if (Test-Path $dbPath) {
+    Write-Host "Base de datos creada: $dbPath" -ForegroundColor Green
+    Write-Host "Usuario: admin | Contraseña: admin123" -ForegroundColor Yellow
+} else {
+    Write-Host "Error: La base de datos no fue creada" -ForegroundColor Red
+}
