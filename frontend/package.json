@@ -8,15 +8,14 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
-        "build:debug": "npm run build && npm run list-dist",
-        "list-dist": "dir dist /s /b",
-        "electron:build": "npm run build && electron-builder",
+        "build:backend": "cd ../backend && dotnet publish src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj -c Release -o ../frontend/backend",
+        "build:complete": "npm run build:backend && npm run build && npm run electron:build",
+        "electron:build": "electron-builder",
         "preview": "vite preview",
         "electron": "electron .",
         "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
         "test:build": "npm run build && npm run electron",
-        "clean": "rm -rf dist dist-electron node_modules/.vite",
+        "clean": "rm -rf dist dist-electron node_modules/.vite backend",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
     },
     "dependencies": {
@@ -64,8 +63,16 @@
         },
         "files": [
             "dist/**/*",
+            "backend/**/*",
             "electron-main.cjs",
             "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "backend",
+                "to": "backend",
+                "filter": ["**/*"]
+            }
         ],
         "win": {
             "target": "nsis",
@@ -75,7 +82,8 @@
             "oneClick": false,
             "allowToChangeInstallationDirectory": true,
             "createDesktopShortcut": true,
-            "createStartMenuShortcut": true
+            "createStartMenuShortcut": true,
+            "installerHeaderIcon": "build/icon.ico"
         },
         "mac": {
             "target": "dmg",
