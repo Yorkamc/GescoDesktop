@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gesco.Desktop.Data.Entities
 {
-  // ORGANIZACIONES
+    // ORGANIZACIONES
     [Table("organizations")]
     public class Organization : SyncableEntity
     {
@@ -98,7 +98,7 @@ namespace Gesco.Desktop.Data.Entities
         public Guid OrganizationId { get; set; }
 
         [Column("role_id")]
-        public Guid RoleId { get; set; } // CORREGIDO: Usar Guid en lugar de int
+        public Guid RoleId { get; set; } // CORREGIDO: Usar Guid
 
         [Column("first_login_at")]
         public DateTime? FirstLoginAt { get; set; }
@@ -174,10 +174,10 @@ namespace Gesco.Desktop.Data.Entities
         public Guid OrganizationId { get; set; }
 
         [Column("membership_id")]
-        public int MembershipId { get; set; }
+        public Guid MembershipId { get; set; } // CORREGIDO: Guid
 
         [Column("subscription_status_id")]
-        public int SubscriptionStatusId { get; set; }
+        public Guid SubscriptionStatusId { get; set; } // CORREGIDO: Guid
 
         [Column("start_date")]
         public DateTime StartDate { get; set; }
@@ -214,7 +214,7 @@ namespace Gesco.Desktop.Data.Entities
         public string ActivationCode { get; set; } = string.Empty;
 
         [Column("subscription_id")]
-        public int SubscriptionId { get; set; }
+        public Guid SubscriptionId { get; set; } // CORREGIDO: Guid
 
         [Column("is_generated")]
         public bool IsGenerated { get; set; } = true;
@@ -325,7 +325,7 @@ namespace Gesco.Desktop.Data.Entities
         public string? Location { get; set; }
 
         [Column("activity_status_id")]
-        public int ActivityStatusId { get; set; }
+        public Guid ActivityStatusId { get; set; } // CORREGIDO: Guid
 
         [Column("manager_user_id")]
         public Guid? ManagerUserId { get; set; }
@@ -375,10 +375,10 @@ namespace Gesco.Desktop.Data.Entities
     public class ActivityCategory : SyncableEntity
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; }
+        public Guid ActivityId { get; set; } // CORREGIDO: Guid
 
         [Column("service_category_id")]
-        public int ServiceCategoryId { get; set; }
+        public Guid ServiceCategoryId { get; set; } // CORREGIDO: Guid
 
         // Navegación
         [ForeignKey("ActivityId")]
@@ -395,7 +395,7 @@ namespace Gesco.Desktop.Data.Entities
     public class CategoryProduct : SyncableEntity
     {
         [Column("activity_category_id")]
-        public int ActivityCategoryId { get; set; }
+        public Guid ActivityCategoryId { get; set; } // CORREGIDO: Guid
 
         [Column("code")]
         [MaxLength(50)]
@@ -477,7 +477,7 @@ namespace Gesco.Desktop.Data.Entities
     public class CashRegister : SyncableEntity
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; }
+        public Guid ActivityId { get; set; } // CORREGIDO: Guid
 
         [Column("register_number")]
         public int RegisterNumber { get; set; }
@@ -518,7 +518,7 @@ namespace Gesco.Desktop.Data.Entities
     public class SalesTransaction : SyncableEntity
     {
         [Column("cash_register_id")]
-        public int CashRegisterId { get; set; }
+        public Guid CashRegisterId { get; set; } // CORREGIDO: Guid
 
         [Column("transaction_number")]
         [Required]
@@ -530,7 +530,7 @@ namespace Gesco.Desktop.Data.Entities
         public string? InvoiceNumber { get; set; }
 
         [Column("sales_status_id")]
-        public int SalesStatusId { get; set; }
+        public Guid SalesStatusId { get; set; } // CORREGIDO: Guid
 
         [Column("transaction_date")]
         public DateTime TransactionDate { get; set; }
@@ -556,13 +556,13 @@ namespace Gesco.Desktop.Data.Entities
     public class TransactionDetail : SyncableEntity
     {
         [Column("sales_transaction_id")]
-        public int SalesTransactionId { get; set; }
+        public Guid SalesTransactionId { get; set; } // CORREGIDO: Guid
 
         [Column("product_id")]
-        public int? ProductId { get; set; }
+        public Guid? ProductId { get; set; } // CORREGIDO: Guid
 
         [Column("combo_id")]
-        public int? ComboId { get; set; }
+        public Guid? ComboId { get; set; } // CORREGIDO: Guid
 
         [Column("quantity")]
         public int Quantity { get; set; }
@@ -594,10 +594,10 @@ namespace Gesco.Desktop.Data.Entities
     public class TransactionPayment : SyncableEntity
     {
         [Column("sales_transaction_id")]
-        public int SalesTransactionId { get; set; }
+        public Guid SalesTransactionId { get; set; } // CORREGIDO: Guid
 
         [Column("payment_method_id")]
-        public int PaymentMethodId { get; set; }
+        public Guid PaymentMethodId { get; set; } // CORREGIDO: Guid
 
         [Column("amount")]
         [Precision(10, 2)]
@@ -626,7 +626,7 @@ namespace Gesco.Desktop.Data.Entities
     public class SalesCombo : SyncableEntity
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; }
+        public Guid ActivityId { get; set; } // CORREGIDO: Guid
 
         [Column("name")]
         [Required]
@@ -656,10 +656,10 @@ namespace Gesco.Desktop.Data.Entities
     public class ComboItem : SyncableEntity
     {
         [Column("combo_id")]
-        public int ComboId { get; set; }
+        public Guid ComboId { get; set; } // CORREGIDO: Guid
 
         [Column("product_id")]
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; } // CORREGIDO: Guid
 
         [Column("quantity")]
         public int Quantity { get; set; } = 1;
@@ -699,10 +699,10 @@ namespace Gesco.Desktop.Data.Entities
     public class InventoryMovement : SyncableEntity
     {
         [Column("product_id")]
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; } // CORREGIDO: Guid
 
         [Column("movement_type_id")]
-        public int MovementTypeId { get; set; }
+        public Guid MovementTypeId { get; set; } // CORREGIDO: Guid
 
         [Column("quantity")]
         public int Quantity { get; set; }
@@ -722,7 +722,7 @@ namespace Gesco.Desktop.Data.Entities
         public decimal? TotalValue { get; set; }
 
         [Column("sales_transaction_id")]
-        public int? SalesTransactionId { get; set; }
+        public Guid? SalesTransactionId { get; set; } // CORREGIDO: Guid
 
         [Column("justification")]
         public string? Justification { get; set; }
@@ -752,7 +752,7 @@ namespace Gesco.Desktop.Data.Entities
     public class CashRegisterClosure : SyncableEntity
     {
         [Column("cash_register_id")]
-        public int CashRegisterId { get; set; }
+        public Guid CashRegisterId { get; set; } // CORREGIDO: Guid
 
         [Column("opening_date")]
         public DateTime OpeningDate { get; set; }
@@ -809,7 +809,7 @@ namespace Gesco.Desktop.Data.Entities
     public class ActivityClosure : SyncableEntity
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; }
+        public Guid ActivityId { get; set; } // CORREGIDO: Guid
 
         [Column("closure_date")]
         public DateTime ClosureDate { get; set; }

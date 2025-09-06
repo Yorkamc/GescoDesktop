@@ -7,7 +7,7 @@ using Gesco.Desktop.Core.Interfaces;
 
 namespace Gesco.Desktop.Core.Services
 {
- public class MigrationService : IMigrationService
+    public class MigrationService : IMigrationService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<MigrationService> _logger;
@@ -113,7 +113,7 @@ namespace Gesco.Desktop.Core.Services
         }
     }
 
-    // Hosted Service para ejecutar migraciones al startup
+    // CORREGIDO: DatabaseInitializationService ahora funciona con IMigrationService como Singleton
     public class DatabaseInitializationService : IHostedService
     {
         private readonly IMigrationService _migrationService;

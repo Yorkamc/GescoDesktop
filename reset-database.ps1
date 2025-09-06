@@ -1,14 +1,14 @@
-# reset-database-con-optimizacion.ps1 - Regenerar BD con auto-optimización
+# reset-database-con-optimizacion.ps1 - Regenerar BD con auto-optimizacion
 param(
     [switch]$Force = $false,
     [switch]$SkipOptimization = $false
 )
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "  REGENERANDO BASE DE DATOS GESCO CON OPTIMIZACIÓN" -ForegroundColor Cyan
+Write-Host "  REGENERANDO BASE DE DATOS GESCO CON OPTIMIZACION" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
-# Función para verificar si un proceso está usando un archivo
+# Funcion para verificar si un proceso esta usando un archivo
 function Test-FileInUse {
     param([string]$FilePath)
     
@@ -39,30 +39,30 @@ foreach ($processName in $processesToKill) {
     }
 }
 
-# Configuración de rutas
+# Configuracion de rutas
 $backendPath = "backend"
 $dataDir = "$backendPath/src/Gesco.Desktop.UI/data"
 $dbPath = "$dataDir/gesco_local.db"
 $migrationsPath = "$backendPath/src/Gesco.Desktop.Data/Migrations"
 $optimizationScriptPath = "$backendPath/src/Gesco.Desktop.Data/script/sqlite_optimization_script.sql"
 
-# Verificar que el script de optimización existe
+# Verificar que el script de optimizacion existe
 if (-not $SkipOptimization -and -not (Test-Path $optimizationScriptPath)) {
-    Write-Host "  Script de optimización no encontrado en: $optimizationScriptPath" -ForegroundColor Yellow
-    Write-Host "   Se continuará sin optimización automática" -ForegroundColor Gray
+    Write-Host "  Script de optimizacion no encontrado en: $optimizationScriptPath" -ForegroundColor Yellow
+    Write-Host "   Se continuara sin optimizacion automatica" -ForegroundColor Gray
     $SkipOptimization = $true
 }
 
-# Verificar si la DB está en uso
+# Verificar si la DB esta en uso
 if (Test-Path $dbPath) {
     if (Test-FileInUse $dbPath) {
-        Write-Host " La base de datos está en uso" -ForegroundColor Red
-        Write-Host "   Cierra todas las instancias de la aplicación e intenta de nuevo" -ForegroundColor Yellow
+        Write-Host " La base de datos esta en uso" -ForegroundColor Red
+        Write-Host "   Cierra todas las instancias de la aplicacion e intenta de nuevo" -ForegroundColor Yellow
         
         if (-not $Force) {
-            $continue = Read-Host "¿Forzar eliminación? (y/n)"
+            $continue = Read-Host "Forzar eliminacion? (y/n)"
             if ($continue -ne 'y') {
-                Write-Host "Operación cancelada" -ForegroundColor Yellow
+                Write-Host "Operacion cancelada" -ForegroundColor Yellow
                 exit 1
             }
         }
@@ -106,30 +106,30 @@ Write-Host "Regenerando base de datos..." -ForegroundColor Yellow
 Set-Location $backendPath
 
 try {
-    # Crear migración inicial
-    Write-Host "    Creando migración inicial..." -ForegroundColor Gray
+    # Crear migracion inicial
+    Write-Host "    Creando migracion inicial..." -ForegroundColor Gray
     $migrationOutput = dotnet ef migrations add "InitialCreateWithOptimization" -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI --verbose
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host " Error creando migración" -ForegroundColor Red
+        Write-Host " Error creando migracion" -ForegroundColor Red
         Write-Host "Output: $migrationOutput" -ForegroundColor Gray
         throw "Migration creation failed"
     }
-    Write-Host "    Migración creada exitosamente" -ForegroundColor Green
+    Write-Host "    Migracion creada exitosamente" -ForegroundColor Green
 
-    # Aplicar migración (esto ejecuta EnsureCreatedAsync y el script de optimización)
-    Write-Host "    Aplicando migración y ejecutando optimización..." -ForegroundColor Gray
+    # Aplicar migracion (esto ejecuta EnsureCreatedAsync y el script de optimizacion)
+    Write-Host "    Aplicando migracion y ejecutando optimizacion..." -ForegroundColor Gray
     $updateOutput = dotnet ef database update -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI --verbose
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host " Error aplicando migración" -ForegroundColor Red
+        Write-Host " Error aplicando migracion" -ForegroundColor Red
         Write-Host "Output: $updateOutput" -ForegroundColor Gray
         throw "Database update failed"
     }
-    Write-Host "    Migración aplicada exitosamente" -ForegroundColor Green
+    Write-Host "    Migracion aplicada exitosamente" -ForegroundColor Green
 
 } catch {
-    Write-Host " Error durante regeneración: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host " Error durante regeneracion: $($_.Exception.Message)" -ForegroundColor Red
     Set-Location ".."
     exit 1
 }
@@ -147,7 +147,7 @@ if (Test-Path $dbPath) {
     
     # Verificar que tiene contenido (debe ser mayor a 50KB con datos semilla)
     if ($dbSize -lt 50000) {
-        Write-Host "     Base de datos parece estar vacía (tamaño muy pequeño)" -ForegroundColor Yellow
+        Write-Host "     Base de datos parece estar vacia (tamano muy pequeno)" -ForegroundColor Yellow
     } else {
         Write-Host "    Base de datos contiene datos semilla" -ForegroundColor Green
     }
@@ -156,12 +156,12 @@ if (Test-Path $dbPath) {
     exit 1
 }
 
-# Verificar optimización ejecutada
+# Verificar optimizacion ejecutada
 if (-not $SkipOptimization) {
     Write-Host ""
-    Write-Host "Verificando optimización SQLite..." -ForegroundColor Yellow
+    Write-Host "Verificando optimizacion SQLite..." -ForegroundColor Yellow
     
-    # Verificar si se pueden ejecutar consultas básicas
+    # Verificar si se pueden ejecutar consultas basicas
     try {
         Set-Location $backendPath
         $testQuery = "SELECT COUNT(*) as UserCount FROM users;"
@@ -172,11 +172,11 @@ if (-not $SkipOptimization) {
             Write-Host "    Base de datos accesible y operacional" -ForegroundColor Green
         }
     } catch {
-        Write-Host "     No se pudo verificar la optimización completamente" -ForegroundColor Yellow
+        Write-Host "     No se pudo verificar la optimizacion completamente" -ForegroundColor Yellow
     }
 }
 
-# Mostrar información del script de optimización
+# Mostrar informacion del script de optimizacion
 if (-not $SkipOptimization -and (Test-Path $optimizationScriptPath)) {
     $scriptContent = Get-Content $optimizationScriptPath -Raw
     $indexCount = ($scriptContent -split "CREATE INDEX").Length - 1
@@ -185,7 +185,7 @@ if (-not $SkipOptimization -and (Test-Path $optimizationScriptPath)) {
     
     Write-Host ""
     Write-Host "Optimizaciones aplicadas:" -ForegroundColor Cyan
-    Write-Host "    Índices creados: $indexCount" -ForegroundColor White
+    Write-Host "    Indices creados: $indexCount" -ForegroundColor White
     Write-Host "     Vistas creadas: $viewCount" -ForegroundColor White
     Write-Host "    Triggers creados: $triggerCount" -ForegroundColor White
 }
@@ -197,46 +197,49 @@ Write-Host " BASE DE DATOS REGENERADA EXITOSAMENTE" -ForegroundColor Green
 Write-Host "=============================================" -ForegroundColor Green
 Write-Host ""
 
-Write-Host " Información de la base de datos:" -ForegroundColor White
-Write-Host "    Ubicación: $dbPath" -ForegroundColor Cyan
+Write-Host " Informacion de la base de datos:" -ForegroundColor White
+Write-Host "    Ubicacion: $dbPath" -ForegroundColor Cyan
 Write-Host "    Usuario: admin" -ForegroundColor Yellow
-Write-Host "    Contraseña: admin123" -ForegroundColor Yellow
-Write-Host "     Tamaño: $dbSizeKB KB" -ForegroundColor Cyan
+Write-Host "    Contrasena: admin123" -ForegroundColor Yellow
+Write-Host "     Tamano: $dbSizeKB KB" -ForegroundColor Cyan
 
 if (-not $SkipOptimization) {
-    Write-Host "    Optimización SQLite: Aplicada automáticamente" -ForegroundColor Green
+    Write-Host "    Optimizacion SQLite: Aplicada automaticamente" -ForegroundColor Green
 } else {
-    Write-Host "     Optimización SQLite: Omitida" -ForegroundColor Yellow
+    Write-Host "     Optimizacion SQLite: Omitida" -ForegroundColor Yellow
 }
 
 Write-Host ""
-Write-Host " Próximos pasos:" -ForegroundColor White
+Write-Host " Proximos pasos:" -ForegroundColor White
 Write-Host "     Inicia el backend:" -ForegroundColor Gray
-Write-Host "      cd backend && dotnet run" -ForegroundColor Cyan
+Write-Host "      cd backend" -ForegroundColor Cyan
+Write-Host "      dotnet run" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "    Inicia el frontend:" -ForegroundColor Gray  
-Write-Host "      cd frontend && npm run dev" -ForegroundColor Cyan
+Write-Host "      cd frontend" -ForegroundColor Cyan
+Write-Host "      npm run dev" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "     Accede a la aplicación:" -ForegroundColor Gray
+Write-Host "     Accede a la aplicacion:" -ForegroundColor Gray
 Write-Host "      http://localhost:5173 (Frontend)" -ForegroundColor Cyan
 Write-Host "      http://localhost:5100/swagger (API)" -ForegroundColor Cyan
 
 Write-Host ""
 Write-Host "  Para Electron:" -ForegroundColor White
-Write-Host "   cd frontend && npm run dev:electron" -ForegroundColor Cyan
+Write-Host "   cd frontend" -ForegroundColor Cyan
+Write-Host "   npm run dev:electron" -ForegroundColor Cyan
 
 Write-Host ""
-Write-Host " Comandos útiles:" -ForegroundColor White
+Write-Host " Comandos utiles:" -ForegroundColor White
 Write-Host "   .\dev.ps1                    # Iniciar desarrollo completo" -ForegroundColor Gray
-Write-Host "   .\build.ps1                  # Build para producción" -ForegroundColor Gray
+Write-Host "   .\build.ps1                  # Build para produccion" -ForegroundColor Gray
 Write-Host "   .\clean.ps1                  # Limpiar proyecto" -ForegroundColor Gray
 
 Write-Host ""
-Write-Host " La optimización SQLite incluye:" -ForegroundColor White
-Write-Host "   • Índices para consultas frecuentes" -ForegroundColor Gray
-Write-Host "   • Vistas para estadísticas de dashboard" -ForegroundColor Gray
-Write-Host "   • Triggers para automatización" -ForegroundColor Gray
-Write-Host "   • Configuraciones de rendimiento" -ForegroundColor Gray
+Write-Host " La optimizacion SQLite incluye:" -ForegroundColor White
+Write-Host "   - Indices para consultas frecuentes" -ForegroundColor Gray
+Write-Host "   - Vistas para estadisticas de dashboard" -ForegroundColor Gray
+Write-Host "   - Triggers para automatizacion" -ForegroundColor Gray
+Write-Host "   - Configuraciones de rendimiento" -ForegroundColor Gray
 
 Write-Host ""
 Write-Host "=============================================" -ForegroundColor Green

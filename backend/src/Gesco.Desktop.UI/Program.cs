@@ -104,18 +104,23 @@ builder.Services.AddDbContext<LocalDbContext>(options =>
 });
 
 // =====================================================
-// SERVICIOS DE NEGOCIO - ACTUALIZADOS
+// SERVICIOS DE NEGOCIO - ACTUALIZADOS Y CORREGIDOS
 // =====================================================
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IActivationService, ActivationService>();
-builder.Services.AddScoped<IActivityService, ActivityService>(); // NUEVO
+builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<ILaravelApiClient, LaravelApiClient>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
-builder.Services.AddScoped<IMigrationService, MigrationService>(); // NUEVO
 
-// Hosted Service para inicialización de DB
-builder.Services.AddHostedService<DatabaseInitializationService>(); // NUEVO
+// CORREGIDO: IMigrationService como Singleton para resolver el problema de DI
+builder.Services.AddSingleton<IMigrationService>(provider =>
+{
+    return new MigrationService(provider, provider.GetRequiredService<ILogger<MigrationService>>());
+});
+
+// CORREGIDO: DatabaseInitializationService ahora puede acceder a IMigrationService
+builder.Services.AddHostedService<DatabaseInitializationService>();
 
 // HTTP Client para servicios externos
 builder.Services.AddHttpClient<ILaravelApiClient, LaravelApiClient>(client =>
@@ -180,11 +185,6 @@ else
 }
 
 var app = builder.Build();
-
-// =====================================================
-// NOTA: LA INICIALIZACIÓN DE DB AHORA ES AUTOMÁTICA
-// VIA DatabaseInitializationService (HostedService)
-// =====================================================
 
 // =====================================================
 // CONFIGURACIÓN DEL PIPELINE DE MIDDLEWARE
@@ -299,8 +299,8 @@ if (app.Environment.IsDevelopment())
 }
 
 Console.WriteLine("=========================================");
-Console.WriteLine("AUTO-OPTIMIZACIÓN: Script SQL se ejecuta");
-Console.WriteLine("automáticamente después de migraciones");
+Console.WriteLine("AUTO-OPTIMIZACION: Script SQL se ejecuta");
+Console.WriteLine("automaticamente despues de migraciones");
 Console.WriteLine("=========================================");
 Console.WriteLine("Credenciales: admin / admin123");
 Console.WriteLine("=========================================");

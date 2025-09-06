@@ -170,12 +170,16 @@ namespace Gesco.Desktop.Core.Services
             }
             else
             {
+                // CORREGIDO: Obtener subscription como Guid
+                var defaultSubscription = await _context.Subscriptions.FirstOrDefaultAsync();
+                var subscriptionId = defaultSubscription?.Id ?? Guid.NewGuid();
+
                 // Create new activation
                 var activation = new Gesco.Desktop.Data.Entities.ActivationKey
                 {
                     Id = Guid.NewGuid(),
                     ActivationCode = codigoActivacion,
-                    SubscriptionId = 1, // Default subscription ID - might need adjustment
+                    SubscriptionId = subscriptionId, // CORREGIDO: Usar Guid
                     GeneratedDate = DateTime.UtcNow,
                     ExpirationDate = fechaExpiracion,
                     UsedDate = DateTime.UtcNow,

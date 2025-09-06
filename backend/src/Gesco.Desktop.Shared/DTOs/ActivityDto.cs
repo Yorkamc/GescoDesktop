@@ -56,10 +56,10 @@ namespace Gesco.Desktop.Shared.DTOs
     public class SalesTransactionDto
     {
         public Guid Id { get; set; }
-        public int CashRegisterId { get; set; }
+        public Guid CashRegisterId { get; set; } // CORREGIDO: Guid
         public string TransactionNumber { get; set; } = string.Empty;
         public string? InvoiceNumber { get; set; }
-        public int SalesStatusId { get; set; }
+        public int SalesStatusId { get; set; } // Mantener int para frontend
         public string? StatusName { get; set; }
         public DateTime TransactionDate { get; set; }
         public decimal TotalAmount { get; set; }
@@ -70,8 +70,8 @@ namespace Gesco.Desktop.Shared.DTOs
     public class TransactionDetailDto
     {
         public Guid Id { get; set; }
-        public int? ProductId { get; set; }
-        public int? ComboId { get; set; }
+        public Guid? ProductId { get; set; } // CORREGIDO: Guid
+        public Guid? ComboId { get; set; } // CORREGIDO: Guid
         public string? ProductName { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
@@ -82,7 +82,7 @@ namespace Gesco.Desktop.Shared.DTOs
     public class TransactionPaymentDto
     {
         public Guid Id { get; set; }
-        public int PaymentMethodId { get; set; }
+        public int PaymentMethodId { get; set; } // Mantener int para frontend
         public string? PaymentMethodName { get; set; }
         public decimal Amount { get; set; }
         public string? Reference { get; set; }
@@ -95,7 +95,7 @@ namespace Gesco.Desktop.Shared.DTOs
     public class CategoryProductDto
     {
         public Guid Id { get; set; }
-        public int ActivityCategoryId { get; set; }
+        public int ActivityCategoryId { get; set; } // Mantener int para frontend
         public string? Code { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -109,7 +109,7 @@ namespace Gesco.Desktop.Shared.DTOs
 
     public class CreateProductRequest
     {
-        public int ActivityCategoryId { get; set; }
+        public int ActivityCategoryId { get; set; } // Mantener int para frontend
         
         [MaxLength(50)]
         public string? Code { get; set; }
@@ -138,9 +138,9 @@ namespace Gesco.Desktop.Shared.DTOs
     public class InventoryMovementDto
     {
         public Guid Id { get; set; }
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; } // CORREGIDO: Guid
         public string? ProductName { get; set; }
-        public int MovementTypeId { get; set; }
+        public int MovementTypeId { get; set; } // Mantener int para frontend
         public string? MovementTypeName { get; set; }
         public int Quantity { get; set; }
         public int PreviousQuantity { get; set; }
@@ -196,5 +196,34 @@ namespace Gesco.Desktop.Shared.DTOs
         public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
         public bool HasNextPage => Page < TotalPages;
         public bool HasPreviousPage => Page > 1;
+    }
+
+    // ============================================
+    // HELPER METHODS PARA MAPEO DE TIPOS
+    // ============================================
+    public static class EntityMappingHelpers
+    {
+        /// <summary>
+        /// Convierte Guid de entidad a int para DTOs (frontend compatibility)
+        /// </summary>
+        public static int MapGuidToInt(Guid guid, List<dynamic> entities)
+        {
+            for (int i = 0; i < entities.Count; i++)
+            {
+                if (entities[i].Id == guid)
+                    return i + 1;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Convierte int de DTO a Guid de entidad
+        /// </summary>
+        public static Guid? MapIntToGuid(int index, List<dynamic> entities)
+        {
+            if (index > 0 && index <= entities.Count)
+                return entities[index - 1].Id;
+            return null;
+        }
     }
 }

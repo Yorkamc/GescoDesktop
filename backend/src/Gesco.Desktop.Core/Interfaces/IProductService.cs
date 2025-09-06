@@ -1,4 +1,3 @@
-
 using Gesco.Desktop.Shared.DTOs;
 
 namespace Gesco.Desktop.Core.Interfaces

@@ -7,7 +7,7 @@ using Gesco.Desktop.Core.Interfaces;
 
 namespace Gesco.Desktop.Core.Services
 {
-public class ProductService : IProductService
+    public class ProductService : IProductService
     {
         private readonly LocalDbContext _context;
         private readonly ILogger<ProductService> _logger;
@@ -29,18 +29,30 @@ public class ProductService : IProductService
                         .ThenInclude(ac => ac.Activity)
                     .AsQueryable();
 
+                // CORREGIDO: Manejar conversión de int a Guid
                 if (activityCategoryId.HasValue)
                 {
-                    query = query.Where(p => p.ActivityCategoryId == activityCategoryId);
+                    var categoryGuid = await GetActivityCategoryGuidByOrder(activityCategoryId.Value);
+                    if (categoryGuid.HasValue)
+                    {
+                        query = query.Where(p => p.ActivityCategoryId == categoryGuid.Value);
+                    }
                 }
 
                 var products = await query
                     .Where(p => p.Active)
                     .OrderBy(p => p.Name)
-                    .Select(p => new CategoryProductDto
+                    .ToListAsync();
+
+                var result = new List<CategoryProductDto>();
+                var allCategories = await _context.ActivityCategories.OrderBy(ac => ac.CreatedAt).ToListAsync();
+
+                foreach (var p in products)
+                {
+                    result.Add(new CategoryProductDto
                     {
                         Id = p.Id,
-                        ActivityCategoryId = p.ActivityCategoryId,
+                        ActivityCategoryId = GetCategoryOrder(p.ActivityCategoryId, allCategories),
                         Code = p.Code,
                         Name = p.Name,
                         Description = p.Description,
@@ -50,11 +62,11 @@ public class ProductService : IProductService
                         AlertQuantity = p.AlertQuantity,
                         Active = p.Active,
                         CreatedAt = p.CreatedAt
-                    })
-                    .ToListAsync();
+                    });
+                }
 
-                _logger.LogInformation("Retrieved {Count} products", products.Count);
-                return products;
+                _logger.LogInformation("Retrieved {Count} products", result.Count);
+                return result;
             }
             catch (Exception ex)
             {
@@ -76,10 +88,12 @@ public class ProductService : IProductService
                     return null;
                 }
 
+                var allCategories = await _context.ActivityCategories.OrderBy(ac => ac.CreatedAt).ToListAsync();
+
                 return new CategoryProductDto
                 {
                     Id = product.Id,
-                    ActivityCategoryId = product.ActivityCategoryId,
+                    ActivityCategoryId = GetCategoryOrder(product.ActivityCategoryId, allCategories),
                     Code = product.Code,
                     Name = product.Name,
                     Description = product.Description,
@@ -102,10 +116,17 @@ public class ProductService : IProductService
         {
             try
             {
+                // CORREGIDO: Convertir int a Guid
+                var categoryGuid = await GetActivityCategoryGuidByOrder(request.ActivityCategoryId);
+                if (!categoryGuid.HasValue)
+                {
+                    throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
+                }
+
                 var product = new CategoryProduct
                 {
                     Id = Guid.NewGuid(),
-                    ActivityCategoryId = request.ActivityCategoryId,
+                    ActivityCategoryId = categoryGuid.Value,
                     Code = request.Code,
                     Name = request.Name,
                     Description = request.Description,
@@ -130,8 +151,8 @@ public class ProductService : IProductService
                         var movement = new InventoryMovement
                         {
                             Id = Guid.NewGuid(),
-                            ProductId = (int)product.Id.GetHashCode(), // Convert Guid to int (temporary)
-                            MovementTypeId = (int)stockInType.Id.GetHashCode(),
+                            ProductId = product.Id, // CORREGIDO: Usar Guid directamente
+                            MovementTypeId = stockInType.Id,
                             Quantity = request.InitialQuantity,
                             PreviousQuantity = 0,
                             NewQuantity = request.InitialQuantity,
@@ -169,9 +190,16 @@ public class ProductService : IProductService
                     return null;
                 }
 
+                // CORREGIDO: Convertir int a Guid
+                var categoryGuid = await GetActivityCategoryGuidByOrder(request.ActivityCategoryId);
+                if (!categoryGuid.HasValue)
+                {
+                    throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
+                }
+
                 var oldQuantity = product.CurrentQuantity;
 
-                product.ActivityCategoryId = request.ActivityCategoryId;
+                product.ActivityCategoryId = categoryGuid.Value;
                 product.Code = request.Code;
                 product.Name = request.Name;
                 product.Description = request.Description;
@@ -233,10 +261,17 @@ public class ProductService : IProductService
                     .Where(p => p.Active && p.CurrentQuantity <= p.AlertQuantity)
                     .OrderBy(p => p.CurrentQuantity)
                     .ThenBy(p => p.Name)
-                    .Select(p => new CategoryProductDto
+                    .ToListAsync();
+
+                var allCategories = await _context.ActivityCategories.OrderBy(ac => ac.CreatedAt).ToListAsync();
+                var result = new List<CategoryProductDto>();
+
+                foreach (var p in products)
+                {
+                    result.Add(new CategoryProductDto
                     {
                         Id = p.Id,
-                        ActivityCategoryId = p.ActivityCategoryId,
+                        ActivityCategoryId = GetCategoryOrder(p.ActivityCategoryId, allCategories),
                         Code = p.Code,
                         Name = p.Name,
                         Description = p.Description,
@@ -246,11 +281,11 @@ public class ProductService : IProductService
                         AlertQuantity = p.AlertQuantity,
                         Active = p.Active,
                         CreatedAt = p.CreatedAt
-                    })
-                    .ToListAsync();
+                    });
+                }
 
-                _logger.LogInformation("Found {Count} low stock products", products.Count);
-                return products;
+                _logger.LogInformation("Found {Count} low stock products", result.Count);
+                return result;
             }
             catch (Exception ex)
             {
@@ -284,8 +319,8 @@ public class ProductService : IProductService
                     var movement = new InventoryMovement
                     {
                         Id = Guid.NewGuid(),
-                        ProductId = (int)productId.GetHashCode(), // Convert Guid to int (temporary)
-                        MovementTypeId = (int)adjustmentType.Id.GetHashCode(),
+                        ProductId = productId, // CORREGIDO: Usar Guid directamente
+                        MovementTypeId = adjustmentType.Id,
                         Quantity = difference,
                         PreviousQuantity = oldQuantity,
                         NewQuantity = newQuantity,
@@ -322,18 +357,25 @@ public class ProductService : IProductService
 
                 if (productId.HasValue)
                 {
-                    var productIntId = (int)productId.Value.GetHashCode(); // Convert Guid to int
-                    query = query.Where(m => m.ProductId == productIntId);
+                    query = query.Where(m => m.ProductId == productId.Value); // CORREGIDO: Comparación Guid
                 }
 
                 var movements = await query
                     .OrderByDescending(m => m.MovementDate)
-                    .Select(m => new InventoryMovementDto
+                    .Take(100) // Limit to last 100 movements
+                    .ToListAsync();
+
+                var allMovementTypes = await _context.InventoryMovementTypes.OrderBy(mt => mt.CreatedAt).ToListAsync();
+                var result = new List<InventoryMovementDto>();
+
+                foreach (var m in movements)
+                {
+                    result.Add(new InventoryMovementDto
                     {
                         Id = m.Id,
-                        ProductId = m.ProductId,
+                        ProductId = m.ProductId, // CORREGIDO: Mantener como Guid en DTO
                         ProductName = m.Product.Name,
-                        MovementTypeId = m.MovementTypeId,
+                        MovementTypeId = GetMovementTypeOrder(m.MovementTypeId, allMovementTypes),
                         MovementTypeName = m.MovementType.Name,
                         Quantity = m.Quantity,
                         PreviousQuantity = m.PreviousQuantity,
@@ -342,11 +384,10 @@ public class ProductService : IProductService
                         TotalValue = m.TotalValue,
                         Justification = m.Justification,
                         MovementDate = m.MovementDate
-                    })
-                    .Take(100) // Limit to last 100 movements
-                    .ToListAsync();
+                    });
+                }
 
-                return movements;
+                return result;
             }
             catch (Exception ex)
             {
@@ -354,6 +395,29 @@ public class ProductService : IProductService
                 throw;
             }
         }
-        
+
+        // MÉTODOS HELPER PARA MAPEO DE TIPOS
+        private async Task<Guid?> GetActivityCategoryGuidByOrder(int order)
+        {
+            var categories = await _context.ActivityCategories
+                .OrderBy(ac => ac.CreatedAt)
+                .ToListAsync();
+
+            return order > 0 && order <= categories.Count 
+                ? categories[order - 1].Id 
+                : null;
+        }
+
+        private static int GetCategoryOrder(Guid categoryId, List<ActivityCategory> categories)
+        {
+            var index = categories.FindIndex(c => c.Id == categoryId);
+            return index >= 0 ? index + 1 : 0;
+        }
+
+        private static int GetMovementTypeOrder(Guid movementTypeId, List<InventoryMovementType> types)
+        {
+            var index = types.FindIndex(t => t.Id == movementTypeId);
+            return index >= 0 ? index + 1 : 0;
+        }
     }
 }
