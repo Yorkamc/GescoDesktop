@@ -7,7 +7,7 @@ using Gesco.Desktop.Core.Interfaces;
 
 namespace Gesco.Desktop.Core.Services
 {
- public class ActivityService : IActivityService
+    public class ActivityService : IActivityService
     {
         private readonly LocalDbContext _context;
         private readonly ILogger<ActivityService> _logger;
@@ -44,7 +44,7 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = a.ActivityStatusId,
+                        ActivityStatusId = (int)a.ActivityStatusId.GetHashCode(), // Temporal conversion
                         StatusName = a.ActivityStatus.Name,
                         ManagerUserId = a.ManagerUserId,
                         OrganizationId = a.OrganizationId,
@@ -87,7 +87,7 @@ namespace Gesco.Desktop.Core.Services
                     EndDate = activity.EndDate,
                     EndTime = activity.EndTime,
                     Location = activity.Location,
-                    ActivityStatusId = activity.ActivityStatusId,
+                    ActivityStatusId = (int)activity.ActivityStatusId.GetHashCode(), // Temporal conversion
                     StatusName = activity.ActivityStatus.Name,
                     ManagerUserId = activity.ManagerUserId,
                     OrganizationId = activity.OrganizationId,
@@ -106,6 +106,15 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
+                // Get the first activity status as default (or find by name)
+                var defaultStatus = await _context.ActivityStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "Not Started");
+                
+                if (defaultStatus == null)
+                {
+                    defaultStatus = await _context.ActivityStatuses.FirstOrDefaultAsync();
+                }
+
                 var activity = new Activity
                 {
                     Id = Guid.NewGuid(),
@@ -116,7 +125,7 @@ namespace Gesco.Desktop.Core.Services
                     EndDate = request.EndDate,
                     EndTime = request.EndTime,
                     Location = request.Location,
-                    ActivityStatusId = request.ActivityStatusId,
+                    ActivityStatusId = defaultStatus?.Id ?? Guid.NewGuid(), // Use proper Guid
                     ManagerUserId = request.ManagerUserId,
                     OrganizationId = request.OrganizationId,
                     CreatedAt = DateTime.UtcNow
@@ -156,7 +165,19 @@ namespace Gesco.Desktop.Core.Services
                 activity.EndDate = request.EndDate;
                 activity.EndTime = request.EndTime;
                 activity.Location = request.Location;
-                activity.ActivityStatusId = request.ActivityStatusId;
+                
+                // Handle status update properly
+                if (request.ActivityStatusId > 0)
+                {
+                    var status = await _context.ActivityStatuses
+                        .Skip(request.ActivityStatusId - 1)
+                        .FirstOrDefaultAsync();
+                    if (status != null)
+                    {
+                        activity.ActivityStatusId = status.Id;
+                    }
+                }
+
                 activity.ManagerUserId = request.ManagerUserId;
                 activity.OrganizationId = request.OrganizationId;
                 activity.UpdatedAt = DateTime.UtcNow;
@@ -201,8 +222,8 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                // Assuming status ID 2 is "In Progress" based on your seed data
-                var activeStatusIds = await _context.ActivityStatuses
+                // Get "In Progress" and "Not Started" statuses
+                var activeStatuses = await _context.ActivityStatuses
                     .Where(s => s.Name == "In Progress" || s.Name == "Not Started")
                     .Select(s => s.Id)
                     .ToListAsync();
@@ -210,7 +231,7 @@ namespace Gesco.Desktop.Core.Services
                 var activities = await _context.Activities
                     .Include(a => a.ActivityStatus)
                     .Include(a => a.Organization)
-                    .Where(a => activeStatusIds.Contains(a.ActivityStatusId))
+                    .Where(a => activeStatuses.Contains(a.ActivityStatusId))
                     .OrderByDescending(a => a.StartDate)
                     .Select(a => new ActivityDto
                     {
@@ -222,7 +243,7 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = a.ActivityStatusId,
+                        ActivityStatusId = (int)a.ActivityStatusId.GetHashCode(), // Temporal conversion
                         StatusName = a.ActivityStatus.Name,
                         ManagerUserId = a.ManagerUserId,
                         OrganizationId = a.OrganizationId,
@@ -247,26 +268,22 @@ namespace Gesco.Desktop.Core.Services
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-                // Get status IDs
-                var inProgressStatusId = await _context.ActivityStatuses
-                    .Where(s => s.Name == "In Progress")
-                    .Select(s => s.Id)
-                    .FirstOrDefaultAsync();
+                // Get status IDs by name
+                var inProgressStatus = await _context.ActivityStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "In Progress");
 
-                var completedStatusId = await _context.SalesStatuses
-                    .Where(s => s.Name == "Completed")
-                    .Select(s => s.Id)
-                    .FirstOrDefaultAsync();
+                var completedSalesStatus = await _context.SalesStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "Completed");
 
                 var stats = new DashboardStatsDto
                 {
                     TotalActivities = await _context.Activities.CountAsync(),
                     ActiveActivities = await _context.Activities
-                        .CountAsync(a => a.ActivityStatusId == inProgressStatusId),
+                        .CountAsync(a => inProgressStatus != null && a.ActivityStatusId == inProgressStatus.Id),
                     
                     TodaySales = await _context.SalesTransactions
                         .Where(t => t.TransactionDate.Date == today && 
-                                   t.SalesStatusId == completedStatusId)
+                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
                         .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     TodayTransactions = await _context.SalesTransactions
@@ -274,7 +291,7 @@ namespace Gesco.Desktop.Core.Services
                     
                     MonthSales = await _context.SalesTransactions
                         .Where(t => t.TransactionDate >= thisMonth && 
-                                   t.SalesStatusId == completedStatusId)
+                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
                         .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     MonthTransactions = await _context.SalesTransactions
@@ -301,4 +318,3 @@ namespace Gesco.Desktop.Core.Services
             }
         }
     }
-}

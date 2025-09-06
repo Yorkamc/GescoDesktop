@@ -9,7 +9,7 @@ namespace Gesco.Desktop.Data.Context
     public class LocalDbContext : DbContext
     {
         // ============================================
-        // DBSETS - NUEVAS ENTIDADES EN INGLÉS
+        // DBSETS - ENTIDADES EN INGLÉS (NUEVAS)
         // ============================================
         
         // Core System
@@ -49,6 +49,21 @@ namespace Gesco.Desktop.Data.Context
         // Closures
         public DbSet<CashRegisterClosure> CashRegisterClosures { get; set; }
         public DbSet<ActivityClosure> ActivityClosures { get; set; }
+
+        // System Configuration
+        public DbSet<SystemConfiguration> SystemConfigurations { get; set; }
+
+        // ============================================
+        // ALIAS PARA COMPATIBILIDAD CON NOMBRES EN ESPAÑOL
+        // ============================================
+        
+        // Mapeo para controladores que usan nombres en español
+        public DbSet<Organization> Organizaciones => Organizations;
+        public DbSet<User> Usuarios => Users;
+        public DbSet<Activity> Actividades => Activities;
+        public DbSet<SalesTransaction> TransaccionesVenta => SalesTransactions;
+        public DbSet<CategoryProduct> ProductosCategorias => CategoryProducts;
+        public DbSet<SystemConfiguration> ConfiguracionesSistema => SystemConfigurations;
 
         // ============================================
         // CONSTRUCTORS
@@ -102,11 +117,6 @@ namespace Gesco.Desktop.Data.Context
                 .HasForeignKey(u => u.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Fix Role relationship - Change to Guid
-            modelBuilder.Entity<User>()
-                .Property(u => u.RoleId)
-                .HasConversion<Guid>();
-
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
@@ -120,7 +130,39 @@ namespace Gesco.Desktop.Data.Context
                 .HasForeignKey(a => a.ActivityStatusId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Other relationships remain the same...
+            // Sales relationships
+            modelBuilder.Entity<SalesTransaction>()
+                .HasOne(st => st.SalesStatus)
+                .WithMany(ss => ss.SalesTransactions)
+                .HasForeignKey(st => st.SalesStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Activity Category relationships (tabla pivote)
+            modelBuilder.Entity<ActivityCategory>()
+                .HasOne(ac => ac.Activity)
+                .WithMany(a => a.ActivityCategories)
+                .HasForeignKey(ac => ac.ActivityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ActivityCategory>()
+                .HasOne(ac => ac.ServiceCategory)
+                .WithMany(sc => sc.ActivityCategories)
+                .HasForeignKey(ac => ac.ServiceCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Category Product relationships
+            modelBuilder.Entity<CategoryProduct>()
+                .HasOne(cp => cp.ActivityCategory)
+                .WithMany(ac => ac.CategoryProducts)
+                .HasForeignKey(cp => cp.ActivityCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Inventory relationships
+            modelBuilder.Entity<InventoryMovement>()
+                .HasOne(im => im.Product)
+                .WithMany(p => p.InventoryMovements)
+                .HasForeignKey(im => im.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         // ============================================
@@ -190,7 +232,7 @@ namespace Gesco.Desktop.Data.Context
                     FullName = "System Administrator",
                     Phone = "8888-8888",
                     OrganizationId = orgId,
-                    RoleId = adminRoleId, // Now using Guid
+                    RoleId = adminRoleId,
                     Active = true,
                     FirstLogin = true,
                     CreatedAt = DateTime.UtcNow
@@ -365,10 +407,50 @@ namespace Gesco.Desktop.Data.Context
                     CreatedAt = DateTime.UtcNow
                 }
             );
+
+            // System Configuration
+            modelBuilder.Entity<SystemConfiguration>().HasData(
+                new SystemConfiguration
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "system.version",
+                    Value = "1.0.0",
+                    DataType = "string",
+                    Category = "system",
+                    Description = "System version",
+                    IsEditable = false,
+                    AccessLevel = "admin",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new SystemConfiguration
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "backup.interval_hours",
+                    Value = "6",
+                    DataType = "int",
+                    Category = "backup",
+                    Description = "Backup interval in hours",
+                    IsEditable = true,
+                    AccessLevel = "admin",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new SystemConfiguration
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "license.check_interval_days",
+                    Value = "7",
+                    DataType = "int",
+                    Category = "license",
+                    Description = "License check interval in days",
+                    IsEditable = true,
+                    AccessLevel = "admin",
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
         }
 
         // ============================================
-        // POST-MIGRATION HOOK FOR RUNNING OPTIMIZATION SCRIPT
+        // OPTIMIZATION SCRIPT EXECUTION
         // ============================================
         public async Task RunOptimizationScriptAsync()
         {
@@ -404,16 +486,16 @@ namespace Gesco.Desktop.Data.Context
                         }
                     }
                     
-                    Console.WriteLine(" SQLite optimization script executed successfully");
+                    Console.WriteLine("✅ SQLite optimization script executed successfully");
                 }
                 else
                 {
-                    Console.WriteLine(" Optimization script not found at: " + scriptPath);
+                    Console.WriteLine("⚠️ Optimization script not found at: " + scriptPath);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Error executing optimization script: {ex.Message}");
+                Console.WriteLine($"❌ Error executing optimization script: {ex.Message}");
             }
         }
     }

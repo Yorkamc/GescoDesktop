@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gesco.Desktop.Data.Context;
-using System.Diagnostics;
 using Gesco.Desktop.Data.Entities;
+using System.Diagnostics;
 
 namespace Gesco.Desktop.UI.Controllers
 {
@@ -81,47 +81,50 @@ namespace Gesco.Desktop.UI.Controllers
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
+                // Get statuses by name to avoid hardcoded IDs
+                var inProgressActivityStatus = await _context.ActivityStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "In Progress");
+
+                var completedSalesStatus = await _context.SalesStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "Completed");
+
                 var stats = new SystemStatsDto
                 {
                     // Actividades
-                    TotalActividades = await _context.Actividades.CountAsync(),
-                    ActividadesActivas = await _context.Actividades
-                        .Where(a => a.EstadoId == 2) // En curso
-                        .CountAsync(),
+                    TotalActividades = await _context.Activities.CountAsync(),
+                    ActividadesActivas = await _context.Activities
+                        .CountAsync(a => inProgressActivityStatus != null && a.ActivityStatusId == inProgressActivityStatus.Id),
                     
                     // Ventas del día
-                    VentasHoy = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion.Date == today && t.EstadoId == 2) // Completadas
-                        .SumAsync(t => (decimal?)t.Total) ?? 0m,
+                    VentasHoy = await _context.SalesTransactions
+                        .Where(t => t.TransactionDate.Date == today && 
+                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
+                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    TransaccionesHoy = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion.Date == today)
-                        .CountAsync(),
+                    TransaccionesHoy = await _context.SalesTransactions
+                        .CountAsync(t => t.TransactionDate.Date == today),
                     
                     // Ventas del mes
-                    VentasMes = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion >= thisMonth && t.EstadoId == 2)
-                        .SumAsync(t => (decimal?)t.Total) ?? 0m,
+                    VentasMes = await _context.SalesTransactions
+                        .Where(t => t.TransactionDate >= thisMonth && 
+                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
+                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    TransaccionesMes = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion >= thisMonth)
-                        .CountAsync(),
+                    TransaccionesMes = await _context.SalesTransactions
+                        .CountAsync(t => t.TransactionDate >= thisMonth),
                     
                     // Usuarios
-                    TotalUsuarios = await _context.Usuarios.CountAsync(),
-                    UsuariosActivos = await _context.Usuarios
-                        .Where(u => u.Activo)
-                        .CountAsync(),
+                    TotalUsuarios = await _context.Users.CountAsync(),
+                    UsuariosActivos = await _context.Users
+                        .CountAsync(u => u.Active),
                     
                     // Productos/Artículos
-                    TotalProductos = await _context.ProductosCategorias.CountAsync(),
-                    ProductosActivos = await _context.ProductosCategorias
-                        .Where(p => p.Activo)
-                        .CountAsync(),
+                    TotalProductos = await _context.CategoryProducts.CountAsync(),
+                    ProductosActivos = await _context.CategoryProducts
+                        .CountAsync(p => p.Active),
                     
-                    ProductosAgotados = await _context.ProductosCategorias
-                        .Where(p => p.CantidadActual <= p.CantidadAlerta)
-                        .CountAsync(),
+                    ProductosAgotados = await _context.CategoryProducts
+                        .CountAsync(p => p.CurrentQuantity <= p.AlertQuantity && p.Active),
                     
                     // Timestamps
                     FechaConsulta = DateTime.UtcNow,
@@ -180,7 +183,7 @@ namespace Gesco.Desktop.UI.Controllers
         /// <returns>Configuraciones del sistema</returns>
         [HttpGet("config")]
         [Authorize] // TODO: Agregar rol de administrador
-        [ProducesResponseType(typeof(List<ConfiguracionSistema>), 200)]
+        [ProducesResponseType(typeof(List<SystemConfigurationDto>), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         public async Task<IActionResult> GetSystemConfig()
@@ -189,19 +192,32 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 // TODO: Verificar que el usuario sea administrador
                 
-                var configs = await _context.ConfiguracionesSistema
-                    .Where(c => c.NivelAcceso == "admin" || c.NivelAcceso == "user")
-                    .Select(c => new
+                var configs = await _context.SystemConfigurations
+                    .Where(c => c.AccessLevel == "admin" || c.AccessLevel == "user")
+                    .Select(c => new SystemConfigurationDto
                     {
-                        c.Id,
-                        c.Clave,
-                        c.Valor,
-                        c.TipoValor,
-                        c.Categoria,
-                        c.Descripcion,
-                        c.EsEditable,
-                        c.ActualizadoEn
+                        Id = c.Id,
+                        Key = c.Key,
+                        Value = c.IsSensitive ? "***" : c.Value, // Hide sensitive values
+                        DataType = c.DataType,
+                        Category = c.Category,
+                        Description = c.Description,
+                        IsEditable = c.IsEditable,
+                        AccessLevel = c.AccessLevel,
+                        DisplayOrder = c.DisplayOrder,
+                        ValidationPattern = c.ValidationPattern,
+                        MinValue = c.MinValue,
+                        MaxValue = c.MaxValue,
+                        AllowedValues = c.AllowedValues,
+                        IsSensitive = c.IsSensitive,
+                        Environment = c.Environment,
+                        RestartRequired = c.RestartRequired,
+                        CreatedAt = c.CreatedAt,
+                        UpdatedAt = c.UpdatedAt
                     })
+                    .OrderBy(c => c.Category)
+                    .ThenBy(c => c.DisplayOrder)
+                    .ThenBy(c => c.Key)
                     .ToListAsync();
 
                 return Ok(configs);
@@ -224,32 +240,36 @@ namespace Gesco.Desktop.UI.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateSystemConfig([FromBody] UpdateConfigRequest request)
+        public async Task<IActionResult> UpdateSystemConfig([FromBody] UpdateSystemConfigurationRequest request)
         {
             try
             {
-                var config = await _context.ConfiguracionesSistema
-                    .FirstOrDefaultAsync(c => c.Clave == request.Clave);
+                var config = await _context.SystemConfigurations
+                    .FirstOrDefaultAsync(c => c.Key == request.Key);
 
                 if (config == null)
                 {
                     return NotFound(new { message = "Configuración no encontrada" });
                 }
 
-                if (!config.EsEditable)
+                if (!config.IsEditable)
                 {
                     return BadRequest(new { message = "Esta configuración no es editable" });
                 }
 
-                config.Valor = request.Valor;
-                config.ActualizadoEn = DateTime.UtcNow;
-                // TODO: Obtener usuario actual y asignar a ActualizadoPor
+                config.Value = request.Value;
+                config.UpdatedAt = DateTime.UtcNow;
+                // TODO: Obtener usuario actual y asignar a UpdatedBy
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("System configuration updated: {Key} = {Value}", request.Clave, request.Valor);
+                _logger.LogInformation("System configuration updated: {Key} = {Value}", 
+                    request.Key, config.IsSensitive ? "***" : request.Value);
 
-                return Ok(new { message = "Configuración actualizada exitosamente" });
+                return Ok(new { 
+                    message = "Configuración actualizada exitosamente",
+                    restartRequired = config.RestartRequired
+                });
             }
             catch (Exception ex)
             {
@@ -316,11 +336,5 @@ namespace Gesco.Desktop.UI.Controllers
         public string MachineName { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string Uptime { get; set; } = string.Empty;
-    }
-
-    public class UpdateConfigRequest
-    {
-        public string Clave { get; set; } = string.Empty;
-        public string Valor { get; set; } = string.Empty;
     }
 }

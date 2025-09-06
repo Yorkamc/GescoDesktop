@@ -33,55 +33,58 @@ namespace Gesco.Desktop.UI.Controllers
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
+                // Get status entities by name to avoid hardcoded IDs
+                var inProgressActivityStatus = await _context.ActivityStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "In Progress");
+
+                var completedSalesStatus = await _context.SalesStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "Completed");
+
                 var stats = new DashboardStatsDto
                 {
                     // Actividades
-                    Actividades = await _context.Actividades.CountAsync(),
-                    ActividadesActivas = await _context.Actividades
-                        .Where(a => a.EstadoId == 2) // En curso
-                        .CountAsync(),
+                    Actividades = await _context.Activities.CountAsync(),
+                    ActividadesActivas = await _context.Activities
+                        .CountAsync(a => inProgressActivityStatus != null && a.ActivityStatusId == inProgressActivityStatus.Id),
                     
-                    // Ventas del día (usar nombre correcto del campo)
-                    VentasHoy = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion.Date == today && t.EstadoId == 2) // Completadas
-                        .SumAsync(t => (decimal?)t.Total) ?? 0m,
+                    // Ventas del día
+                    VentasHoy = await _context.SalesTransactions
+                        .Where(t => t.TransactionDate.Date == today && 
+                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
+                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    Transacciones = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion.Date == today)
-                        .CountAsync(),
+                    Transacciones = await _context.SalesTransactions
+                        .CountAsync(t => t.TransactionDate.Date == today),
                     
                     // Ventas del mes
-                    VentasMes = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion >= thisMonth && t.EstadoId == 2)
-                        .SumAsync(t => (decimal?)t.Total) ?? 0m,
+                    VentasMes = await _context.SalesTransactions
+                        .Where(t => t.TransactionDate >= thisMonth && 
+                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
+                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    TransaccionesMes = await _context.TransaccionesVenta
-                        .Where(t => t.FechaTransaccion >= thisMonth)
-                        .CountAsync(),
+                    TransaccionesMes = await _context.SalesTransactions
+                        .CountAsync(t => t.TransactionDate >= thisMonth),
                     
                     // Usuarios
-                    TotalUsuarios = await _context.Usuarios.CountAsync(),
-                    UsuariosActivos = await _context.Usuarios
-                        .Where(u => u.Activo)
-                        .CountAsync(),
+                    TotalUsuarios = await _context.Users.CountAsync(),
+                    UsuariosActivos = await _context.Users
+                        .CountAsync(u => u.Active),
                     
                     // Productos/Artículos
-                    TotalProductos = await _context.ProductosCategorias.CountAsync(),
-                    ProductosActivos = await _context.ProductosCategorias
-                        .Where(p => p.Activo)
-                        .CountAsync(),
+                    TotalProductos = await _context.CategoryProducts.CountAsync(),
+                    ProductosActivos = await _context.CategoryProducts
+                        .CountAsync(p => p.Active),
                     
-                    ProductosAgotados = await _context.ProductosCategorias
-                        .Where(p => p.CantidadActual <= p.CantidadAlerta)
-                        .CountAsync(),
+                    ProductosAgotados = await _context.CategoryProducts
+                        .CountAsync(p => p.CurrentQuantity <= p.AlertQuantity && p.Active),
                     
                     // Timestamps
                     FechaConsulta = DateTime.UtcNow,
                     PeriodoReporte = $"Día {today:dd/MM/yyyy} y mes {thisMonth:MM/yyyy}"
                 };
 
-                _logger.LogInformation("Stats retrieved: {Stats}", 
-                    $"Activities: {stats.Actividades}, Sales today: {stats.VentasHoy:C}");
+                _logger.LogInformation("Stats retrieved: Activities: {Activities}, Sales today: {SalesToday:C}", 
+                    stats.Actividades, stats.VentasHoy);
 
                 return Ok(stats);
             }
@@ -107,16 +110,19 @@ namespace Gesco.Desktop.UI.Controllers
             try
             {
                 var startDate = DateTime.Today.AddDays(-dias);
+                var completedStatus = await _context.SalesStatuses
+                    .FirstOrDefaultAsync(s => s.Name == "Completed");
                 
-                var salesData = await _context.TransaccionesVenta
-                    .Where(t => t.FechaTransaccion >= startDate && t.EstadoId == 2)
-                    .GroupBy(t => t.FechaTransaccion.Date)
+                var salesData = await _context.SalesTransactions
+                    .Where(t => t.TransactionDate >= startDate && 
+                               (completedStatus == null || t.SalesStatusId == completedStatus.Id))
+                    .GroupBy(t => t.TransactionDate.Date)
                     .Select(g => new SalesSummaryDto
                     {
                         Fecha = g.Key,
-                        TotalVentas = g.Sum(t => t.Total),
+                        TotalVentas = g.Sum(t => t.TotalAmount),
                         Transacciones = g.Count(),
-                        PromedioTransaccion = g.Average(t => t.Total)
+                        PromedioTransaccion = g.Average(t => t.TotalAmount)
                     })
                     .OrderBy(s => s.Fecha)
                     .ToListAsync();
@@ -142,19 +148,19 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
-                var activities = await _context.Actividades
-                    .Include(a => a.Estado)
-                    .Include(a => a.Organizacion)
-                    .OrderByDescending(a => a.CreadoEn)
+                var activities = await _context.Activities
+                    .Include(a => a.ActivityStatus)
+                    .Include(a => a.Organization)
+                    .OrderByDescending(a => a.CreatedAt)
                     .Take(limite)
                     .Select(a => new ActivitySummaryDto
                     {
                         Id = a.Id,
-                        Nombre = a.Nombre,
-                        Estado = a.Estado.Nombre,
-                        FechaInicio = a.FechaInicio,
-                        Organizacion = a.Organizacion.Nombre,
-                        CreadoEn = a.CreadoEn
+                        Nombre = a.Name,
+                        Estado = a.ActivityStatus.Name,
+                        FechaInicio = a.StartDate.ToDateTime(a.StartTime ?? TimeOnly.MinValue),
+                        Organizacion = a.Organization != null ? a.Organization.Name : "Sin organización",
+                        CreadoEn = a.CreatedAt
                     })
                     .ToListAsync();
 
@@ -168,7 +174,7 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // DTOs
+    // DTOs actualizados
     public class DashboardStatsDto
     {
         public int Actividades { get; set; }
@@ -196,7 +202,7 @@ namespace Gesco.Desktop.UI.Controllers
 
     public class ActivitySummaryDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public DateTime FechaInicio { get; set; }
