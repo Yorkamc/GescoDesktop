@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace Gesco.Desktop.Shared.DTOs
 {
@@ -15,7 +13,7 @@ namespace Gesco.Desktop.Shared.DTOs
         public DateOnly? EndDate { get; set; }
         public TimeOnly? EndTime { get; set; }
         public string? Location { get; set; }
-        public int ActivityStatusId { get; set; }
+        public int ActivityStatusId { get; set; } // Mantener como int para compatibilidad con frontend
         public string? StatusName { get; set; }
         public Guid? ManagerUserId { get; set; }
         public string? ManagerName { get; set; }
@@ -26,20 +24,34 @@ namespace Gesco.Desktop.Shared.DTOs
 
     public class CreateActivityRequest
     {
+        [Required]
+        [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
+        
+        [MaxLength(1000)]
         public string? Description { get; set; }
+        
+        [Required]
         public DateOnly StartDate { get; set; }
+        
         public TimeOnly? StartTime { get; set; }
+        
         public DateOnly? EndDate { get; set; }
+        
         public TimeOnly? EndTime { get; set; }
+        
+        [MaxLength(200)]
         public string? Location { get; set; }
-        public int ActivityStatusId { get; set; }
+        
+        public int ActivityStatusId { get; set; } = 1; // Default to first status
+        
         public Guid? ManagerUserId { get; set; }
+        
         public Guid? OrganizationId { get; set; }
     }
 
     // ============================================
-    // SALES DTOs
+    // SALES DTOs - CORREGIDOS
     // ============================================
     public class SalesTransactionDto
     {
@@ -78,7 +90,7 @@ namespace Gesco.Desktop.Shared.DTOs
     }
 
     // ============================================
-    // PRODUCT DTOs
+    // PRODUCT DTOs - CORREGIDOS
     // ============================================
     public class CategoryProductDto
     {
@@ -98,16 +110,30 @@ namespace Gesco.Desktop.Shared.DTOs
     public class CreateProductRequest
     {
         public int ActivityCategoryId { get; set; }
+        
+        [MaxLength(50)]
         public string? Code { get; set; }
+        
+        [Required]
+        [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
+        
+        [MaxLength(1000)]
         public string? Description { get; set; }
+        
+        [Required]
+        [Range(0, double.MaxValue)]
         public decimal UnitPrice { get; set; }
+        
+        [Range(0, int.MaxValue)]
         public int InitialQuantity { get; set; }
+        
+        [Range(0, int.MaxValue)]
         public int AlertQuantity { get; set; } = 10;
     }
 
     // ============================================
-    // INVENTORY DTOs
+    // INVENTORY DTOs - CORREGIDOS
     // ============================================
     public class InventoryMovementDto
     {
@@ -126,7 +152,7 @@ namespace Gesco.Desktop.Shared.DTOs
     }
 
     // ============================================
-    // DASHBOARD DTOs
+    // DASHBOARD DTOs - CORREGIDOS
     // ============================================
     public class DashboardStatsDto
     {

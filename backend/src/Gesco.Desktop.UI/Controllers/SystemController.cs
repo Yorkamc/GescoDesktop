@@ -92,23 +92,31 @@ namespace Gesco.Desktop.UI.Controllers
                 {
                     // Actividades
                     TotalActividades = await _context.Activities.CountAsync(),
-                    ActividadesActivas = await _context.Activities
-                        .CountAsync(a => inProgressActivityStatus != null && a.ActivityStatusId == inProgressActivityStatus.Id),
+                    // LÍNEA 96 CORREGIDA: Usar comparación con Guid
+                    ActividadesActivas = inProgressActivityStatus != null 
+                        ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id)
+                        : 0,
                     
-                    // Ventas del día
-                    VentasHoy = await _context.SalesTransactions
-                        .Where(t => t.TransactionDate.Date == today && 
-                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
-                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
+                    // LÍNEAS 101, 110 CORREGIDAS: Usar comparación con Guid
+                    VentasHoy = completedSalesStatus != null
+                        ? await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
+                        : await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     TransaccionesHoy = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate.Date == today),
                     
                     // Ventas del mes
-                    VentasMes = await _context.SalesTransactions
-                        .Where(t => t.TransactionDate >= thisMonth && 
-                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
-                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
+                    VentasMes = completedSalesStatus != null
+                        ? await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
+                        : await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     TransaccionesMes = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate >= thisMonth),
@@ -336,5 +344,35 @@ namespace Gesco.Desktop.UI.Controllers
         public string MachineName { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string Uptime { get; set; } = string.Empty;
+    }
+
+    // DTO para SystemConfiguration
+    public class SystemConfigurationDto
+    {
+        public Guid Id { get; set; }
+        public string Key { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public string DataType { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsEditable { get; set; }
+        public string AccessLevel { get; set; } = string.Empty;
+        public int DisplayOrder { get; set; }
+        public string? ValidationPattern { get; set; }
+        public decimal? MinValue { get; set; }
+        public decimal? MaxValue { get; set; }
+        public string? AllowedValues { get; set; }
+        public bool IsSensitive { get; set; }
+        public string Environment { get; set; } = string.Empty;
+        public bool RestartRequired { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    // Request para actualizar configuración
+    public class UpdateSystemConfigurationRequest
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
     }
 }

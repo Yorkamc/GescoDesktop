@@ -44,23 +44,31 @@ namespace Gesco.Desktop.UI.Controllers
                 {
                     // Actividades
                     Actividades = await _context.Activities.CountAsync(),
-                    ActividadesActivas = await _context.Activities
-                        .CountAsync(a => inProgressActivityStatus != null && a.ActivityStatusId == inProgressActivityStatus.Id),
+                    // LÍNEA 48 CORREGIDA: Usar comparación con Guid
+                    ActividadesActivas = inProgressActivityStatus != null 
+                        ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id)
+                        : 0,
                     
-                    // Ventas del día
-                    VentasHoy = await _context.SalesTransactions
-                        .Where(t => t.TransactionDate.Date == today && 
-                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
-                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
+                    // LÍNEAS 53, 62 CORREGIDAS: Usar comparación con Guid
+                    VentasHoy = completedSalesStatus != null
+                        ? await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
+                        : await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     Transacciones = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate.Date == today),
                     
                     // Ventas del mes
-                    VentasMes = await _context.SalesTransactions
-                        .Where(t => t.TransactionDate >= thisMonth && 
-                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
-                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
+                    VentasMes = completedSalesStatus != null
+                        ? await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
+                        : await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     TransaccionesMes = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate >= thisMonth),
@@ -113,6 +121,7 @@ namespace Gesco.Desktop.UI.Controllers
                 var completedStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Completed");
                 
+                // LÍNEA 118 CORREGIDA: Usar comparación con Guid
                 var salesData = await _context.SalesTransactions
                     .Where(t => t.TransactionDate >= startDate && 
                                (completedStatus == null || t.SalesStatusId == completedStatus.Id))

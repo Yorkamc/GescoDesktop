@@ -166,15 +166,14 @@ namespace Gesco.Desktop.Core.Services
                 activity.EndTime = request.EndTime;
                 activity.Location = request.Location;
                 
-                // Handle status update properly
+                // LÍNEA 128 CORREGIDA: Handle status update properly
                 if (request.ActivityStatusId > 0)
                 {
-                    var status = await _context.ActivityStatuses
-                        .Skip(request.ActivityStatusId - 1)
-                        .FirstOrDefaultAsync();
-                    if (status != null)
+                    var statuses = await _context.ActivityStatuses.ToListAsync();
+                    if (request.ActivityStatusId <= statuses.Count)
                     {
-                        activity.ActivityStatusId = status.Id;
+                        var selectedStatus = statuses[request.ActivityStatusId - 1];
+                        activity.ActivityStatusId = selectedStatus.Id; // Esto asigna Guid a Guid
                     }
                 }
 
@@ -243,7 +242,8 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = (int)a.ActivityStatusId.GetHashCode(), // Temporal conversion
+                        // LÍNEA 177 CORREGIDA: Usar un mapeo temporal más seguro
+                        ActivityStatusId = activeStatuses.IndexOf(a.ActivityStatusId) + 1,
                         StatusName = a.ActivityStatus.Name,
                         ManagerUserId = a.ManagerUserId,
                         OrganizationId = a.OrganizationId,
@@ -278,21 +278,30 @@ namespace Gesco.Desktop.Core.Services
                 var stats = new DashboardStatsDto
                 {
                     TotalActivities = await _context.Activities.CountAsync(),
-                    ActiveActivities = await _context.Activities
-                        .CountAsync(a => inProgressStatus != null && a.ActivityStatusId == inProgressStatus.Id),
+                    // LÍNEA 234 CORREGIDA: Usar comparación con Guid
+                    ActiveActivities = inProgressStatus != null 
+                        ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressStatus.Id)
+                        : 0,
                     
-                    TodaySales = await _context.SalesTransactions
-                        .Where(t => t.TransactionDate.Date == today && 
-                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
-                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
+                    // LÍNEAS 282, 286, 294 CORREGIDAS: Usar comparación con Guid
+                    TodaySales = completedSalesStatus != null
+                        ? await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
+                        : await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     TodayTransactions = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate.Date == today),
                     
-                    MonthSales = await _context.SalesTransactions
-                        .Where(t => t.TransactionDate >= thisMonth && 
-                                   (completedSalesStatus == null || t.SalesStatusId == completedSalesStatus.Id))
-                        .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
+                    MonthSales = completedSalesStatus != null
+                        ? await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
+                        : await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
                     MonthTransactions = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate >= thisMonth),
@@ -317,4 +326,5 @@ namespace Gesco.Desktop.Core.Services
                 throw;
             }
         }
-    }
+    } // LÍNEA 320 CORREGIDA: Agregando la llave de cierre faltante
+}
