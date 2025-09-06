@@ -28,4 +28,5 @@ namespace Gesco.Desktop.Shared.DTOs
         public int MaxUsuarios { get; set; }
         public int? OrganizacionId { get; set; }
     }
+
 }

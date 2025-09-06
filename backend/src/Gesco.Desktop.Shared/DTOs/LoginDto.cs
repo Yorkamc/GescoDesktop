@@ -2,7 +2,7 @@
 
 namespace Gesco.Desktop.Shared.DTOs
 {
-    public class LoginResultDto
+   public class LoginResultDto
     {
         public bool Success { get; set; }
         public string? Message { get; set; }
@@ -14,12 +14,12 @@ namespace Gesco.Desktop.Shared.DTOs
 
     public class UsuarioDto
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = string.Empty; // Changed to string to support Guid
         public string? NombreUsuario { get; set; }
         public string? Correo { get; set; }
         public string? NombreCompleto { get; set; }
-        public int? OrganizacionId { get; set; }
-        public int RolId { get; set; }
+        public string? OrganizacionId { get; set; } // Changed to string to support Guid
+        public string RolId { get; set; } = string.Empty; // Changed to string to support Guid
         public string? NombreRol { get; set; }
     }
 

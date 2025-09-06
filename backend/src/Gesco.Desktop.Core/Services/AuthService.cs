@@ -33,11 +33,11 @@ namespace Gesco.Desktop.Core.Services
             {
                 _logger.LogInformation("Attempting login for user: {Usuario}", usuario);
 
-                // Buscar usuario por nombre de usuario o email
-                var user = await _context.Usuarios
-                    .Include(u => u.Organizacion)
-                    .Include(u => u.Rol)
-                    .FirstOrDefaultAsync(u => u.NombreUsuario == usuario || u.Correo == usuario);
+                // Find user by username or email (using new entity structure)
+                var user = await _context.Users
+                    .Include(u => u.Organization)
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.Username == usuario || u.Email == usuario);
 
                 if (user == null)
                 {
@@ -49,7 +49,7 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
-                if (!user.Activo)
+                if (!user.Active)
                 {
                     _logger.LogWarning("User inactive: {Usuario}", usuario);
                     return new LoginResultDto
@@ -61,14 +61,12 @@ namespace Gesco.Desktop.Core.Services
 
                 // Debug logging
                 _logger.LogDebug("Found user: {UserId}, checking password...", user.Id);
-                _logger.LogDebug("Stored hash starts with: {HashPrefix}...", 
-                    user.Contrasena?.Substring(0, Math.Min(10, user.Contrasena != null ? user.Contrasena.Length : 0)));
 
-                // Verificar contraseña con BCrypt usando PasswordHelper
+                // Verify password with BCrypt using PasswordHelper
                 bool passwordValid = false;
                 try
                 {
-                    passwordValid = PasswordHelper.VerifyPassword(password, user.Contrasena);
+                    passwordValid = PasswordHelper.VerifyPassword(password, user.Password);
                     _logger.LogDebug("Password verification result: {Valid} for user: {Usuario}", 
                         passwordValid, usuario);
                 }
@@ -76,10 +74,10 @@ namespace Gesco.Desktop.Core.Services
                 {
                     _logger.LogError(ex, "Error verifying password for user: {Usuario}", usuario);
                     
-                    // En caso de error, intentar verificación directa como fallback
+                    // Fallback verification
                     try
                     {
-                        passwordValid = BCrypt.Net.BCrypt.Verify(password, user.Contrasena);
+                        passwordValid = BCrypt.Net.BCrypt.Verify(password, user.Password);
                         _logger.LogDebug("Fallback BCrypt verification result: {Valid}", passwordValid);
                     }
                     catch (Exception fallbackEx)
@@ -96,11 +94,6 @@ namespace Gesco.Desktop.Core.Services
                 if (!passwordValid)
                 {
                     _logger.LogWarning("Invalid password for user: {Usuario}", usuario);
-                    
-                    // Log adicional para debugging
-                    _logger.LogDebug("Password check failed - Input: '{Password}', Hash: '{Hash}'", 
-                        password, user.Contrasena);
-                    
                     return new LoginResultDto
                     {
                         Success = false,
@@ -108,11 +101,12 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
-                // Generar JWT token
+                // Generate JWT token
                 var token = GenerateJwtToken(user);
 
-                // Actualizar último login
-                user.UltimoLogin = DateTime.Now;
+                // Update last login
+                user.LastLoginAt = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Successful login for user: {Usuario}", usuario);
@@ -122,17 +116,17 @@ namespace Gesco.Desktop.Core.Services
                     Success = true,
                     Message = "Login exitoso",
                     Token = token,
-                    TokenExpiration = DateTime.Now.AddHours(24),
+                    TokenExpiration = DateTime.UtcNow.AddHours(24),
                     IsOffline = false,
                     Usuario = new UsuarioDto
                     {
-                        Id = user.Id,
-                        NombreUsuario = user.NombreUsuario,
-                        Correo = user.Correo,
-                        NombreCompleto = user.NombreCompleto,
-                        OrganizacionId = user.OrganizacionId,
-                        RolId = user.RolId,
-                        NombreRol = user.Rol?.Nombre ?? GetRoleName(user.RolId)
+                        Id = user.Id.ToString(), // Convert Guid to string
+                        NombreUsuario = user.Username,
+                        Correo = user.Email,
+                        NombreCompleto = user.FullName ?? user.Username,
+                        OrganizacionId = user.OrganizationId.ToString(),
+                        RolId = user.RoleId.ToString(),
+                        NombreRol = user.Role?.Name ?? "Unknown"
                     }
                 };
             }
@@ -182,7 +176,7 @@ namespace Gesco.Desktop.Core.Services
             return null;
         }
 
-        private string GenerateJwtToken(Data.Entities.Usuario user)
+        private string GenerateJwtToken(Gesco.Desktop.Data.Entities.User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSecret);
@@ -192,10 +186,10 @@ namespace Gesco.Desktop.Core.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.NombreUsuario),
-                    new Claim(ClaimTypes.Email, user.Correo),
-                    new Claim("organizacion_id", user.OrganizacionId?.ToString() ?? ""),
-                    new Claim("rol_id", user.RolId.ToString())
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim("organization_id", user.OrganizationId.ToString()),
+                    new Claim("role_id", user.RoleId.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(
@@ -205,17 +199,6 @@ namespace Gesco.Desktop.Core.Services
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
-        }
-
-        private string GetRoleName(int rolId)
-        {
-            return rolId switch
-            {
-                1 => "Administrador",
-                2 => "Vendedor", 
-                3 => "Cajero",
-                _ => "Usuario"
-            };
         }
     }
 }
