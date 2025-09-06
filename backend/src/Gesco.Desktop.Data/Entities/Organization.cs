@@ -98,7 +98,7 @@ namespace Gesco.Desktop.Data.Entities
         public Guid OrganizationId { get; set; }
 
         [Column("role_id")]
-        public int RoleId { get; set; }
+        public Guid RoleId { get; set; } // CORREGIDO: Usar Guid en lugar de int
 
         [Column("first_login_at")]
         public DateTime? FirstLoginAt { get; set; }
