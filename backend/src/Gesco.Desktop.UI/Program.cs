@@ -103,12 +103,19 @@ builder.Services.AddDbContext<LocalDbContext>(options =>
     }
 });
 
-// Servicios de negocio
+// =====================================================
+// SERVICIOS DE NEGOCIO - ACTUALIZADOS
+// =====================================================
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IActivationService, ActivationService>();
+builder.Services.AddScoped<IActivityService, ActivityService>(); // NUEVO
 builder.Services.AddScoped<ILaravelApiClient, LaravelApiClient>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddScoped<IMigrationService, MigrationService>(); // NUEVO
+
+// Hosted Service para inicialización de DB
+builder.Services.AddHostedService<DatabaseInitializationService>(); // NUEVO
 
 // HTTP Client para servicios externos
 builder.Services.AddHttpClient<ILaravelApiClient, LaravelApiClient>(client =>
@@ -175,32 +182,9 @@ else
 var app = builder.Build();
 
 // =====================================================
-// INICIALIZACIÓN DE BASE DE DATOS
+// NOTA: LA INICIALIZACIÓN DE DB AHORA ES AUTOMÁTICA
+// VIA DatabaseInitializationService (HostedService)
 // =====================================================
-using (var scope = app.Services.CreateScope())
-{
-    try 
-    {
-        var context = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
-        var dbLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        
-        dbLogger.LogInformation("Initializing database...");
-        await context.Database.EnsureCreatedAsync();
-        
-        var userCount = await context.Usuarios.CountAsync();
-        dbLogger.LogInformation("Database initialized successfully. Users: {UserCount}", userCount);
-        
-        if (userCount == 0)
-        {
-            dbLogger.LogWarning("No users found in database. Check seed data configuration.");
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error inicializando base de datos: {ex.Message}");
-        throw;
-    }
-}
 
 // =====================================================
 // CONFIGURACIÓN DEL PIPELINE DE MIDDLEWARE
@@ -244,6 +228,23 @@ app.MapGet("/ping", () => Results.Ok(new {
 .WithName("Ping")
 .ExcludeFromDescription();
 
+// Endpoint para ejecutar optimización manual
+app.MapPost("/api/system/optimize", async (IMigrationService migrationService) =>
+{
+    try
+    {
+        await migrationService.RunOptimizationScriptAsync();
+        return Results.Ok(new { message = "Optimization script executed successfully" });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error executing optimization: {ex.Message}");
+    }
+})
+.WithTags("System")
+.WithName("RunOptimization")
+.RequireAuthorization();
+
 // =====================================================
 // MANEJO GLOBAL DE ERRORES
 // =====================================================
@@ -286,7 +287,9 @@ Console.WriteLine($"Swagger UI: http://localhost:5100/swagger");
 Console.WriteLine($"Health Check: http://localhost:5100/api/system/health");
 Console.WriteLine($"Auth: http://localhost:5100/api/auth");
 Console.WriteLine($"License: http://localhost:5100/api/license");
-Console.WriteLine($"Stats: http://localhost:5100/api/system/stats");
+Console.WriteLine($"Activities: http://localhost:5100/api/activities");
+Console.WriteLine($"Stats: http://localhost:5100/api/stats");
+Console.WriteLine($"Manual Optimization: POST http://localhost:5100/api/system/optimize");
 Console.WriteLine($"Security: Headers de seguridad activos");
 
 if (app.Environment.IsDevelopment())
@@ -295,6 +298,9 @@ if (app.Environment.IsDevelopment())
     Console.WriteLine($"Request Logging: Activo");
 }
 
+Console.WriteLine("=========================================");
+Console.WriteLine("AUTO-OPTIMIZACIÓN: Script SQL se ejecuta");
+Console.WriteLine("automáticamente después de migraciones");
 Console.WriteLine("=========================================");
 Console.WriteLine("Credenciales: admin / admin123");
 Console.WriteLine("=========================================");

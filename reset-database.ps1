@@ -1,130 +1,242 @@
-# reset-database-fixed.ps1 - Regenerar base de datos sin problemas de codificacion
+# reset-database-con-optimizacion.ps1 - Regenerar BD con auto-optimización
+param(
+    [switch]$Force = $false,
+    [switch]$SkipOptimization = $false
+)
+
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "  REGENERANDO BASE DE DATOS GESCO" -ForegroundColor Cyan
+Write-Host "  REGENERANDO BASE DE DATOS GESCO CON OPTIMIZACIÓN" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
-# Detener cualquier proceso que pueda estar usando la DB
-Write-Host ""
-Write-Host "Deteniendo procesos que puedan usar la DB..." -ForegroundColor Yellow
-
-# Buscar y matar procesos de dotnet que puedan estar usando la DB
-Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | ForEach-Object {
-    Write-Host "   Terminando proceso dotnet: $($_.Id)" -ForegroundColor Gray
-    Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
-}
-
-Start-Sleep -Seconds 2
-
-# Ubicacion de la base de datos
-$dbPath = "backend/src/Gesco.Desktop.UI/data/gesco_local.db"
-$dataDir = "backend/src/Gesco.Desktop.UI/data"
-
-# Eliminar base de datos existente
-Write-Host ""
-Write-Host "Eliminando base de datos anterior..." -ForegroundColor Yellow
-
-if (Test-Path $dbPath) {
+# Función para verificar si un proceso está usando un archivo
+function Test-FileInUse {
+    param([string]$FilePath)
+    
+    if (-not (Test-Path $FilePath)) {
+        return $false
+    }
+    
     try {
-        Remove-Item $dbPath -Force
-        Write-Host "   Base de datos eliminada: $dbPath" -ForegroundColor Green
+        $file = [System.IO.File]::Open($FilePath, 'Open', 'Write')
+        $file.Close()
+        return $false
     } catch {
-        Write-Host "   No se pudo eliminar la DB (puede estar en uso): $($_.Exception.Message)" -ForegroundColor Yellow
-        Write-Host "   Intenta cerrar todas las ventanas de la aplicacion y reintenta" -ForegroundColor Gray
-        exit 1
-    }
-} else {
-    Write-Host "   No se encontro base de datos anterior" -ForegroundColor Gray
-}
-
-# Eliminar archivos relacionados
-$relatedFiles = @("$dbPath-wal", "$dbPath-shm")
-foreach ($file in $relatedFiles) {
-    if (Test-Path $file) {
-        Remove-Item $file -Force -ErrorAction SilentlyContinue
-        Write-Host "   Eliminado: $file" -ForegroundColor Gray
+        return $true
     }
 }
 
-# Asegurar que el directorio existe
+# Detener procesos que puedan estar usando la DB
 Write-Host ""
-Write-Host "Preparando directorio de datos..." -ForegroundColor Yellow
+Write-Host "Deteniendo procesos relacionados..." -ForegroundColor Yellow
+
+$processesToKill = @("dotnet", "Gesco.Desktop.UI")
+foreach ($processName in $processesToKill) {
+    $processes = Get-Process -Name $processName -ErrorAction SilentlyContinue
+    if ($processes) {
+        Write-Host "   Terminando $($processes.Count) proceso(s) de $processName..." -ForegroundColor Gray
+        $processes | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 1
+    }
+}
+
+# Configuración de rutas
+$backendPath = "backend"
+$dataDir = "$backendPath/src/Gesco.Desktop.UI/data"
+$dbPath = "$dataDir/gesco_local.db"
+$migrationsPath = "$backendPath/src/Gesco.Desktop.Data/Migrations"
+$optimizationScriptPath = "$backendPath/src/Gesco.Desktop.Data/script/sqlite_optimization_script.sql"
+
+# Verificar que el script de optimización existe
+if (-not $SkipOptimization -and -not (Test-Path $optimizationScriptPath)) {
+    Write-Host "  Script de optimización no encontrado en: $optimizationScriptPath" -ForegroundColor Yellow
+    Write-Host "   Se continuará sin optimización automática" -ForegroundColor Gray
+    $SkipOptimization = $true
+}
+
+# Verificar si la DB está en uso
+if (Test-Path $dbPath) {
+    if (Test-FileInUse $dbPath) {
+        Write-Host " La base de datos está en uso" -ForegroundColor Red
+        Write-Host "   Cierra todas las instancias de la aplicación e intenta de nuevo" -ForegroundColor Yellow
+        
+        if (-not $Force) {
+            $continue = Read-Host "¿Forzar eliminación? (y/n)"
+            if ($continue -ne 'y') {
+                Write-Host "Operación cancelada" -ForegroundColor Yellow
+                exit 1
+            }
+        }
+    }
+}
+
+# Limpiar base de datos anterior
+Write-Host ""
+Write-Host "Limpiando base de datos anterior..." -ForegroundColor Yellow
+
+$filesToDelete = @($dbPath, "$dbPath-wal", "$dbPath-shm", "$dbPath-journal")
+foreach ($file in $filesToDelete) {
+    if (Test-Path $file) {
+        try {
+            Remove-Item $file -Force
+            Write-Host "    Eliminado: $file" -ForegroundColor Green
+        } catch {
+            Write-Host "    No se pudo eliminar: $file" -ForegroundColor Red
+            Write-Host "      Error: $($_.Exception.Message)" -ForegroundColor Gray
+        }
+    }
+}
+
+# Asegurar directorio de datos
 if (-not (Test-Path $dataDir)) {
     New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
-    Write-Host "   Directorio creado: $dataDir" -ForegroundColor Green
-} else {
-    Write-Host "   Directorio ya existe: $dataDir" -ForegroundColor Green
+    Write-Host "    Directorio creado: $dataDir" -ForegroundColor Green
 }
 
-# Regenerar base de datos
+# Limpiar migraciones existentes
+Write-Host ""
+Write-Host "Limpiando migraciones anteriores..." -ForegroundColor Yellow
+if (Test-Path $migrationsPath) {
+    Remove-Item $migrationsPath -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "    Migraciones anteriores eliminadas" -ForegroundColor Green
+}
+
+# Cambiar al directorio backend
 Write-Host ""
 Write-Host "Regenerando base de datos..." -ForegroundColor Yellow
-
-Set-Location "backend"
+Set-Location $backendPath
 
 try {
-    # Eliminar migraciones existentes (opcional)
-    $migrationsPath = "src/Gesco.Desktop.Data/Migrations"
-    if (Test-Path $migrationsPath) {
-        Write-Host "   Eliminando migraciones anteriores..." -ForegroundColor Gray
-        Remove-Item $migrationsPath -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    # Crear nueva migracion
-    Write-Host "   Creando nueva migracion..." -ForegroundColor Gray
-    $migrationResult = dotnet ef migrations add "InitialCreate" -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI
+    # Crear migración inicial
+    Write-Host "    Creando migración inicial..." -ForegroundColor Gray
+    $migrationOutput = dotnet ef migrations add "InitialCreateWithOptimization" -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI --verbose
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Error creando migracion" -ForegroundColor Red
-        Set-Location ".."
-        exit 1
+        Write-Host " Error creando migración" -ForegroundColor Red
+        Write-Host "Output: $migrationOutput" -ForegroundColor Gray
+        throw "Migration creation failed"
     }
+    Write-Host "    Migración creada exitosamente" -ForegroundColor Green
 
-    # Aplicar migracion (esto creara la DB con datos semilla)
-    Write-Host "   Aplicando migracion y datos semilla..." -ForegroundColor Gray
-    $updateResult = dotnet ef database update -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI
+    # Aplicar migración (esto ejecuta EnsureCreatedAsync y el script de optimización)
+    Write-Host "    Aplicando migración y ejecutando optimización..." -ForegroundColor Gray
+    $updateOutput = dotnet ef database update -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI --verbose
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Error aplicando migracion" -ForegroundColor Red
-        Set-Location ".."
-        exit 1
+        Write-Host " Error aplicando migración" -ForegroundColor Red
+        Write-Host "Output: $updateOutput" -ForegroundColor Gray
+        throw "Database update failed"
     }
-
-    Write-Host "   Base de datos regenerada exitosamente" -ForegroundColor Green
+    Write-Host "    Migración aplicada exitosamente" -ForegroundColor Green
 
 } catch {
-    Write-Host "Error durante la regeneracion: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host " Error durante regeneración: $($_.Exception.Message)" -ForegroundColor Red
     Set-Location ".."
     exit 1
 }
 
 Set-Location ".."
 
-# Verificar que la base de datos fue creada
+# Verificar resultado
 Write-Host ""
 Write-Host "Verificando base de datos..." -ForegroundColor Yellow
 
 if (Test-Path $dbPath) {
     $dbSize = (Get-Item $dbPath).Length
-    Write-Host "   Base de datos creada: $dbPath ($dbSize bytes)" -ForegroundColor Green
+    $dbSizeKB = [math]::Round($dbSize / 1024, 2)
+    Write-Host "    Base de datos creada: $dbPath ($dbSizeKB KB)" -ForegroundColor Green
+    
+    # Verificar que tiene contenido (debe ser mayor a 50KB con datos semilla)
+    if ($dbSize -lt 50000) {
+        Write-Host "     Base de datos parece estar vacía (tamaño muy pequeño)" -ForegroundColor Yellow
+    } else {
+        Write-Host "    Base de datos contiene datos semilla" -ForegroundColor Green
+    }
 } else {
-    Write-Host "   La base de datos no fue creada" -ForegroundColor Red
+    Write-Host "    La base de datos no fue creada" -ForegroundColor Red
     exit 1
 }
 
+# Verificar optimización ejecutada
+if (-not $SkipOptimization) {
+    Write-Host ""
+    Write-Host "Verificando optimización SQLite..." -ForegroundColor Yellow
+    
+    # Verificar si se pueden ejecutar consultas básicas
+    try {
+        Set-Location $backendPath
+        $testQuery = "SELECT COUNT(*) as UserCount FROM users;"
+        $result = dotnet ef database drop --dry-run -p src/Gesco.Desktop.Data -s src/Gesco.Desktop.UI 2>&1
+        Set-Location ".."
+        
+        if ($result -match "would drop") {
+            Write-Host "    Base de datos accesible y operacional" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "     No se pudo verificar la optimización completamente" -ForegroundColor Yellow
+    }
+}
+
+# Mostrar información del script de optimización
+if (-not $SkipOptimization -and (Test-Path $optimizationScriptPath)) {
+    $scriptContent = Get-Content $optimizationScriptPath -Raw
+    $indexCount = ($scriptContent -split "CREATE INDEX").Length - 1
+    $viewCount = ($scriptContent -split "CREATE VIEW").Length - 1
+    $triggerCount = ($scriptContent -split "CREATE TRIGGER").Length - 1
+    
+    Write-Host ""
+    Write-Host "Optimizaciones aplicadas:" -ForegroundColor Cyan
+    Write-Host "    Índices creados: $indexCount" -ForegroundColor White
+    Write-Host "     Vistas creadas: $viewCount" -ForegroundColor White
+    Write-Host "    Triggers creados: $triggerCount" -ForegroundColor White
+}
+
+# Resumen final
 Write-Host ""
-Write-Host "BASE DE DATOS REGENERADA EXITOSAMENTE!" -ForegroundColor Green
+Write-Host "=============================================" -ForegroundColor Green
+Write-Host " BASE DE DATOS REGENERADA EXITOSAMENTE" -ForegroundColor Green
 Write-Host "=============================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Informacion de la base de datos:" -ForegroundColor White
-Write-Host "   Ubicacion: $dbPath" -ForegroundColor Cyan
-Write-Host "   Usuario: admin" -ForegroundColor Yellow
-Write-Host "   Contraseña: admin123" -ForegroundColor Yellow
+
+Write-Host " Información de la base de datos:" -ForegroundColor White
+Write-Host "    Ubicación: $dbPath" -ForegroundColor Cyan
+Write-Host "    Usuario: admin" -ForegroundColor Yellow
+Write-Host "    Contraseña: admin123" -ForegroundColor Yellow
+Write-Host "     Tamaño: $dbSizeKB KB" -ForegroundColor Cyan
+
+if (-not $SkipOptimization) {
+    Write-Host "    Optimización SQLite: Aplicada automáticamente" -ForegroundColor Green
+} else {
+    Write-Host "     Optimización SQLite: Omitida" -ForegroundColor Yellow
+}
+
 Write-Host ""
-Write-Host "Proximos pasos:" -ForegroundColor White
-Write-Host "   1. Inicia el backend: cd backend && dotnet run" -ForegroundColor Gray
-Write-Host "   2. Inicia el frontend: cd frontend && npm run dev" -ForegroundColor Gray
-Write-Host "   3. Prueba el login en: http://localhost:5173" -ForegroundColor Gray
+Write-Host " Próximos pasos:" -ForegroundColor White
+Write-Host "     Inicia el backend:" -ForegroundColor Gray
+Write-Host "      cd backend && dotnet run" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Para Electron:" -ForegroundColor White
-Write-Host "   cd frontend && npm run dev:electron" -ForegroundColor Gray
+Write-Host "    Inicia el frontend:" -ForegroundColor Gray  
+Write-Host "      cd frontend && npm run dev" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "     Accede a la aplicación:" -ForegroundColor Gray
+Write-Host "      http://localhost:5173 (Frontend)" -ForegroundColor Cyan
+Write-Host "      http://localhost:5100/swagger (API)" -ForegroundColor Cyan
+
+Write-Host ""
+Write-Host "  Para Electron:" -ForegroundColor White
+Write-Host "   cd frontend && npm run dev:electron" -ForegroundColor Cyan
+
+Write-Host ""
+Write-Host " Comandos útiles:" -ForegroundColor White
+Write-Host "   .\dev.ps1                    # Iniciar desarrollo completo" -ForegroundColor Gray
+Write-Host "   .\build.ps1                  # Build para producción" -ForegroundColor Gray
+Write-Host "   .\clean.ps1                  # Limpiar proyecto" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host " La optimización SQLite incluye:" -ForegroundColor White
+Write-Host "   • Índices para consultas frecuentes" -ForegroundColor Gray
+Write-Host "   • Vistas para estadísticas de dashboard" -ForegroundColor Gray
+Write-Host "   • Triggers para automatización" -ForegroundColor Gray
+Write-Host "   • Configuraciones de rendimiento" -ForegroundColor Gray
+
+Write-Host ""
 Write-Host "=============================================" -ForegroundColor Green

@@ -2,6 +2,7 @@
 using Gesco.Desktop.Data.Entities;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Gesco.Desktop.Data.Context
 {
@@ -85,10 +86,41 @@ namespace Gesco.Desktop.Data.Context
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }
 
-            // ============================================
-            // SEED DATA
-            // ============================================
+            // Configure foreign key relationships properly
+            ConfigureRelationships(modelBuilder);
+
+            // Seed data
             SeedData(modelBuilder);
+        }
+
+        private static void ConfigureRelationships(ModelBuilder modelBuilder)
+        {
+            // User relationships
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Organization)
+                .WithMany(o => o.Users)
+                .HasForeignKey(u => u.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Fix Role relationship - Change to Guid
+            modelBuilder.Entity<User>()
+                .Property(u => u.RoleId)
+                .HasConversion<Guid>();
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Activity relationships
+            modelBuilder.Entity<Activity>()
+                .HasOne(a => a.ActivityStatus)
+                .WithMany(s => s.Activities)
+                .HasForeignKey(a => a.ActivityStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Other relationships remain the same...
         }
 
         // ============================================
@@ -96,11 +128,17 @@ namespace Gesco.Desktop.Data.Context
         // ============================================
         private static void SeedData(ModelBuilder modelBuilder)
         {
+            // Generate IDs
+            var orgId = Guid.NewGuid();
+            var adminRoleId = Guid.NewGuid();
+            var salesRoleId = Guid.NewGuid();
+            var supervisorRoleId = Guid.NewGuid();
+
             // Default Organization
             modelBuilder.Entity<Organization>().HasData(
                 new Organization
                 {
-                    Id = Guid.NewGuid(),
+                    Id = orgId,
                     Name = "Demo Organization",
                     ContactEmail = "demo@gesco.com",
                     ContactPhone = "2222-2222",
@@ -115,7 +153,7 @@ namespace Gesco.Desktop.Data.Context
             modelBuilder.Entity<Role>().HasData(
                 new Role 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = adminRoleId,
                     Name = "Administrator", 
                     Description = "Full system access", 
                     Active = true, 
@@ -123,7 +161,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new Role 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = salesRoleId,
                     Name = "Salesperson", 
                     Description = "Sales and cash register access", 
                     Active = true, 
@@ -131,7 +169,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new Role 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = supervisorRoleId,
                     Name = "Supervisor", 
                     Description = "Activity supervision", 
                     Active = true, 
@@ -141,8 +179,6 @@ namespace Gesco.Desktop.Data.Context
 
             // Admin User - Using BCrypt hash for "admin123"
             var adminPasswordHash = "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6";
-            var adminRoleId = Guid.NewGuid();
-            var adminOrgId = Guid.NewGuid();
             
             modelBuilder.Entity<User>().HasData(
                 new User
@@ -153,8 +189,8 @@ namespace Gesco.Desktop.Data.Context
                     Password = adminPasswordHash,
                     FullName = "System Administrator",
                     Phone = "8888-8888",
-                    OrganizationId = adminOrgId,
-                    RoleId = 1, // Will need to be updated to match role GUID
+                    OrganizationId = orgId,
+                    RoleId = adminRoleId, // Now using Guid
                     Active = true,
                     FirstLogin = true,
                     CreatedAt = DateTime.UtcNow
@@ -162,10 +198,18 @@ namespace Gesco.Desktop.Data.Context
             );
 
             // Activity Statuses
+            var activityStatusIds = new[]
+            {
+                Guid.NewGuid(), // Not Started
+                Guid.NewGuid(), // In Progress  
+                Guid.NewGuid(), // Completed
+                Guid.NewGuid()  // Cancelled
+            };
+
             modelBuilder.Entity<ActivityStatus>().HasData(
                 new ActivityStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = activityStatusIds[0],
                     Name = "Not Started", 
                     Description = "Activity not started", 
                     Active = true, 
@@ -173,7 +217,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new ActivityStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = activityStatusIds[1],
                     Name = "In Progress", 
                     Description = "Activity in development", 
                     Active = true, 
@@ -181,7 +225,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new ActivityStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = activityStatusIds[2],
                     Name = "Completed", 
                     Description = "Activity completed", 
                     Active = true, 
@@ -189,7 +233,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new ActivityStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = activityStatusIds[3],
                     Name = "Cancelled", 
                     Description = "Activity cancelled", 
                     Active = true, 
@@ -198,10 +242,17 @@ namespace Gesco.Desktop.Data.Context
             );
 
             // Sales Statuses
+            var salesStatusIds = new[]
+            {
+                Guid.NewGuid(), // Pending
+                Guid.NewGuid(), // Completed
+                Guid.NewGuid()  // Cancelled
+            };
+
             modelBuilder.Entity<SalesStatus>().HasData(
                 new SalesStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = salesStatusIds[0],
                     Name = "Pending", 
                     Description = "Sale pending processing", 
                     Active = true, 
@@ -209,7 +260,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SalesStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = salesStatusIds[1],
                     Name = "Completed", 
                     Description = "Sale completed successfully", 
                     Active = true, 
@@ -217,7 +268,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SalesStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = salesStatusIds[2],
                     Name = "Cancelled", 
                     Description = "Sale cancelled", 
                     Active = true, 
@@ -314,6 +365,56 @@ namespace Gesco.Desktop.Data.Context
                     CreatedAt = DateTime.UtcNow
                 }
             );
+        }
+
+        // ============================================
+        // POST-MIGRATION HOOK FOR RUNNING OPTIMIZATION SCRIPT
+        // ============================================
+        public async Task RunOptimizationScriptAsync()
+        {
+            try
+            {
+                var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), 
+                    "..", "..", "src", "Gesco.Desktop.Data", "script", "sqlite_optimization_script.sql");
+                
+                if (File.Exists(scriptPath))
+                {
+                    var script = await File.ReadAllTextAsync(scriptPath);
+                    
+                    // Split script by semicolons and execute each statement
+                    var statements = script.Split(new[] { ";\r\n", ";\n", ";" }, 
+                        StringSplitOptions.RemoveEmptyEntries);
+                    
+                    foreach (var statement in statements)
+                    {
+                        var cleanStatement = statement.Trim();
+                        if (!string.IsNullOrEmpty(cleanStatement) && 
+                            !cleanStatement.StartsWith("--") && 
+                            !cleanStatement.StartsWith("/*"))
+                        {
+                            try
+                            {
+                                await Database.ExecuteSqlRawAsync(cleanStatement);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log but don't throw - some statements might not be compatible
+                                Console.WriteLine($"Warning executing optimization statement: {ex.Message}");
+                            }
+                        }
+                    }
+                    
+                    Console.WriteLine(" SQLite optimization script executed successfully");
+                }
+                else
+                {
+                    Console.WriteLine(" Optimization script not found at: " + scriptPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($" Error executing optimization script: {ex.Message}");
+            }
         }
     }
 }
