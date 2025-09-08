@@ -3,23 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { statsService, authService, healthService } from '../../services/api';
 
 interface DashboardStats {
-  actividades: number;
-  actividadesActivas: number;
-  ventasHoy: number;
-  transacciones: number;
-  ventasMes: number;
-  transaccionesMes: number;
-  totalUsuarios: number;
-  usuariosActivos: number;
-  totalProductos: number;
-  productosActivos: number;
-  productosAgotados: number;
-  fechaConsulta: string;
-  periodoReporte: string;
+  totalActivities: number;
+  activeActivities: number;
+  todaySales: number;
+  todayTransactions: number;
+  monthSales: number;
+  monthTransactions: number;
+  totalUsers: number;
+  activeUsers: number;
+  totalProducts: number;
+  activeProducts: number;
+  lowStockProducts: number;
+  queryDate: string;
+  reportPeriod: string;
 }
 
 interface User {
-  id: number;
+  id: string;
   nombreUsuario: string;
   nombreCompleto: string;
   nombreRol: string;
@@ -34,19 +34,19 @@ interface SystemStatus {
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
-    actividades: 0,
-    actividadesActivas: 0,
-    ventasHoy: 0,
-    transacciones: 0,
-    ventasMes: 0,
-    transaccionesMes: 0,
-    totalUsuarios: 0,
-    usuariosActivos: 0,
-    totalProductos: 0,
-    productosActivos: 0,
-    productosAgotados: 0,
-    fechaConsulta: '',
-    periodoReporte: ''
+    totalActivities: 0,
+    activeActivities: 0,
+    todaySales: 0,
+    todayTransactions: 0,
+    monthSales: 0,
+    monthTransactions: 0,
+    totalUsers: 0,
+    activeUsers: 0,
+    totalProducts: 0,
+    activeProducts: 0,
+    lowStockProducts: 0,
+    queryDate: '',
+    reportPeriod: ''
   });
   
   const [user, setUser] = useState<User | null>(null);
@@ -75,10 +75,12 @@ export const Dashboard: React.FC = () => {
 
   const loadDashboardData = async () => {
     try {
+      console.log('🔄 Cargando estadísticas del dashboard...');
       const data = await statsService.getStats();
       setStats(data);
       setLastUpdate(new Date());
       setError('');
+      console.log('✅ Estadísticas cargadas:', data);
     } catch (err: any) {
       setError('Error cargando estadísticas: ' + err.message);
       console.error('Stats error:', err);
@@ -267,7 +269,7 @@ export const Dashboard: React.FC = () => {
               Bienvenido{user?.nombreCompleto ? `, ${user.nombreCompleto.split(' ')[0]}` : ''}
             </h2>
             <p className="text-gray-600">
-              {stats.periodoReporte || 'Aquí tienes un resumen de la actividad actual'}
+              {stats.reportPeriod || 'Aquí tienes un resumen de la actividad actual'}
             </p>
           </div>
 
@@ -278,6 +280,12 @@ export const Dashboard: React.FC = () => {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               {error}
+              <button 
+                onClick={handleRefresh}
+                className="ml-auto text-red-600 hover:text-red-800 underline"
+              >
+                Reintentar
+              </button>
             </div>
           )}
 
@@ -285,8 +293,8 @@ export const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
             <StatCard
               title="Actividades"
-              value={stats.actividadesActivas}
-              subtitle={`${stats.actividades} total`}
+              value={stats.activeActivities}
+              subtitle={`${stats.totalActivities} total`}
               loading={loading}
               color="bg-blue-100"
               icon={
@@ -298,8 +306,8 @@ export const Dashboard: React.FC = () => {
 
             <StatCard
               title="Ventas Hoy"
-              value={formatCurrency(stats.ventasHoy)}
-              subtitle={`${stats.transacciones} transacciones`}
+              value={formatCurrency(stats.todaySales)}
+              subtitle={`${stats.todayTransactions} transacciones`}
               loading={loading}
               color="bg-green-100"
               icon={
@@ -311,8 +319,8 @@ export const Dashboard: React.FC = () => {
 
             <StatCard
               title="Ventas Mes"
-              value={formatCurrency(stats.ventasMes)}
-              subtitle={`${stats.transaccionesMes} transacciones`}
+              value={formatCurrency(stats.monthSales)}
+              subtitle={`${stats.monthTransactions} transacciones`}
               loading={loading}
               color="bg-purple-100"
               icon={
@@ -324,8 +332,8 @@ export const Dashboard: React.FC = () => {
 
             <StatCard
               title="Productos"
-              value={stats.productosActivos}
-              subtitle={`${stats.productosAgotados} agotados`}
+              value={stats.activeProducts}
+              subtitle={`${stats.lowStockProducts} agotados`}
               loading={loading}
               color="bg-yellow-100"
               icon={
@@ -340,8 +348,8 @@ export const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 mb-8">
             <StatCard
               title="Usuarios"
-              value={stats.usuariosActivos}
-              subtitle={`${stats.totalUsuarios} registrados`}
+              value={stats.activeUsers}
+              subtitle={`${stats.totalUsers} registrados`}
               loading={loading}
               color="bg-indigo-100"
               icon={
@@ -353,8 +361,8 @@ export const Dashboard: React.FC = () => {
 
             <StatCard
               title="Inventario"
-              value={stats.totalProductos}
-              subtitle={`${stats.productosActivos} disponibles`}
+              value={stats.totalProducts}
+              subtitle={`${stats.activeProducts} disponibles`}
               loading={loading}
               color="bg-pink-100"
               icon={
@@ -388,15 +396,15 @@ export const Dashboard: React.FC = () => {
                   </button>
 
                   <button 
-                    className="w-full flex items-center px-4 py-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    disabled
+                    onClick={() => navigate('/activities')}
+                    className="w-full flex items-center px-4 py-3 text-left bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                   >
-                    <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     <div>
-                      <span className="font-medium">Nueva Actividad</span>
-                      <p className="text-sm text-gray-500">Crear evento o actividad</p>
+                      <span className="font-medium">Gestionar Actividades</span>
+                      <p className="text-sm text-gray-500">Ver y crear actividades</p>
                     </div>
                   </button>
 
@@ -531,4 +539,4 @@ export const Dashboard: React.FC = () => {
       </main>
     </div>
   );
-};
+}

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gesco.Desktop.Data.Context;
-using Gesco.Desktop.Shared.DTOs; // AGREGADO: Usar DTOs compartidos
+using Gesco.Desktop.Shared.DTOs;
 
 namespace Gesco.Desktop.UI.Controllers
 {
@@ -25,7 +25,7 @@ namespace Gesco.Desktop.UI.Controllers
         /// </summary>
         /// <returns>Estadísticas del dashboard</returns>
         [HttpGet]
-        [ProducesResponseType(typeof(DashboardStatsDto), 200)] // CORREGIDO: Usar el DTO compartido
+        [ProducesResponseType(typeof(DashboardStatsDto), 200)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> GetStats()
         {
@@ -41,7 +41,7 @@ namespace Gesco.Desktop.UI.Controllers
                 var completedSalesStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Completed");
 
-                var stats = new DashboardStatsDto // CORREGIDO: Usar el DTO compartido
+                var stats = new DashboardStatsDto
                 {
                     // Actividades
                     TotalActivities = await _context.Activities.CountAsync(),
@@ -182,7 +182,7 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // DTOs locales que NO conflictúan con nombres compartidos
+    // DTOs locales específicos del StatsController
     public class SalesSummaryDto
     {
         public DateTime Fecha { get; set; }

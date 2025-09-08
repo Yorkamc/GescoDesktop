@@ -2,7 +2,8 @@
 import { Login } from './pages/Login/Login';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { LicenseActivation } from './pages/LicenseActivation/LicenseActivation';
-
+import { Activities } from './pages/Activities/Activities';
+import { ProtectedRoute } from './components/Common/ProtectedRoute';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -26,8 +27,23 @@ function App() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/license-activation" element={<LicenseActivation />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/activities" 
+          element={
+            <ProtectedRoute>
+              <Activities />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

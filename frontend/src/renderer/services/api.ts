@@ -2,7 +2,6 @@
 
 const API_URL = 'http://localhost:5100/api';
 
-// Verificar conectividad al inicializar
 console.log('🔧 Inicializando cliente API para:', API_URL);
 
 const api = axios.create({
@@ -10,10 +9,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // Aumentar timeout para debugging
+  timeout: 15000,
 });
 
-// Interceptor mejorado para requests
+// Interceptor para requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -21,10 +20,7 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-      data: config.data,
-      headers: config.headers
-    });
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, config.data);
     return config;
   },
   (error) => {
@@ -33,37 +29,17 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor mejorado para responses
+// Interceptor para responses
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.statusText}`, {
-      url: response.config.url,
-      data: response.data
-    });
+    console.log(`✅ API Response: ${response.status} ${response.statusText}`, response.data);
     return response;
   },
   (error: AxiosError) => {
-    console.error('❌ API Error Details:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url: error.config?.url,
-      message: error.message,
-      code: error.code
-    });
+    console.error('❌ API Error Details:', error);
 
-    // Diagnóstico específico para errores comunes
     if (error.code === 'ERR_NETWORK') {
-      console.error('🌐 PROBLEMA DE RED:');
-      console.error('   - Backend no está corriendo en localhost:5100');
-      console.error('   - Firewall bloquea la conexión');
-      console.error('   - CORS mal configurado');
-    }
-
-    if (error.code === 'ECONNREFUSED') {
-      console.error('🚫 CONEXIÓN RECHAZADA:');
-      console.error('   - Backend no responde en puerto 5100');
-      console.error('   - Servicio no iniciado');
+      console.error('🌐 PROBLEMA DE RED: Backend no está corriendo en localhost:5100');
     }
 
     if (error.response?.status === 401) {
@@ -72,8 +48,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       
       if (!window.location.pathname.includes('/login')) {
-        console.log('📍 Redirigiendo al login...');
-        window.location.href = '#/login'; // HashRouter compatible
+        window.location.href = '#/login';
       }
     }
 
@@ -81,7 +56,9 @@ api.interceptors.response.use(
   }
 );
 
-// Interfaces (mantener las existentes)
+// =====================================================
+// INTERFACES COMPLETAS
+// =====================================================
 interface LoginResponse {
   success: boolean;
   message?: string;
@@ -109,58 +86,83 @@ interface LicenseStatus {
 }
 
 interface DashboardStats {
-  actividades: number;
-  actividadesActivas: number;
-  ventasHoy: number;
-  transacciones: number;
-  ventasMes: number;
-  transaccionesMes: number;
-  totalUsuarios: number;
-  usuariosActivos: number;
-  totalProductos: number;
-  productosActivos: number;
-  productosAgotados: number;
-  fechaConsulta: string;
-  periodoReporte: string;
+  totalActivities: number;
+  activeActivities: number;
+  todaySales: number;
+  todayTransactions: number;
+  monthSales: number;
+  monthTransactions: number;
+  totalUsers: number;
+  activeUsers: number;
+  totalProducts: number;
+  activeProducts: number;
+  lowStockProducts: number;
+  queryDate: string;
+  reportPeriod: string;
+}
+
+// INTERFACES PARA ACTIVIDADES
+interface Activity {
+  id: string;
+  name: string;
+  description?: string;
+  startDate: string;
+  startTime?: string;
+  endDate?: string;
+  endTime?: string;
+  location?: string;
+  activityStatusId: number;
+  statusName?: string;
+  managerUserId?: string;
+  managerName?: string;
+  organizationId?: string;
+  organizationName?: string;
+  createdAt: string;
+}
+
+interface CreateActivityRequest {
+  name: string;
+  description?: string;
+  startDate: string;
+  startTime?: string;
+  endDate?: string;
+  endTime?: string;
+  location?: string;
+  activityStatusId?: number;
+  managerUserId?: string;
+  organizationId?: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  errors?: string[];
+  timestamp: string;
 }
 
 // =====================================================
-// AUTH SERVICE - CON DEBUGGING MEJORADO
+// AUTH SERVICE
 // =====================================================
 export const authService = {
   async login(usuario: string, password: string): Promise<LoginResponse> {
     try {
       console.log('🔐 Iniciando login para:', usuario);
       
-      // Test de conectividad previo
-      try {
-        const healthCheck = await api.get('/system/health', { timeout: 5000 });
-        console.log('✅ Backend disponible:', healthCheck.data);
-      } catch (healthError) {
-        console.error('❌ Backend no disponible:', healthError);
-        throw new Error('No se puede conectar al servidor. Verifica que esté corriendo en http://localhost:5100');
-      }
-
       const response = await api.post('/auth/login', { usuario, password });
       
       if (response.data.success && response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.usuario));
         console.log('✅ Login exitoso, token guardado');
-        console.log('👤 Usuario:', response.data.usuario);
       }
       
       return response.data;
     } catch (error: any) {
       console.error('❌ Login failed:', error);
       
-      // Diagnóstico específico de errores
       if (error.code === 'ERR_NETWORK') {
         throw new Error('No se puede conectar al servidor. Asegúrate de que el backend esté corriendo en http://localhost:5100');
-      }
-      
-      if (error.code === 'ECONNREFUSED') {
-        throw new Error('Servidor no disponible. Inicia el backend con: dotnet run');
       }
       
       if (error.response?.status === 401) {
@@ -213,7 +215,7 @@ export const authService = {
 };
 
 // =====================================================
-// HEALTH SERVICE - NUEVO
+// HEALTH SERVICE
 // =====================================================
 export const healthService = {
   async checkBackendConnection(): Promise<{ 
@@ -253,7 +255,9 @@ export const healthService = {
   }
 };
 
-// Resto de servicios (mantener los existentes)
+// =====================================================
+// LICENSE SERVICE
+// =====================================================
 export const licenseService = {
   async getStatus(): Promise<LicenseStatus> {
     try {
@@ -285,25 +289,29 @@ export const licenseService = {
   }
 };
 
+// =====================================================
+// STATS SERVICE CORREGIDO
+// =====================================================
 export const statsService = {
   async getStats(): Promise<DashboardStats> {
     try {
       const response = await api.get('/stats');
       
+      // Mapear las propiedades del backend (camelCase) al frontend
       return {
-        actividades: response.data.actividades || 0,
-        actividadesActivas: response.data.actividadesActivas || 0,
-        ventasHoy: response.data.ventasHoy || 0,
-        transacciones: response.data.transacciones || 0,
-        ventasMes: response.data.ventasMes || 0,
-        transaccionesMes: response.data.transaccionesMes || 0,
-        totalUsuarios: response.data.totalUsuarios || 0,
-        usuariosActivos: response.data.usuariosActivos || 0,
-        totalProductos: response.data.totalProductos || 0,
-        productosActivos: response.data.productosActivos || 0,
-        productosAgotados: response.data.productosAgotados || 0,
-        fechaConsulta: response.data.fechaConsulta || new Date().toISOString(),
-        periodoReporte: response.data.periodoReporte || 'Período actual'
+        totalActivities: response.data.totalActivities || 0,
+        activeActivities: response.data.activeActivities || 0,
+        todaySales: response.data.todaySales || 0,
+        todayTransactions: response.data.todayTransactions || 0,
+        monthSales: response.data.monthSales || 0,
+        monthTransactions: response.data.monthTransactions || 0,
+        totalUsers: response.data.totalUsers || 0,
+        activeUsers: response.data.activeUsers || 0,
+        totalProducts: response.data.totalProducts || 0,
+        activeProducts: response.data.activeProducts || 0,
+        lowStockProducts: response.data.lowStockProducts || 0,
+        queryDate: response.data.queryDate || new Date().toISOString(),
+        reportPeriod: response.data.reportPeriod || 'Período actual'
       };
     } catch (error: any) {
       console.error('❌ Error obteniendo estadísticas:', error);
@@ -316,6 +324,162 @@ export const statsService = {
         throw new Error('No se puede conectar al servidor de estadísticas');
       }
       
+      throw new Error('Error al cargar las estadísticas');
+    }
+  }
+};
+
+// =====================================================
+// ACTIVITIES SERVICE - NUEVO
+// =====================================================
+export const activitiesService = {
+  async getActivities(organizationId?: string): Promise<Activity[]> {
+    try {
+      const params = organizationId ? { organizationId } : {};
+      const response = await api.get('/activities', { params });
+      
+      if (response.data.success) {
+        return response.data.data || [];
+      } else {
+        throw new Error(response.data.message || 'Error obteniendo actividades');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo actividades:', error);
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al cargar las actividades');
+    }
+  },
+
+  async getActivity(id: string): Promise<Activity> {
+    try {
+      const response = await api.get(`/activities/${id}`);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Actividad no encontrada');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo actividad:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Actividad no encontrada');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al cargar la actividad');
+    }
+  },
+
+  async createActivity(activity: CreateActivityRequest): Promise<Activity> {
+    try {
+      const response = await api.post('/activities', activity);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Error creando actividad');
+      }
+    } catch (error: any) {
+      console.error('❌ Error creando actividad:', error);
+      
+      if (error.response?.status === 400) {
+        const errors = error.response.data.errors || [error.response.data.message];
+        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al crear la actividad');
+    }
+  },
+
+  async updateActivity(id: string, activity: CreateActivityRequest): Promise<Activity> {
+    try {
+      const response = await api.put(`/activities/${id}`, activity);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Error actualizando actividad');
+      }
+    } catch (error: any) {
+      console.error('❌ Error actualizando actividad:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Actividad no encontrada');
+      }
+      
+      if (error.response?.status === 400) {
+        const errors = error.response.data.errors || [error.response.data.message];
+        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al actualizar la actividad');
+    }
+  },
+
+  async deleteActivity(id: string): Promise<void> {
+    try {
+      const response = await api.delete(`/activities/${id}`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Error eliminando actividad');
+      }
+    } catch (error: any) {
+      console.error('❌ Error eliminando actividad:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Actividad no encontrada');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al eliminar la actividad');
+    }
+  },
+
+  async getActiveActivities(): Promise<Activity[]> {
+    try {
+      const response = await api.get('/activities/active');
+      
+      if (response.data.success) {
+        return response.data.data || [];
+      } else {
+        throw new Error(response.data.message || 'Error obteniendo actividades activas');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo actividades activas:', error);
+      throw new Error('Error al cargar las actividades activas');
+    }
+  },
+
+  async getActivityStats(): Promise<DashboardStats> {
+    try {
+      const response = await api.get('/activities/stats');
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Error obteniendo estadísticas');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo estadísticas de actividades:', error);
       throw new Error('Error al cargar las estadísticas');
     }
   }
