@@ -6,7 +6,7 @@ using Gesco.Desktop.Core.Interfaces;
 
 namespace Gesco.Desktop.UI.Controllers
 {
- [ApiController]
+    [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
     public class ActivitiesController : ControllerBase
@@ -32,6 +32,8 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting activities for organization: {OrganizationId}", organizationId);
+                
                 var activities = await _activityService.GetActivitiesAsync(organizationId);
                 
                 return Ok(new ApiResponse<List<ActivityDto>>
@@ -110,21 +112,72 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
+                _logger.LogInformation("Creating activity: {Name}", request.Name);
+
+                // Validaciones básicas
+                if (string.IsNullOrWhiteSpace(request.Name))
                 {
                     return BadRequest(new ApiResponse
                     {
                         Success = false,
-                        Message = "Datos inválidos",
-                        Errors = ModelState.Values
-                            .SelectMany(v => v.Errors)
-                            .Select(e => e.ErrorMessage)
-                            .ToList()
+                        Message = "El nombre de la actividad es requerido",
+                        Errors = new List<string> { "Name is required" }
                     });
                 }
 
+                // Validar fecha
+                if (request.StartDate == default)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "La fecha de inicio es requerida",
+                        Errors = new List<string> { "StartDate is required" }
+                    });
+                }
+
+                // Convertir string a DateOnly si es necesario
+                if (!DateOnly.TryParse(request.StartDate.ToString(), out var startDate))
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Formato de fecha inválido",
+                        Errors = new List<string> { "Invalid date format" }
+                    });
+                }
+
+                // Obtener el primer usuario como manager por defecto si no se especifica
+                if (!request.ManagerUserId.HasValue || request.ManagerUserId == Guid.Empty)
+                {
+                    // Obtener el ID del usuario actual del token si está disponible
+                    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    if (!string.IsNullOrEmpty(currentUserId) && Guid.TryParse(currentUserId, out var userId))
+                    {
+                        request.ManagerUserId = userId;
+                    }
+                }
+
+                // Obtener la primera organización como default si no se especifica
+                if (!request.OrganizationId.HasValue || request.OrganizationId == Guid.Empty)
+                {
+                    // Por ahora usar la primera organización disponible
+                    // En un escenario real, esto vendría del contexto del usuario
+                    request.OrganizationId = null; // El servicio manejará esto
+                }
+
+                _logger.LogInformation("Validated request: {@Request}", new { 
+                    request.Name, 
+                    request.StartDate, 
+                    request.ActivityStatusId,
+                    request.ManagerUserId,
+                    request.OrganizationId 
+                });
+
                 var activity = await _activityService.CreateActivityAsync(request);
                 
+                _logger.LogInformation("Activity created successfully: {ActivityId}", activity.Id);
+
                 return CreatedAtAction(
                     nameof(GetActivity),
                     new { id = activity.Id },
@@ -137,7 +190,7 @@ namespace Gesco.Desktop.UI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating activity");
+                _logger.LogError(ex, "Error creating activity: {@Request}", request);
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,
@@ -164,16 +217,26 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
+                _logger.LogInformation("Updating activity {ActivityId}: {Name}", id, request.Name);
+
+                // Validaciones básicas (similar al create)
+                if (string.IsNullOrWhiteSpace(request.Name))
                 {
                     return BadRequest(new ApiResponse
                     {
                         Success = false,
-                        Message = "Datos inválidos",
-                        Errors = ModelState.Values
-                            .SelectMany(v => v.Errors)
-                            .Select(e => e.ErrorMessage)
-                            .ToList()
+                        Message = "El nombre de la actividad es requerido",
+                        Errors = new List<string> { "Name is required" }
+                    });
+                }
+
+                if (request.StartDate == default)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "La fecha de inicio es requerida",
+                        Errors = new List<string> { "StartDate is required" }
                     });
                 }
 
@@ -187,6 +250,8 @@ namespace Gesco.Desktop.UI.Controllers
                         Message = "Actividad no encontrada"
                     });
                 }
+
+                _logger.LogInformation("Activity updated successfully: {ActivityId}", id);
 
                 return Ok(new ApiResponse<ActivityDto>
                 {
@@ -232,6 +297,8 @@ namespace Gesco.Desktop.UI.Controllers
                         Message = "Actividad no encontrada"
                     });
                 }
+
+                _logger.LogInformation("Activity deleted successfully: {ActivityId}", id);
 
                 return Ok(new ApiResponse
                 {
@@ -288,7 +355,7 @@ namespace Gesco.Desktop.UI.Controllers
         /// </summary>
         /// <returns>Estadísticas generales</returns>
         [HttpGet("stats")]
-        [ProducesResponseType(typeof(ApiResponse<Gesco.Desktop.Shared.DTOs.DashboardStatsDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<DashboardStatsDto>), 200)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> GetActivityStats()
         {
@@ -296,7 +363,7 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 var stats = await _activityService.GetActivityStatsAsync();
                 
-                return Ok(new ApiResponse<Gesco.Desktop.Shared.DTOs.DashboardStatsDto>
+                return Ok(new ApiResponse<DashboardStatsDto>
                 {
                     Success = true,
                     Data = stats,

@@ -330,7 +330,7 @@ export const statsService = {
 };
 
 // =====================================================
-// ACTIVITIES SERVICE - NUEVO
+// ACTIVITIES SERVICE - CORREGIDO PARA FECHAS
 // =====================================================
 export const activitiesService = {
   async getActivities(organizationId?: string): Promise<Activity[]> {
@@ -380,7 +380,23 @@ export const activitiesService = {
 
   async createActivity(activity: CreateActivityRequest): Promise<Activity> {
     try {
-      const response = await api.post('/activities', activity);
+      // Asegurar formato correcto de datos
+      const activityData = {
+        name: activity.name.trim(),
+        description: activity.description?.trim() || '',
+        startDate: activity.startDate, // Ya debe venir en formato YYYY-MM-DD
+        startTime: activity.startTime || undefined,
+        endDate: activity.endDate || undefined,
+        endTime: activity.endTime || undefined,
+        location: activity.location?.trim() || '',
+        activityStatusId: activity.activityStatusId || 1,
+        managerUserId: activity.managerUserId || undefined,
+        organizationId: activity.organizationId || undefined
+      };
+
+      console.log('📝 Enviando datos de actividad:', activityData);
+
+      const response = await api.post('/activities', activityData);
       
       if (response.data.success) {
         return response.data.data;
@@ -405,7 +421,23 @@ export const activitiesService = {
 
   async updateActivity(id: string, activity: CreateActivityRequest): Promise<Activity> {
     try {
-      const response = await api.put(`/activities/${id}`, activity);
+      // Asegurar formato correcto de datos
+      const activityData = {
+        name: activity.name.trim(),
+        description: activity.description?.trim() || '',
+        startDate: activity.startDate,
+        startTime: activity.startTime || undefined,
+        endDate: activity.endDate || undefined,
+        endTime: activity.endTime || undefined,
+        location: activity.location?.trim() || '',
+        activityStatusId: activity.activityStatusId || 1,
+        managerUserId: activity.managerUserId || undefined,
+        organizationId: activity.organizationId || undefined
+      };
+
+      console.log('📝 Actualizando actividad:', activityData);
+
+      const response = await api.put(`/activities/${id}`, activityData);
       
       if (response.data.success) {
         return response.data.data;

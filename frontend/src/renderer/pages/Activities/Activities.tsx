@@ -75,16 +75,34 @@ export const Activities: React.FC = () => {
   };
 
   const handleCreateActivity = async (e: React.FormEvent) => {
-    e.preventDefault();
+   e.preventDefault();
     try {
       setIsCreating(true);
       
-      // Convert date format for backend
-      const activityData = {
-        ...formData,
-        startDate: formData.startDate,
-        endDate: formData.endDate || formData.startDate,
+      // Validaciones del frontend
+      if (!formData.name.trim()) {
+        setError('El nombre de la actividad es requerido');
+        return;
+      }
+      
+      if (!formData.startDate) {
+        setError('La fecha de inicio es requerida');
+        return;
+      }
+
+      // Asegurar que las fechas estén en formato correcto
+      const activityData: CreateActivityRequest = {
+        name: formData.name.trim(),
+        description: formData.description?.trim() || '',
+        startDate: formData.startDate, // Formato YYYY-MM-DD
+        startTime: formData.startTime || undefined,
+        endDate: formData.endDate || undefined,
+        endTime: formData.endTime || undefined,
+        location: formData.location?.trim() || '',
+        activityStatusId: formData.activityStatusId || 1
       };
+
+      console.log('📝 Creando actividad con datos:', activityData);
 
       const newActivity = await activitiesService.createActivity(activityData);
       setActivities([newActivity, ...activities]);
@@ -92,6 +110,7 @@ export const Activities: React.FC = () => {
       resetForm();
       setError('');
     } catch (err: any) {
+      console.error('Error creating activity:', err);
       setError(err.message);
     } finally {
       setIsCreating(false);
@@ -99,17 +118,35 @@ export const Activities: React.FC = () => {
   };
 
   const handleUpdateActivity = async (e: React.FormEvent) => {
-    e.preventDefault();
+   e.preventDefault();
     if (!editingActivity) return;
 
     try {
       setIsCreating(true);
       
-      const activityData = {
-        ...formData,
+      // Validaciones del frontend
+      if (!formData.name.trim()) {
+        setError('El nombre de la actividad es requerido');
+        return;
+      }
+      
+      if (!formData.startDate) {
+        setError('La fecha de inicio es requerida');
+        return;
+      }
+
+      const activityData: CreateActivityRequest = {
+        name: formData.name.trim(),
+        description: formData.description?.trim() || '',
         startDate: formData.startDate,
-        endDate: formData.endDate || formData.startDate,
+        startTime: formData.startTime || undefined,
+        endDate: formData.endDate || undefined,
+        endTime: formData.endTime || undefined,
+        location: formData.location?.trim() || '',
+        activityStatusId: formData.activityStatusId || 1
       };
+
+      console.log('📝 Actualizando actividad con datos:', activityData);
 
       const updatedActivity = await activitiesService.updateActivity(editingActivity.id, activityData);
       setActivities(activities.map(a => a.id === editingActivity.id ? updatedActivity : a));
@@ -118,6 +155,7 @@ export const Activities: React.FC = () => {
       resetForm();
       setError('');
     } catch (err: any) {
+      console.error('Error updating activity:', err);
       setError(err.message);
     } finally {
       setIsCreating(false);
@@ -139,13 +177,25 @@ export const Activities: React.FC = () => {
   };
 
   const handleEditActivity = (activity: Activity) => {
-    setEditingActivity(activity);
+  setEditingActivity(activity);
+    
+    // Extraer solo la parte de fecha (YYYY-MM-DD) del string de fecha
+    const extractDate = (dateString: string) => {
+      if (!dateString) return '';
+      // Si ya está en formato YYYY-MM-DD, devolverlo tal como está
+      if (dateString.includes('T')) {
+        return dateString.split('T')[0];
+      }
+      // Si es solo fecha, devolverla tal como está
+      return dateString;
+    };
+
     setFormData({
       name: activity.name,
       description: activity.description || '',
-      startDate: activity.startDate.split('T')[0], // Extract date part
+      startDate: extractDate(activity.startDate),
       startTime: activity.startTime || '',
-      endDate: activity.endDate?.split('T')[0] || '',
+      endDate: activity.endDate ? extractDate(activity.endDate) : '',
       endTime: activity.endTime || '',
       location: activity.location || '',
       activityStatusId: activity.activityStatusId,
@@ -172,12 +222,46 @@ export const Activities: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+ if (!dateString) return 'Sin fecha';
+    
+    try {
+      // Intentar parsear la fecha
+      const date = new Date(dateString);
+      
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        return 'Fecha inválida';
+      }
+      
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Fecha inválida';
+    }
+  };
+   const formatTime = (timeString?: string) => {
+    if (!timeString) return '';
+    
+    try {
+      // Si ya está en formato HH:MM, devolverlo tal como está
+      if (timeString.match(/^\d{2}:\d{2}$/)) {
+        return timeString;
+      }
+      
+      // Si viene con segundos, extraer solo HH:MM
+      if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+        return timeString.substring(0, 5);
+      }
+      
+      return timeString;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '';
+    }
   };
 
   const getStatusColor = (statusName?: string) => {

@@ -31,67 +31,165 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting dashboard stats...");
+
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-                // Get status entities by name to avoid hardcoded IDs
+                // Get status entities by name to avoid hardcoded IDs - Con manejo de errores
                 var inProgressActivityStatus = await _context.ActivityStatuses
                     .FirstOrDefaultAsync(s => s.Name == "In Progress");
 
                 var completedSalesStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Completed");
 
+                _logger.LogInformation("Found activity status: {StatusFound}", inProgressActivityStatus != null);
+                _logger.LogInformation("Found sales status: {StatusFound}", completedSalesStatus != null);
+
+                // Calcular estadísticas con manejo de errores individual
+                var totalActivities = 0;
+                var activeActivities = 0;
+                var todaySales = 0m;
+                var todayTransactions = 0;
+                var monthSales = 0m;
+                var monthTransactions = 0;
+                var totalUsers = 0;
+                var activeUsers = 0;
+                var totalProducts = 0;
+                var activeProducts = 0;
+                var lowStockProducts = 0;
+
+                try
+                {
+                    totalActivities = await _context.Activities.CountAsync();
+                    _logger.LogInformation("Total activities: {Count}", totalActivities);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting total activities");
+                }
+
+                try
+                {
+                    if (inProgressActivityStatus != null)
+                    {
+                        activeActivities = await _context.Activities
+                            .CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id);
+                    }
+                    _logger.LogInformation("Active activities: {Count}", activeActivities);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting active activities");
+                }
+
+                try
+                {
+                    if (completedSalesStatus != null)
+                    {
+                        todaySales = await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+                    }
+                    else
+                    {
+                        todaySales = await _context.SalesTransactions
+                            .Where(t => t.TransactionDate.Date == today)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+                    }
+                    _logger.LogInformation("Today sales: {Amount}", todaySales);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting today sales");
+                }
+
+                try
+                {
+                    todayTransactions = await _context.SalesTransactions
+                        .CountAsync(t => t.TransactionDate.Date == today);
+                    _logger.LogInformation("Today transactions: {Count}", todayTransactions);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting today transactions");
+                }
+
+                try
+                {
+                    if (completedSalesStatus != null)
+                    {
+                        monthSales = await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+                    }
+                    else
+                    {
+                        monthSales = await _context.SalesTransactions
+                            .Where(t => t.TransactionDate >= thisMonth)
+                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+                    }
+                    _logger.LogInformation("Month sales: {Amount}", monthSales);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting month sales");
+                }
+
+                try
+                {
+                    monthTransactions = await _context.SalesTransactions
+                        .CountAsync(t => t.TransactionDate >= thisMonth);
+                    _logger.LogInformation("Month transactions: {Count}", monthTransactions);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting month transactions");
+                }
+
+                try
+                {
+                    totalUsers = await _context.Users.CountAsync();
+                    activeUsers = await _context.Users.CountAsync(u => u.Active);
+                    _logger.LogInformation("Users: {Total} total, {Active} active", totalUsers, activeUsers);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting user stats");
+                }
+
+                try
+                {
+                    totalProducts = await _context.CategoryProducts.CountAsync();
+                    activeProducts = await _context.CategoryProducts.CountAsync(p => p.Active);
+                    lowStockProducts = await _context.CategoryProducts
+                        .CountAsync(p => p.CurrentQuantity <= p.AlertQuantity && p.Active);
+                    _logger.LogInformation("Products: {Total} total, {Active} active, {LowStock} low stock", 
+                        totalProducts, activeProducts, lowStockProducts);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error getting product stats");
+                }
+
                 var stats = new DashboardStatsDto
                 {
-                    // Actividades
-                    TotalActivities = await _context.Activities.CountAsync(),
-                    ActiveActivities = inProgressActivityStatus != null 
-                        ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id)
-                        : 0,
-                    
-                    // Ventas del día
-                    TodaySales = completedSalesStatus != null
-                        ? await _context.SalesTransactions
-                            .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
-                        : await _context.SalesTransactions
-                            .Where(t => t.TransactionDate.Date == today)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
-                    
-                    TodayTransactions = await _context.SalesTransactions
-                        .CountAsync(t => t.TransactionDate.Date == today),
-                    
-                    // Ventas del mes
-                    MonthSales = completedSalesStatus != null
-                        ? await _context.SalesTransactions
-                            .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
-                        : await _context.SalesTransactions
-                            .Where(t => t.TransactionDate >= thisMonth)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
-                    
-                    MonthTransactions = await _context.SalesTransactions
-                        .CountAsync(t => t.TransactionDate >= thisMonth),
-                    
-                    // Usuarios
-                    TotalUsers = await _context.Users.CountAsync(),
-                    ActiveUsers = await _context.Users
-                        .CountAsync(u => u.Active),
-                    
-                    // Productos/Artículos
-                    TotalProducts = await _context.CategoryProducts.CountAsync(),
-                    ActiveProducts = await _context.CategoryProducts
-                        .CountAsync(p => p.Active),
-                    
-                    LowStockProducts = await _context.CategoryProducts
-                        .CountAsync(p => p.CurrentQuantity <= p.AlertQuantity && p.Active),
-                    
-                    // Timestamps
+                    TotalActivities = totalActivities,
+                    ActiveActivities = activeActivities,
+                    TodaySales = todaySales,
+                    TodayTransactions = todayTransactions,
+                    MonthSales = monthSales,
+                    MonthTransactions = monthTransactions,
+                    TotalUsers = totalUsers,
+                    ActiveUsers = activeUsers,
+                    TotalProducts = totalProducts,
+                    ActiveProducts = activeProducts,
+                    LowStockProducts = lowStockProducts,
                     QueryDate = DateTime.UtcNow,
                     ReportPeriod = $"Día {today:dd/MM/yyyy} y mes {thisMonth:MM/yyyy}"
                 };
 
-                _logger.LogInformation("Stats retrieved: Activities: {Activities}, Sales today: {SalesToday:C}", 
+                _logger.LogInformation("Stats retrieved successfully: Activities: {Activities}, Sales today: {SalesToday:C}", 
                     stats.TotalActivities, stats.TodaySales);
 
                 return Ok(stats);
@@ -99,10 +197,26 @@ namespace Gesco.Desktop.UI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting dashboard stats");
-                return StatusCode(500, new { 
-                    message = "Error al obtener estadísticas del sistema",
-                    error = ex.Message
-                });
+                
+                // Devolver estadísticas por defecto en caso de error
+                var defaultStats = new DashboardStatsDto
+                {
+                    TotalActivities = 0,
+                    ActiveActivities = 0,
+                    TodaySales = 0,
+                    TodayTransactions = 0,
+                    MonthSales = 0,
+                    MonthTransactions = 0,
+                    TotalUsers = 0,
+                    ActiveUsers = 0,
+                    TotalProducts = 0,
+                    ActiveProducts = 0,
+                    LowStockProducts = 0,
+                    QueryDate = DateTime.UtcNow,
+                    ReportPeriod = "Error al cargar datos"
+                };
+
+                return Ok(defaultStats);
             }
         }
 
@@ -140,7 +254,7 @@ namespace Gesco.Desktop.UI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting sales summary");
-                return StatusCode(500, new { message = "Error al obtener resumen de ventas" });
+                return Ok(new List<SalesSummaryDto>());
             }
         }
 
@@ -177,7 +291,7 @@ namespace Gesco.Desktop.UI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting recent activities");
-                return StatusCode(500, new { message = "Error al obtener actividades recientes" });
+                return Ok(new List<ActivitySummaryDto>());
             }
         }
     }
