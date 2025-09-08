@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gesco.Desktop.Data.Context;
 using Gesco.Desktop.Data.Entities;
+using Gesco.Desktop.Shared.DTOs; // AGREGADO: Usar DTOs compartidos
 using System.Diagnostics;
 
 namespace Gesco.Desktop.UI.Controllers
@@ -39,7 +40,7 @@ namespace Gesco.Desktop.UI.Controllers
                     Status = canConnectToDb ? "healthy" : "unhealthy",
                     Timestamp = DateTime.UtcNow,
                     Version = "1.0.0",
-                    Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
+                    Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
                     DatabaseConnection = canConnectToDb,
                     Uptime = GetUptime(),
                     MemoryUsage = GetMemoryUsage()
@@ -71,7 +72,7 @@ namespace Gesco.Desktop.UI.Controllers
         /// <returns>Estadísticas del sistema</returns>
         [HttpGet("stats")]
         [Authorize]
-        [ProducesResponseType(typeof(SystemStatsDto), 200)]
+        [ProducesResponseType(typeof(DashboardStatsDto), 200)] // CORREGIDO: Usar DTO compartido
         [ProducesResponseType(401)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> GetStats()
@@ -88,17 +89,16 @@ namespace Gesco.Desktop.UI.Controllers
                 var completedSalesStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Completed");
 
-                var stats = new SystemStatsDto
+                var stats = new DashboardStatsDto // CORREGIDO: Usar DTO compartido
                 {
                     // Actividades
-                    TotalActividades = await _context.Activities.CountAsync(),
-                    // LÍNEA 96 CORREGIDA: Usar comparación con Guid
-                    ActividadesActivas = inProgressActivityStatus != null 
+                    TotalActivities = await _context.Activities.CountAsync(),
+                    ActiveActivities = inProgressActivityStatus != null 
                         ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id)
                         : 0,
                     
-                    // LÍNEAS 101, 110 CORREGIDAS: Usar comparación con Guid
-                    VentasHoy = completedSalesStatus != null
+                    // Ventas del día
+                    TodaySales = completedSalesStatus != null
                         ? await _context.SalesTransactions
                             .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
@@ -106,11 +106,11 @@ namespace Gesco.Desktop.UI.Controllers
                             .Where(t => t.TransactionDate.Date == today)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    TransaccionesHoy = await _context.SalesTransactions
+                    TodayTransactions = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate.Date == today),
                     
                     // Ventas del mes
-                    VentasMes = completedSalesStatus != null
+                    MonthSales = completedSalesStatus != null
                         ? await _context.SalesTransactions
                             .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
@@ -118,25 +118,25 @@ namespace Gesco.Desktop.UI.Controllers
                             .Where(t => t.TransactionDate >= thisMonth)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    TransaccionesMes = await _context.SalesTransactions
+                    MonthTransactions = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate >= thisMonth),
                     
                     // Usuarios
-                    TotalUsuarios = await _context.Users.CountAsync(),
-                    UsuariosActivos = await _context.Users
+                    TotalUsers = await _context.Users.CountAsync(),
+                    ActiveUsers = await _context.Users
                         .CountAsync(u => u.Active),
                     
                     // Productos/Artículos
-                    TotalProductos = await _context.CategoryProducts.CountAsync(),
-                    ProductosActivos = await _context.CategoryProducts
+                    TotalProducts = await _context.CategoryProducts.CountAsync(),
+                    ActiveProducts = await _context.CategoryProducts
                         .CountAsync(p => p.Active),
                     
-                    ProductosAgotados = await _context.CategoryProducts
+                    LowStockProducts = await _context.CategoryProducts
                         .CountAsync(p => p.CurrentQuantity <= p.AlertQuantity && p.Active),
                     
                     // Timestamps
-                    FechaConsulta = DateTime.UtcNow,
-                    PeriodoReporte = "Día actual y mes actual"
+                    QueryDate = DateTime.UtcNow,
+                    ReportPeriod = "Día actual y mes actual"
                 };
 
                 return Ok(stats);
@@ -164,15 +164,15 @@ namespace Gesco.Desktop.UI.Controllers
                 {
                     Version = "1.0.0",
                     BuildDate = System.IO.File.GetLastWriteTime(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                    Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
+                    Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
                     ServerTime = DateTime.UtcNow,
-                    Platform = Environment.OSVersion.ToString(),
-                    ProcessorCount = Environment.ProcessorCount,
-                    WorkingSet = Environment.WorkingSet,
+                    Platform = System.Environment.OSVersion.ToString(),
+                    ProcessorCount = System.Environment.ProcessorCount,
+                    WorkingSet = System.Environment.WorkingSet,
                     GCMemory = GC.GetTotalMemory(false),
-                    Runtime = Environment.Version.ToString(),
-                    MachineName = Environment.MachineName,
-                    UserName = Environment.UserName,
+                    Runtime = System.Environment.Version.ToString(),
+                    MachineName = System.Environment.MachineName,
+                    UserName = System.Environment.UserName,
                     Uptime = GetUptime()
                 };
 
@@ -294,13 +294,13 @@ namespace Gesco.Desktop.UI.Controllers
 
         private string GetMemoryUsage()
         {
-            var workingSet = Environment.WorkingSet / 1024 / 1024; // MB
+            var workingSet = System.Environment.WorkingSet / 1024 / 1024; // MB
             var gcMemory = GC.GetTotalMemory(false) / 1024 / 1024; // MB
             return $"Working Set: {workingSet} MB, GC Memory: {gcMemory} MB";
         }
     }
 
-    // DTOs
+    // DTOs locales específicos del SystemController (diferentes nombres para evitar conflictos)
     public class HealthCheckDto
     {
         public string Status { get; set; } = string.Empty;
@@ -311,23 +311,6 @@ namespace Gesco.Desktop.UI.Controllers
         public string Uptime { get; set; } = string.Empty;
         public string MemoryUsage { get; set; } = string.Empty;
         public string? Error { get; set; }
-    }
-
-    public class SystemStatsDto
-    {
-        public int TotalActividades { get; set; }
-        public int ActividadesActivas { get; set; }
-        public decimal VentasHoy { get; set; }
-        public int TransaccionesHoy { get; set; }
-        public decimal VentasMes { get; set; }
-        public int TransaccionesMes { get; set; }
-        public int TotalUsuarios { get; set; }
-        public int UsuariosActivos { get; set; }
-        public int TotalProductos { get; set; }
-        public int ProductosActivos { get; set; }
-        public int ProductosAgotados { get; set; }
-        public DateTime FechaConsulta { get; set; }
-        public string PeriodoReporte { get; set; } = string.Empty;
     }
 
     public class SystemInfoDto
@@ -346,7 +329,7 @@ namespace Gesco.Desktop.UI.Controllers
         public string Uptime { get; set; } = string.Empty;
     }
 
-    // DTO para SystemConfiguration
+    // DTO para SystemConfiguration - ya existe en Shared/DTOs, pero Swagger necesita ver la referencia aquí
     public class SystemConfigurationDto
     {
         public Guid Id { get; set; }

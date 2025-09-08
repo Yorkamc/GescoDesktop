@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Gesco.Desktop.Data.Context;
+using Gesco.Desktop.Shared.DTOs; // AGREGADO: Usar DTOs compartidos
 
 namespace Gesco.Desktop.UI.Controllers
 {
@@ -24,7 +25,7 @@ namespace Gesco.Desktop.UI.Controllers
         /// </summary>
         /// <returns>Estadísticas del dashboard</returns>
         [HttpGet]
-        [ProducesResponseType(typeof(DashboardStatsDto), 200)]
+        [ProducesResponseType(typeof(DashboardStatsDto), 200)] // CORREGIDO: Usar el DTO compartido
         [ProducesResponseType(500)]
         public async Task<IActionResult> GetStats()
         {
@@ -40,17 +41,16 @@ namespace Gesco.Desktop.UI.Controllers
                 var completedSalesStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Completed");
 
-                var stats = new DashboardStatsDto
+                var stats = new DashboardStatsDto // CORREGIDO: Usar el DTO compartido
                 {
                     // Actividades
-                    Actividades = await _context.Activities.CountAsync(),
-                    // LÍNEA 48 CORREGIDA: Usar comparación con Guid
-                    ActividadesActivas = inProgressActivityStatus != null 
+                    TotalActivities = await _context.Activities.CountAsync(),
+                    ActiveActivities = inProgressActivityStatus != null 
                         ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id)
                         : 0,
                     
-                    // LÍNEAS 53, 62 CORREGIDAS: Usar comparación con Guid
-                    VentasHoy = completedSalesStatus != null
+                    // Ventas del día
+                    TodaySales = completedSalesStatus != null
                         ? await _context.SalesTransactions
                             .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
@@ -58,11 +58,11 @@ namespace Gesco.Desktop.UI.Controllers
                             .Where(t => t.TransactionDate.Date == today)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    Transacciones = await _context.SalesTransactions
+                    TodayTransactions = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate.Date == today),
                     
                     // Ventas del mes
-                    VentasMes = completedSalesStatus != null
+                    MonthSales = completedSalesStatus != null
                         ? await _context.SalesTransactions
                             .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m
@@ -70,29 +70,29 @@ namespace Gesco.Desktop.UI.Controllers
                             .Where(t => t.TransactionDate >= thisMonth)
                             .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m,
                     
-                    TransaccionesMes = await _context.SalesTransactions
+                    MonthTransactions = await _context.SalesTransactions
                         .CountAsync(t => t.TransactionDate >= thisMonth),
                     
                     // Usuarios
-                    TotalUsuarios = await _context.Users.CountAsync(),
-                    UsuariosActivos = await _context.Users
+                    TotalUsers = await _context.Users.CountAsync(),
+                    ActiveUsers = await _context.Users
                         .CountAsync(u => u.Active),
                     
                     // Productos/Artículos
-                    TotalProductos = await _context.CategoryProducts.CountAsync(),
-                    ProductosActivos = await _context.CategoryProducts
+                    TotalProducts = await _context.CategoryProducts.CountAsync(),
+                    ActiveProducts = await _context.CategoryProducts
                         .CountAsync(p => p.Active),
                     
-                    ProductosAgotados = await _context.CategoryProducts
+                    LowStockProducts = await _context.CategoryProducts
                         .CountAsync(p => p.CurrentQuantity <= p.AlertQuantity && p.Active),
                     
                     // Timestamps
-                    FechaConsulta = DateTime.UtcNow,
-                    PeriodoReporte = $"Día {today:dd/MM/yyyy} y mes {thisMonth:MM/yyyy}"
+                    QueryDate = DateTime.UtcNow,
+                    ReportPeriod = $"Día {today:dd/MM/yyyy} y mes {thisMonth:MM/yyyy}"
                 };
 
                 _logger.LogInformation("Stats retrieved: Activities: {Activities}, Sales today: {SalesToday:C}", 
-                    stats.Actividades, stats.VentasHoy);
+                    stats.TotalActivities, stats.TodaySales);
 
                 return Ok(stats);
             }
@@ -121,7 +121,6 @@ namespace Gesco.Desktop.UI.Controllers
                 var completedStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Completed");
                 
-                // LÍNEA 118 CORREGIDA: Usar comparación con Guid
                 var salesData = await _context.SalesTransactions
                     .Where(t => t.TransactionDate >= startDate && 
                                (completedStatus == null || t.SalesStatusId == completedStatus.Id))
@@ -183,24 +182,7 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // DTOs actualizados
-    public class DashboardStatsDto
-    {
-        public int Actividades { get; set; }
-        public int ActividadesActivas { get; set; }
-        public decimal VentasHoy { get; set; }
-        public int Transacciones { get; set; }
-        public decimal VentasMes { get; set; }
-        public int TransaccionesMes { get; set; }
-        public int TotalUsuarios { get; set; }
-        public int UsuariosActivos { get; set; }
-        public int TotalProductos { get; set; }
-        public int ProductosActivos { get; set; }
-        public int ProductosAgotados { get; set; }
-        public DateTime FechaConsulta { get; set; }
-        public string PeriodoReporte { get; set; } = string.Empty;
-    }
-
+    // DTOs locales que NO conflictúan con nombres compartidos
     public class SalesSummaryDto
     {
         public DateTime Fecha { get; set; }

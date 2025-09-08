@@ -798,10 +798,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { new Guid("317dce9b-92ae-4365-b267-d4e086a1a7ee"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8478), null, "Activity not started", "Not Started", null, null },
-                    { new Guid("b73028b1-9475-4faf-a006-dd6c0fc0ec9a"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8483), null, "Activity completed", "Completed", null, null },
-                    { new Guid("caf73678-6d4f-4889-81f3-2aaa8c249cf3"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8480), null, "Activity in development", "In Progress", null, null },
-                    { new Guid("cfc5266d-9c7c-4182-a1e6-5810e53754a5"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8487), null, "Activity cancelled", "Cancelled", null, null }
+                    { new Guid("576ecfc4-e6f8-41a9-bb2b-e1b3fb2b55b3"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5459), null, "Activity not started", "Not Started", null, null },
+                    { new Guid("a6faf492-6c4a-48e2-89a2-c872852e42bc"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5466), null, "Activity in development", "In Progress", null, null },
+                    { new Guid("b883d441-e010-4799-943a-1bade7c09953"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5477), null, "Activity completed", "Completed", null, null },
+                    { new Guid("c44d0120-ad31-41dd-9f4d-2080c880f40e"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5599), null, "Activity cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -809,24 +809,24 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "requires_justification", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { new Guid("2d8ea2ae-3c87-41c5-a55b-2694590506dc"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8587), null, "Stock out by product sale", "Sale", false, null, null },
-                    { new Guid("413d6494-6f72-4fd7-a940-d076729fcbb9"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8589), null, "Inventory adjustment for differences", "Adjustment", true, null, null },
-                    { new Guid("e925a53f-12d0-4f7f-b6aa-9384a8d58d11"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8582), null, "Merchandise entry to inventory", "Stock In", false, null, null }
+                    { new Guid("7683b342-cee4-419d-a08a-2771e10f7871"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5926), null, "Inventory adjustment for differences", "Adjustment", true, null, null },
+                    { new Guid("9858b30b-5dc5-4926-8f92-eeb9adbcbdfc"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5908), null, "Merchandise entry to inventory", "Stock In", false, null, null },
+                    { new Guid("c4684aae-de50-436e-9467-7c1cf3bc18a6"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5917), null, "Stock out by product sale", "Sale", false, null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "organizations",
                 columns: new[] { "id", "active", "address", "contact_email", "contact_phone", "created_at", "created_by", "integrity_hash", "last_sync", "name", "purchaser_name", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { new Guid("cf17936f-7a72-4626-b84f-3e889da46534"), true, "San José, Costa Rica", "demo@gesco.com", "2222-2222", new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(7968), null, null, null, "Demo Organization", "Demo Administrator", 1L, null, null });
+                values: new object[] { new Guid("1b7bd928-2f60-4519-b7ef-7893564eba85"), true, "San José, Costa Rica", "demo@gesco.com", "2222-2222", new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(4660), null, null, null, "Demo Organization", "Demo Administrator", 1L, null, null });
 
             migrationBuilder.InsertData(
                 table: "payment_methods",
                 columns: new[] { "id", "active", "created_at", "created_by", "name", "requires_reference", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { new Guid("2d443ee3-ebc4-41a7-b8dc-ae0c451fbc44"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8550), null, "Card", true, null, null },
-                    { new Guid("8cfefaab-6bd3-40b2-a180-544deaf01fe3"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8553), null, "SINPE Mobile", true, null, null },
-                    { new Guid("a1670f87-4239-4a98-9b4e-2d4837593771"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8547), null, "Cash", false, null, null }
+                    { new Guid("3ea387c0-d207-4f4f-b5fb-a462f5522c71"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5779), null, "Cash", false, null, null },
+                    { new Guid("8fbc6b3e-d8d0-4787-b651-2b5f776adea0"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5825), null, "SINPE Mobile", true, null, null },
+                    { new Guid("e961ab76-354a-454e-b748-3270c1f3a7eb"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5787), null, "Card", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -834,9 +834,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { new Guid("49dab6c2-3570-4377-a39d-65f1fa234b36"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8409), null, "Activity supervision", "Supervisor", null, null },
-                    { new Guid("66990a4c-4c45-414a-88c8-639efe1f4bde"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8404), null, "Full system access", "Administrator", null, null },
-                    { new Guid("c58a2d28-8554-4567-9e49-bbb46a2f6c20"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8407), null, "Sales and cash register access", "Salesperson", null, null }
+                    { new Guid("1cd04798-9c33-4292-a050-e246fd2bec1f"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5233), null, "Sales and cash register access", "Salesperson", null, null },
+                    { new Guid("619e32c5-5639-47a5-aae7-65e85476bb24"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5225), null, "Full system access", "Administrator", null, null },
+                    { new Guid("70b1ee11-0462-48f7-acc9-474821107660"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5240), null, "Activity supervision", "Supervisor", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -844,9 +844,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { new Guid("8cf0b8ba-61d9-41a6-98e8-5db97125afff"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8520), null, "Sale completed successfully", "Completed", null, null },
-                    { new Guid("e44e0b65-07ff-4dad-979c-0d66a987eb7e"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8522), null, "Sale cancelled", "Cancelled", null, null },
-                    { new Guid("fbda1583-262a-4f60-a897-f65b9932ee97"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8517), null, "Sale pending processing", "Pending", null, null }
+                    { new Guid("1c33bac6-c332-47e2-9fa8-89f054ae176a"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5704), null, "Sale completed successfully", "Completed", null, null },
+                    { new Guid("5f9b15bf-6e0e-4d1a-9e17-f0577abd86eb"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5710), null, "Sale cancelled", "Cancelled", null, null },
+                    { new Guid("f41560b0-91ab-45ff-b866-dd1454ac68a5"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5697), null, "Sale pending processing", "Pending", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -854,9 +854,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "allows_system_usage", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { new Guid("23b94cb0-3409-4aed-93de-61c775fc7382"), true, false, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8621), null, "Suspended subscription", "Suspended", null, null },
-                    { new Guid("a7e76538-9b62-4c39-9797-cb6355e0eb05"), true, false, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8626), null, "Cancelled subscription", "Cancelled", null, null },
-                    { new Guid("cbb31f95-7338-46d4-be71-43c04541c5d3"), true, true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8618), null, "Active subscription", "Active", null, null }
+                    { new Guid("0a51d32a-6d89-45dc-8f2d-c054bd84c64e"), true, false, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6020), null, "Suspended subscription", "Suspended", null, null },
+                    { new Guid("c699c536-3ea8-4bff-9326-c3336c56b003"), true, true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6010), null, "Active subscription", "Active", null, null },
+                    { new Guid("f77d27a8-eff9-4294-8621-f269aec9585e"), true, false, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6028), null, "Cancelled subscription", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -864,15 +864,15 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "access_level", "allowed_values", "category", "created_at", "created_by", "data_type", "description", "display_order", "environment", "is_editable", "is_sensitive", "key", "max_value", "min_value", "restart_required", "updated_at", "updated_by", "validation_pattern", "value" },
                 values: new object[,]
                 {
-                    { new Guid("12851d93-e880-44fa-8491-a18cda26f6c0"), "admin", null, "system", new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8651), null, "string", "System version", 0, "all", false, false, "system.version", null, null, false, null, null, null, "1.0.0" },
-                    { new Guid("94df5d9d-ddfc-47e3-a81c-07dca79196bb"), "admin", null, "license", new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8657), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, false, null, null, null, "7" },
-                    { new Guid("b137f2f6-29e4-4cfa-abb4-67db04a1e522"), "admin", null, "backup", new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8654), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, false, null, null, null, "6" }
+                    { new Guid("034d18b6-74c7-4b59-af07-055cf860b110"), "admin", null, "system", new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6100), null, "string", "System version", 0, "all", false, false, "system.version", null, null, false, null, null, null, "1.0.0" },
+                    { new Guid("9b726a26-5f30-485b-abbb-d787c3d7ac52"), "admin", null, "license", new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6124), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, false, null, null, null, "7" },
+                    { new Guid("b3a5e165-9bb4-4a0c-83b3-ca9e07d46ed9"), "admin", null, "backup", new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6116), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, false, null, null, null, "6" }
                 });
 
             migrationBuilder.InsertData(
                 table: "users",
                 columns: new[] { "id", "active", "created_at", "created_by", "email", "email_verified_at", "first_login", "first_login_at", "full_name", "integrity_hash", "last_login_at", "last_sync", "organization_id", "password", "phone", "role_id", "sync_version", "updated_at", "updated_by", "username" },
-                values: new object[] { new Guid("17f458d8-ca21-439d-bebc-7b0666e1afbb"), true, new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8448), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, new Guid("cf17936f-7a72-4626-b84f-3e889da46534"), "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6", "8888-8888", new Guid("66990a4c-4c45-414a-88c8-639efe1f4bde"), 1L, null, null, "admin" });
+                values: new object[] { new Guid("f4e07ae2-fe3a-4390-a3ea-8fb94211721c"), true, new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5347), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, new Guid("1b7bd928-2f60-4519-b7ef-7893564eba85"), "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6", "8888-8888", new Guid("619e32c5-5639-47a5-aae7-65e85476bb24"), 1L, null, null, "admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_activation_keys_subscription_id",

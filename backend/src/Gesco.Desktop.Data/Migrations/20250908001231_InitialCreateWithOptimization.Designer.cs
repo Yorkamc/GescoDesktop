@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gesco.Desktop.Data.Migrations
 {
     [DbContext(typeof(LocalDbContext))]
-    [Migration("20250906233249_InitialCreateWithOptimization")]
+    [Migration("20250908001231_InitialCreateWithOptimization")]
     partial class InitialCreateWithOptimization
     {
         /// <inheritdoc />
@@ -430,33 +430,33 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("317dce9b-92ae-4365-b267-d4e086a1a7ee"),
+                            Id = new Guid("576ecfc4-e6f8-41a9-bb2b-e1b3fb2b55b3"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8478),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5459),
                             Description = "Activity not started",
                             Name = "Not Started"
                         },
                         new
                         {
-                            Id = new Guid("caf73678-6d4f-4889-81f3-2aaa8c249cf3"),
+                            Id = new Guid("a6faf492-6c4a-48e2-89a2-c872852e42bc"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8480),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5466),
                             Description = "Activity in development",
                             Name = "In Progress"
                         },
                         new
                         {
-                            Id = new Guid("b73028b1-9475-4faf-a006-dd6c0fc0ec9a"),
+                            Id = new Guid("b883d441-e010-4799-943a-1bade7c09953"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8483),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5477),
                             Description = "Activity completed",
                             Name = "Completed"
                         },
                         new
                         {
-                            Id = new Guid("cfc5266d-9c7c-4182-a1e6-5810e53754a5"),
+                            Id = new Guid("c44d0120-ad31-41dd-9f4d-2080c880f40e"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8487),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5599),
                             Description = "Activity cancelled",
                             Name = "Cancelled"
                         });
@@ -933,27 +933,27 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("e925a53f-12d0-4f7f-b6aa-9384a8d58d11"),
+                            Id = new Guid("9858b30b-5dc5-4926-8f92-eeb9adbcbdfc"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8582),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5908),
                             Description = "Merchandise entry to inventory",
                             Name = "Stock In",
                             RequiresJustification = false
                         },
                         new
                         {
-                            Id = new Guid("2d8ea2ae-3c87-41c5-a55b-2694590506dc"),
+                            Id = new Guid("c4684aae-de50-436e-9467-7c1cf3bc18a6"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8587),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5917),
                             Description = "Stock out by product sale",
                             Name = "Sale",
                             RequiresJustification = false
                         },
                         new
                         {
-                            Id = new Guid("413d6494-6f72-4fd7-a940-d076729fcbb9"),
+                            Id = new Guid("7683b342-cee4-419d-a08a-2771e10f7871"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8589),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5926),
                             Description = "Inventory adjustment for differences",
                             Name = "Adjustment",
                             RequiresJustification = true
@@ -1088,12 +1088,12 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("cf17936f-7a72-4626-b84f-3e889da46534"),
+                            Id = new Guid("1b7bd928-2f60-4519-b7ef-7893564eba85"),
                             Active = true,
                             Address = "San José, Costa Rica",
                             ContactEmail = "demo@gesco.com",
                             ContactPhone = "2222-2222",
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(7968),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(4660),
                             Name = "Demo Organization",
                             PurchaserName = "Demo Administrator",
                             SyncVersion = 1L
@@ -1144,25 +1144,25 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("a1670f87-4239-4a98-9b4e-2d4837593771"),
+                            Id = new Guid("3ea387c0-d207-4f4f-b5fb-a462f5522c71"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8547),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5779),
                             Name = "Cash",
                             RequiresReference = false
                         },
                         new
                         {
-                            Id = new Guid("2d443ee3-ebc4-41a7-b8dc-ae0c451fbc44"),
+                            Id = new Guid("e961ab76-354a-454e-b748-3270c1f3a7eb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8550),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5787),
                             Name = "Card",
                             RequiresReference = true
                         },
                         new
                         {
-                            Id = new Guid("8cfefaab-6bd3-40b2-a180-544deaf01fe3"),
+                            Id = new Guid("8fbc6b3e-d8d0-4787-b651-2b5f776adea0"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8553),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5825),
                             Name = "SINPE Mobile",
                             RequiresReference = true
                         });
@@ -1213,25 +1213,25 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("66990a4c-4c45-414a-88c8-639efe1f4bde"),
+                            Id = new Guid("619e32c5-5639-47a5-aae7-65e85476bb24"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8404),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5225),
                             Description = "Full system access",
                             Name = "Administrator"
                         },
                         new
                         {
-                            Id = new Guid("c58a2d28-8554-4567-9e49-bbb46a2f6c20"),
+                            Id = new Guid("1cd04798-9c33-4292-a050-e246fd2bec1f"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8407),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5233),
                             Description = "Sales and cash register access",
                             Name = "Salesperson"
                         },
                         new
                         {
-                            Id = new Guid("49dab6c2-3570-4377-a39d-65f1fa234b36"),
+                            Id = new Guid("70b1ee11-0462-48f7-acc9-474821107660"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8409),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5240),
                             Description = "Activity supervision",
                             Name = "Supervisor"
                         });
@@ -1347,25 +1347,25 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("fbda1583-262a-4f60-a897-f65b9932ee97"),
+                            Id = new Guid("f41560b0-91ab-45ff-b866-dd1454ac68a5"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8517),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5697),
                             Description = "Sale pending processing",
                             Name = "Pending"
                         },
                         new
                         {
-                            Id = new Guid("8cf0b8ba-61d9-41a6-98e8-5db97125afff"),
+                            Id = new Guid("1c33bac6-c332-47e2-9fa8-89f054ae176a"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8520),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5704),
                             Description = "Sale completed successfully",
                             Name = "Completed"
                         },
                         new
                         {
-                            Id = new Guid("e44e0b65-07ff-4dad-979c-0d66a987eb7e"),
+                            Id = new Guid("5f9b15bf-6e0e-4d1a-9e17-f0577abd86eb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8522),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5710),
                             Description = "Sale cancelled",
                             Name = "Cancelled"
                         });
@@ -1628,28 +1628,28 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("cbb31f95-7338-46d4-be71-43c04541c5d3"),
+                            Id = new Guid("c699c536-3ea8-4bff-9326-c3336c56b003"),
                             Active = true,
                             AllowsSystemUsage = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8618),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6010),
                             Description = "Active subscription",
                             Name = "Active"
                         },
                         new
                         {
-                            Id = new Guid("23b94cb0-3409-4aed-93de-61c775fc7382"),
+                            Id = new Guid("0a51d32a-6d89-45dc-8f2d-c054bd84c64e"),
                             Active = true,
                             AllowsSystemUsage = false,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8621),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6020),
                             Description = "Suspended subscription",
                             Name = "Suspended"
                         },
                         new
                         {
-                            Id = new Guid("a7e76538-9b62-4c39-9797-cb6355e0eb05"),
+                            Id = new Guid("f77d27a8-eff9-4294-8621-f269aec9585e"),
                             Active = true,
                             AllowsSystemUsage = false,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8626),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6028),
                             Description = "Cancelled subscription",
                             Name = "Cancelled"
                         });
@@ -1758,10 +1758,10 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("12851d93-e880-44fa-8491-a18cda26f6c0"),
+                            Id = new Guid("034d18b6-74c7-4b59-af07-055cf860b110"),
                             AccessLevel = "admin",
                             Category = "system",
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8651),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6100),
                             DataType = "string",
                             Description = "System version",
                             DisplayOrder = 0,
@@ -1774,10 +1774,10 @@ namespace Gesco.Desktop.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("b137f2f6-29e4-4cfa-abb4-67db04a1e522"),
+                            Id = new Guid("b3a5e165-9bb4-4a0c-83b3-ca9e07d46ed9"),
                             AccessLevel = "admin",
                             Category = "backup",
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8654),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6116),
                             DataType = "int",
                             Description = "Backup interval in hours",
                             DisplayOrder = 0,
@@ -1790,10 +1790,10 @@ namespace Gesco.Desktop.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("94df5d9d-ddfc-47e3-a81c-07dca79196bb"),
+                            Id = new Guid("9b726a26-5f30-485b-abbb-d787c3d7ac52"),
                             AccessLevel = "admin",
                             Category = "license",
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8657),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(6124),
                             DataType = "int",
                             Description = "License check interval in days",
                             DisplayOrder = 0,
@@ -2056,16 +2056,16 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("17f458d8-ca21-439d-bebc-7b0666e1afbb"),
+                            Id = new Guid("f4e07ae2-fe3a-4390-a3ea-8fb94211721c"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 9, 6, 23, 32, 49, 151, DateTimeKind.Utc).AddTicks(8448),
+                            CreatedAt = new DateTime(2025, 9, 8, 0, 12, 30, 514, DateTimeKind.Utc).AddTicks(5347),
                             Email = "admin@gesco.com",
                             FirstLogin = true,
                             FullName = "System Administrator",
-                            OrganizationId = new Guid("cf17936f-7a72-4626-b84f-3e889da46534"),
+                            OrganizationId = new Guid("1b7bd928-2f60-4519-b7ef-7893564eba85"),
                             Password = "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6",
                             Phone = "8888-8888",
-                            RoleId = new Guid("66990a4c-4c45-414a-88c8-639efe1f4bde"),
+                            RoleId = new Guid("619e32c5-5639-47a5-aae7-65e85476bb24"),
                             SyncVersion = 1L,
                             Username = "admin"
                         });
