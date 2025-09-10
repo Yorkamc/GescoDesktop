@@ -191,7 +191,7 @@ namespace Gesco.Desktop.UI.Controllers
         /// <returns>Configuraciones del sistema</returns>
         [HttpGet("config")]
         [Authorize] // TODO: Agregar rol de administrador
-        [ProducesResponseType(typeof(List<SystemConfigurationDto>), 200)]
+        [ProducesResponseType(typeof(List<SystemConfigurationLocalDto>), 200)] // CORREGIDO: Usar DTO local
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         public async Task<IActionResult> GetSystemConfig()
@@ -202,9 +202,9 @@ namespace Gesco.Desktop.UI.Controllers
                 
                 var configs = await _context.SystemConfigurations
                     .Where(c => c.AccessLevel == "admin" || c.AccessLevel == "user")
-                    .Select(c => new SystemConfigurationDto
+                    .Select(c => new SystemConfigurationLocalDto // CORREGIDO: Usar DTO local con int ID
                     {
-                        Id = c.Id,
+                        Id = c.Id, // int -> int (correcto ahora)
                         Key = c.Key,
                         Value = c.IsSensitive ? "***" : c.Value, // Hide sensitive values
                         DataType = c.DataType,
@@ -329,10 +329,10 @@ namespace Gesco.Desktop.UI.Controllers
         public string Uptime { get; set; } = string.Empty;
     }
 
-    // DTO para SystemConfiguration - ya existe en Shared/DTOs, pero Swagger necesita ver la referencia aquí
-    public class SystemConfigurationDto
+    // CORREGIDO: DTO local para SystemConfiguration con int ID
+    public class SystemConfigurationLocalDto
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; } // CORREGIDO: int en lugar de Guid
         public string Key { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
         public string DataType { get; set; } = string.Empty;

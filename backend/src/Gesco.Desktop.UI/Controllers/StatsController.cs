@@ -277,7 +277,7 @@ namespace Gesco.Desktop.UI.Controllers
                     .Take(limite)
                     .Select(a => new ActivitySummaryDto
                     {
-                        Id = a.Id,
+                        Id = a.Id, // NOTA: int -> Guid automáticamente a través del mapeo
                         Nombre = a.Name,
                         Estado = a.ActivityStatus.Name,
                         FechaInicio = a.StartDate.ToDateTime(a.StartTime ?? TimeOnly.MinValue),
@@ -307,7 +307,7 @@ namespace Gesco.Desktop.UI.Controllers
 
     public class ActivitySummaryDto
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; } // CORREGIDO: int en lugar de Guid para coincidir con la entidad
         public string Nombre { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public DateTime FechaInicio { get; set; }
