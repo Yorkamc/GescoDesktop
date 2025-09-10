@@ -9,28 +9,30 @@ namespace Gesco.Desktop.Data.Context
     public class LocalDbContext : DbContext
     {
         // ============================================
-        // DBSETS - ENTIDADES EN INGLÉS (NUEVAS)
+        // DBSETS - ENTIDADES ACTUALIZADAS CON NUEVOS TIPOS DE ID
         // ============================================
         
-        // Core System
+        // Core System - Guid
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<User> Users { get; set; }
+
+        // Core System - int
         public DbSet<Role> Roles { get; set; }
 
-        // Memberships and Subscriptions
+        // Memberships and Subscriptions - int
         public DbSet<Membership> Memberships { get; set; }
         public DbSet<SubscriptionStatus> SubscriptionStatuses { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<ActivationKey> ActivationKeys { get; set; }
 
-        // Activities
+        // Activities - int
         public DbSet<ActivityStatus> ActivityStatuses { get; set; }
         public DbSet<Activity> Activities { get; set; }
         public DbSet<ServiceCategory> ServiceCategories { get; set; }
         public DbSet<ActivityCategory> ActivityCategories { get; set; }
         public DbSet<CategoryProduct> CategoryProducts { get; set; }
 
-        // Sales
+        // Sales - int
         public DbSet<SalesStatus> SalesStatuses { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<CashRegister> CashRegisters { get; set; }
@@ -38,19 +40,19 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<TransactionDetail> TransactionDetails { get; set; }
         public DbSet<TransactionPayment> TransactionPayments { get; set; }
 
-        // Combos
+        // Combos - int
         public DbSet<SalesCombo> SalesCombos { get; set; }
         public DbSet<ComboItem> ComboItems { get; set; }
 
-        // Inventory
+        // Inventory - int
         public DbSet<InventoryMovementType> InventoryMovementTypes { get; set; }
         public DbSet<InventoryMovement> InventoryMovements { get; set; }
 
-        // Closures
+        // Closures - int
         public DbSet<CashRegisterClosure> CashRegisterClosures { get; set; }
         public DbSet<ActivityClosure> ActivityClosures { get; set; }
 
-        // System Configuration
+        // System Configuration - int
         public DbSet<SystemConfiguration> SystemConfigurations { get; set; }
 
         // ============================================
@@ -110,73 +112,130 @@ namespace Gesco.Desktop.Data.Context
 
         private static void ConfigureRelationships(ModelBuilder modelBuilder)
         {
-            // User relationships
+            // User relationships - Mixed Guid/int
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Organization)
                 .WithMany(o => o.Users)
-                .HasForeignKey(u => u.OrganizationId)
+                .HasForeignKey(u => u.OrganizationId) // Guid
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
-                .HasForeignKey(u => u.RoleId)
+                .HasForeignKey(u => u.RoleId) // int
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Activity relationships
+            // Activity relationships - Mixed
             modelBuilder.Entity<Activity>()
                 .HasOne(a => a.ActivityStatus)
                 .WithMany(s => s.Activities)
-                .HasForeignKey(a => a.ActivityStatusId)
+                .HasForeignKey(a => a.ActivityStatusId) // int
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Sales relationships
+            modelBuilder.Entity<Activity>()
+                .HasOne(a => a.Organization)
+                .WithMany(o => o.Activities)
+                .HasForeignKey(a => a.OrganizationId) // Guid
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Sales relationships - int to int
             modelBuilder.Entity<SalesTransaction>()
                 .HasOne(st => st.SalesStatus)
                 .WithMany(ss => ss.SalesTransactions)
-                .HasForeignKey(st => st.SalesStatusId)
+                .HasForeignKey(st => st.SalesStatusId) // int
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Activity Category relationships (tabla pivote)
+            modelBuilder.Entity<SalesTransaction>()
+                .HasOne(st => st.CashRegister)
+                .WithMany(cr => cr.SalesTransactions)
+                .HasForeignKey(st => st.CashRegisterId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Activity Category relationships - int to int
             modelBuilder.Entity<ActivityCategory>()
                 .HasOne(ac => ac.Activity)
                 .WithMany(a => a.ActivityCategories)
-                .HasForeignKey(ac => ac.ActivityId)
+                .HasForeignKey(ac => ac.ActivityId) // int
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ActivityCategory>()
                 .HasOne(ac => ac.ServiceCategory)
                 .WithMany(sc => sc.ActivityCategories)
-                .HasForeignKey(ac => ac.ServiceCategoryId)
+                .HasForeignKey(ac => ac.ServiceCategoryId) // int
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Category Product relationships
+            // Category Product relationships - int to int
             modelBuilder.Entity<CategoryProduct>()
                 .HasOne(cp => cp.ActivityCategory)
                 .WithMany(ac => ac.CategoryProducts)
-                .HasForeignKey(cp => cp.ActivityCategoryId)
+                .HasForeignKey(cp => cp.ActivityCategoryId) // int
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Inventory relationships
+            // Inventory relationships - int to int
             modelBuilder.Entity<InventoryMovement>()
                 .HasOne(im => im.Product)
                 .WithMany(p => p.InventoryMovements)
-                .HasForeignKey(im => im.ProductId)
+                .HasForeignKey(im => im.ProductId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryMovement>()
+                .HasOne(im => im.MovementType)
+                .WithMany(mt => mt.InventoryMovements)
+                .HasForeignKey(im => im.MovementTypeId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Transaction Detail relationships - int to int
+            modelBuilder.Entity<TransactionDetail>()
+                .HasOne(td => td.SalesTransaction)
+                .WithMany(st => st.TransactionDetails)
+                .HasForeignKey(td => td.SalesTransactionId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TransactionDetail>()
+                .HasOne(td => td.Product)
+                .WithMany(p => p.TransactionDetails)
+                .HasForeignKey(td => td.ProductId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Subscription relationships - Mixed Guid/int
+            modelBuilder.Entity<Subscription>()
+                .HasOne(s => s.Organization)
+                .WithMany(o => o.Subscriptions)
+                .HasForeignKey(s => s.OrganizationId) // Guid
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Subscription>()
+                .HasOne(s => s.Membership)
+                .WithMany(m => m.Subscriptions)
+                .HasForeignKey(s => s.MembershipId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Subscription>()
+                .HasOne(s => s.SubscriptionStatus)
+                .WithMany(ss => ss.Subscriptions)
+                .HasForeignKey(s => s.SubscriptionStatusId) // int
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Activation Key relationships - int to int
+            modelBuilder.Entity<ActivationKey>()
+                .HasOne(ak => ak.Subscription)
+                .WithMany(s => s.ActivationKeys)
+                .HasForeignKey(ak => ak.SubscriptionId) // int
                 .OnDelete(DeleteBehavior.Restrict);
         }
 
         // ============================================
-        // SEED DATA METHOD
+        // SEED DATA METHOD - ACTUALIZADO CON NUEVOS TIPOS
         // ============================================
         private static void SeedData(ModelBuilder modelBuilder)
         {
             // Generate IDs
-            var orgId = Guid.NewGuid();
-            var adminRoleId = Guid.NewGuid();
-            var salesRoleId = Guid.NewGuid();
-            var supervisorRoleId = Guid.NewGuid();
+            var orgId = Guid.NewGuid(); // Organization - Guid
+            var adminRoleId = 1; // Role - int
+            var salesRoleId = 2; // Role - int  
+            var supervisorRoleId = 3; // Role - int
 
-            // Default Organization
+            // Default Organization - Guid ID
             modelBuilder.Entity<Organization>().HasData(
                 new Organization
                 {
@@ -191,7 +250,7 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // System Roles
+            // System Roles - int ID
             modelBuilder.Entity<Role>().HasData(
                 new Role 
                 { 
@@ -225,33 +284,25 @@ namespace Gesco.Desktop.Data.Context
             modelBuilder.Entity<User>().HasData(
                 new User
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.NewGuid(), // User - Guid
                     Username = "admin",
                     Email = "admin@gesco.com",
                     Password = adminPasswordHash,
                     FullName = "System Administrator",
                     Phone = "8888-8888",
-                    OrganizationId = orgId,
-                    RoleId = adminRoleId,
+                    OrganizationId = orgId, // FK Guid
+                    RoleId = adminRoleId, // FK int
                     Active = true,
                     FirstLogin = true,
                     CreatedAt = DateTime.UtcNow
                 }
             );
 
-            // Activity Statuses
-            var activityStatusIds = new[]
-            {
-                Guid.NewGuid(), // Not Started
-                Guid.NewGuid(), // In Progress  
-                Guid.NewGuid(), // Completed
-                Guid.NewGuid()  // Cancelled
-            };
-
+            // Activity Statuses - int IDs
             modelBuilder.Entity<ActivityStatus>().HasData(
                 new ActivityStatus 
                 { 
-                    Id = activityStatusIds[0],
+                    Id = 1,
                     Name = "Not Started", 
                     Description = "Activity not started", 
                     Active = true, 
@@ -259,7 +310,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new ActivityStatus 
                 { 
-                    Id = activityStatusIds[1],
+                    Id = 2,
                     Name = "In Progress", 
                     Description = "Activity in development", 
                     Active = true, 
@@ -267,7 +318,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new ActivityStatus 
                 { 
-                    Id = activityStatusIds[2],
+                    Id = 3,
                     Name = "Completed", 
                     Description = "Activity completed", 
                     Active = true, 
@@ -275,7 +326,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new ActivityStatus 
                 { 
-                    Id = activityStatusIds[3],
+                    Id = 4,
                     Name = "Cancelled", 
                     Description = "Activity cancelled", 
                     Active = true, 
@@ -283,18 +334,11 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // Sales Statuses
-            var salesStatusIds = new[]
-            {
-                Guid.NewGuid(), // Pending
-                Guid.NewGuid(), // Completed
-                Guid.NewGuid()  // Cancelled
-            };
-
+            // Sales Statuses - int IDs
             modelBuilder.Entity<SalesStatus>().HasData(
                 new SalesStatus 
                 { 
-                    Id = salesStatusIds[0],
+                    Id = 1,
                     Name = "Pending", 
                     Description = "Sale pending processing", 
                     Active = true, 
@@ -302,7 +346,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SalesStatus 
                 { 
-                    Id = salesStatusIds[1],
+                    Id = 2,
                     Name = "Completed", 
                     Description = "Sale completed successfully", 
                     Active = true, 
@@ -310,7 +354,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SalesStatus 
                 { 
-                    Id = salesStatusIds[2],
+                    Id = 3,
                     Name = "Cancelled", 
                     Description = "Sale cancelled", 
                     Active = true, 
@@ -318,11 +362,11 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // Payment Methods
+            // Payment Methods - int IDs
             modelBuilder.Entity<PaymentMethod>().HasData(
                 new PaymentMethod 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 1,
                     Name = "Cash", 
                     RequiresReference = false, 
                     Active = true, 
@@ -330,7 +374,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new PaymentMethod 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 2,
                     Name = "Card", 
                     RequiresReference = true, 
                     Active = true, 
@@ -338,7 +382,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new PaymentMethod 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 3,
                     Name = "SINPE Mobile", 
                     RequiresReference = true, 
                     Active = true, 
@@ -346,11 +390,11 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // Inventory Movement Types
+            // Inventory Movement Types - int IDs
             modelBuilder.Entity<InventoryMovementType>().HasData(
                 new InventoryMovementType 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 1,
                     Name = "Stock In", 
                     Description = "Merchandise entry to inventory", 
                     RequiresJustification = false, 
@@ -359,7 +403,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new InventoryMovementType 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 2,
                     Name = "Sale", 
                     Description = "Stock out by product sale", 
                     RequiresJustification = false, 
@@ -368,7 +412,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new InventoryMovementType 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 3,
                     Name = "Adjustment", 
                     Description = "Inventory adjustment for differences", 
                     RequiresJustification = true, 
@@ -377,11 +421,11 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // Subscription Statuses
+            // Subscription Statuses - int IDs
             modelBuilder.Entity<SubscriptionStatus>().HasData(
                 new SubscriptionStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 1,
                     Name = "Active", 
                     Description = "Active subscription", 
                     AllowsSystemUsage = true, 
@@ -390,7 +434,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SubscriptionStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 2,
                     Name = "Suspended", 
                     Description = "Suspended subscription", 
                     AllowsSystemUsage = false, 
@@ -399,7 +443,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SubscriptionStatus 
                 { 
-                    Id = Guid.NewGuid(),
+                    Id = 3,
                     Name = "Cancelled", 
                     Description = "Cancelled subscription", 
                     AllowsSystemUsage = false, 
@@ -408,11 +452,11 @@ namespace Gesco.Desktop.Data.Context
                 }
             );
 
-            // System Configuration
+            // System Configuration - int IDs
             modelBuilder.Entity<SystemConfiguration>().HasData(
                 new SystemConfiguration
                 {
-                    Id = Guid.NewGuid(),
+                    Id = 1,
                     Key = "system.version",
                     Value = "1.0.0",
                     DataType = "string",
@@ -424,7 +468,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SystemConfiguration
                 {
-                    Id = Guid.NewGuid(),
+                    Id = 2,
                     Key = "backup.interval_hours",
                     Value = "6",
                     DataType = "int",
@@ -436,7 +480,7 @@ namespace Gesco.Desktop.Data.Context
                 },
                 new SystemConfiguration
                 {
-                    Id = Guid.NewGuid(),
+                    Id = 3,
                     Key = "license.check_interval_days",
                     Value = "7",
                     DataType = "int",

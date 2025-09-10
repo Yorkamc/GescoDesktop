@@ -4,9 +4,9 @@ using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
-    // CONFIGURACIÓN DEL SISTEMA
-    [Table("system_configurations")]
-    public class SystemConfiguration : AuditableEntity
+    // CONFIGURACIÓN DEL SISTEMA - CAMBIA A int
+    [Table("system_configuration")] // CORREGIDO: Singular para coincidir con migraciones Laravel
+    public class SystemConfiguration : AuditableEntityInt
     {
         [Column("key")]
         [Required]
@@ -105,7 +105,7 @@ namespace Gesco.Desktop.Data.Entities
     // DTO para las configuraciones del sistema
     public class SystemConfigurationDto
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; } // CAMBIA a int
         public string Key { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
         public string DataType { get; set; } = string.Empty;
