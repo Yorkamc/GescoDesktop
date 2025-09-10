@@ -29,13 +29,13 @@ namespace Gesco.Desktop.Core.Services
                         .ThenInclude(ac => ac.Activity)
                     .AsQueryable();
 
-                // CORREGIDO: Manejar conversión de int a Guid
+                // CORREGIDO: Manejar filtro por categoría correctamente
                 if (activityCategoryId.HasValue)
                 {
-                    var categoryGuid = await GetActivityCategoryGuidByOrder(activityCategoryId.Value);
-                    if (categoryGuid.HasValue)
+                    var categoryId = await GetActivityCategoryIdByOrder(activityCategoryId.Value);
+                    if (categoryId.HasValue)
                     {
-                        query = query.Where(p => p.ActivityCategoryId == categoryGuid.Value);
+                        query = query.Where(p => p.ActivityCategoryId == categoryId.Value);
                     }
                 }
 
@@ -51,7 +51,7 @@ namespace Gesco.Desktop.Core.Services
                 {
                     result.Add(new CategoryProductDto
                     {
-                        Id = p.Id,
+                        Id = GenerateGuidFromInt(p.Id), // Mapear int ID a Guid para DTO
                         ActivityCategoryId = GetCategoryOrder(p.ActivityCategoryId, allCategories),
                         Code = p.Code,
                         Name = p.Name,
@@ -79,9 +79,12 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(id);
+                
                 var product = await _context.CategoryProducts
                     .Include(p => p.ActivityCategory)
-                    .FirstOrDefaultAsync(p => p.Id == id);
+                    .FirstOrDefaultAsync(p => p.Id == intId);
 
                 if (product == null)
                 {
@@ -92,7 +95,7 @@ namespace Gesco.Desktop.Core.Services
 
                 return new CategoryProductDto
                 {
-                    Id = product.Id,
+                    Id = id, // Mantener el Guid del parámetro
                     ActivityCategoryId = GetCategoryOrder(product.ActivityCategoryId, allCategories),
                     Code = product.Code,
                     Name = product.Name,
@@ -116,17 +119,17 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                // CORREGIDO: Convertir int a Guid
-                var categoryGuid = await GetActivityCategoryGuidByOrder(request.ActivityCategoryId);
-                if (!categoryGuid.HasValue)
+                // CORREGIDO: Convertir order a ID de categoría
+                var categoryId = await GetActivityCategoryIdByOrder(request.ActivityCategoryId);
+                if (!categoryId.HasValue)
                 {
                     throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
                 }
 
                 var product = new CategoryProduct
                 {
-                    Id = Guid.NewGuid(),
-                    ActivityCategoryId = categoryGuid.Value,
+                    // Id se genera automáticamente como int
+                    ActivityCategoryId = categoryId.Value, // int -> int (correcto)
                     Code = request.Code,
                     Name = request.Name,
                     Description = request.Description,
@@ -150,9 +153,9 @@ namespace Gesco.Desktop.Core.Services
                     {
                         var movement = new InventoryMovement
                         {
-                            Id = Guid.NewGuid(),
-                            ProductId = product.Id, // CORREGIDO: Usar Guid directamente
-                            MovementTypeId = stockInType.Id,
+                            // Id se genera automáticamente como int
+                            ProductId = product.Id, // int -> int (correcto)
+                            MovementTypeId = stockInType.Id, // int -> int (correcto)
                             Quantity = request.InitialQuantity,
                             PreviousQuantity = 0,
                             NewQuantity = request.InitialQuantity,
@@ -170,7 +173,9 @@ namespace Gesco.Desktop.Core.Services
                 _logger.LogInformation("Created new product: {ProductName} with ID {ProductId}", 
                     product.Name, product.Id);
 
-                return await GetProductByIdAsync(product.Id) ?? 
+                // Generar Guid para el DTO de respuesta
+                var responseGuid = GenerateGuidFromInt(product.Id);
+                return await GetProductByIdAsync(responseGuid) ?? 
                     throw new InvalidOperationException("Failed to retrieve created product");
             }
             catch (Exception ex)
@@ -184,22 +189,25 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var product = await _context.CategoryProducts.FindAsync(id);
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(id);
+                
+                var product = await _context.CategoryProducts.FindAsync(intId);
                 if (product == null)
                 {
                     return null;
                 }
 
-                // CORREGIDO: Convertir int a Guid
-                var categoryGuid = await GetActivityCategoryGuidByOrder(request.ActivityCategoryId);
-                if (!categoryGuid.HasValue)
+                // CORREGIDO: Convertir order a ID de categoría
+                var categoryId = await GetActivityCategoryIdByOrder(request.ActivityCategoryId);
+                if (!categoryId.HasValue)
                 {
                     throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
                 }
 
                 var oldQuantity = product.CurrentQuantity;
 
-                product.ActivityCategoryId = categoryGuid.Value;
+                product.ActivityCategoryId = categoryId.Value; // int -> int (correcto)
                 product.Code = request.Code;
                 product.Name = request.Name;
                 product.Description = request.Description;
@@ -231,7 +239,10 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var product = await _context.CategoryProducts.FindAsync(id);
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(id);
+                
+                var product = await _context.CategoryProducts.FindAsync(intId);
                 if (product == null)
                 {
                     return false;
@@ -270,7 +281,7 @@ namespace Gesco.Desktop.Core.Services
                 {
                     result.Add(new CategoryProductDto
                     {
-                        Id = p.Id,
+                        Id = GenerateGuidFromInt(p.Id), // Mapear int ID a Guid
                         ActivityCategoryId = GetCategoryOrder(p.ActivityCategoryId, allCategories),
                         Code = p.Code,
                         Name = p.Name,
@@ -298,7 +309,10 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var product = await _context.CategoryProducts.FindAsync(productId);
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(productId);
+                
+                var product = await _context.CategoryProducts.FindAsync(intId);
                 if (product == null)
                 {
                     return false;
@@ -318,9 +332,9 @@ namespace Gesco.Desktop.Core.Services
                 {
                     var movement = new InventoryMovement
                     {
-                        Id = Guid.NewGuid(),
-                        ProductId = productId, // CORREGIDO: Usar Guid directamente
-                        MovementTypeId = adjustmentType.Id,
+                        // Id se genera automáticamente como int
+                        ProductId = intId, // int -> int (correcto)
+                        MovementTypeId = adjustmentType.Id, // int -> int (correcto)
                         Quantity = difference,
                         PreviousQuantity = oldQuantity,
                         NewQuantity = newQuantity,
@@ -357,7 +371,9 @@ namespace Gesco.Desktop.Core.Services
 
                 if (productId.HasValue)
                 {
-                    query = query.Where(m => m.ProductId == productId.Value); // CORREGIDO: Comparación Guid
+                    // Convertir Guid del DTO a int de la entidad
+                    var intId = ExtractIntFromGuid(productId.Value);
+                    query = query.Where(m => m.ProductId == intId);
                 }
 
                 var movements = await query
@@ -372,8 +388,8 @@ namespace Gesco.Desktop.Core.Services
                 {
                     result.Add(new InventoryMovementDto
                     {
-                        Id = m.Id,
-                        ProductId = m.ProductId, // CORREGIDO: Mantener como Guid en DTO
+                        Id = GenerateGuidFromInt(m.Id), // Mapear int ID a Guid
+                        ProductId = GenerateGuidFromInt(m.ProductId), // Mapear int ID a Guid
                         ProductName = m.Product.Name,
                         MovementTypeId = GetMovementTypeOrder(m.MovementTypeId, allMovementTypes),
                         MovementTypeName = m.MovementType.Name,
@@ -396,8 +412,8 @@ namespace Gesco.Desktop.Core.Services
             }
         }
 
-        // MÉTODOS HELPER PARA MAPEO DE TIPOS
-        private async Task<Guid?> GetActivityCategoryGuidByOrder(int order)
+        // MÉTODOS HELPER PARA MAPEO DE TIPOS Y IDs
+        private async Task<int?> GetActivityCategoryIdByOrder(int order)
         {
             var categories = await _context.ActivityCategories
                 .OrderBy(ac => ac.CreatedAt)
@@ -408,16 +424,40 @@ namespace Gesco.Desktop.Core.Services
                 : null;
         }
 
-        private static int GetCategoryOrder(Guid categoryId, List<ActivityCategory> categories)
+        private static int GetCategoryOrder(int categoryId, List<ActivityCategory> categories)
         {
             var index = categories.FindIndex(c => c.Id == categoryId);
             return index >= 0 ? index + 1 : 0;
         }
 
-        private static int GetMovementTypeOrder(Guid movementTypeId, List<InventoryMovementType> types)
+        private static int GetMovementTypeOrder(int movementTypeId, List<InventoryMovementType> types)
         {
             var index = types.FindIndex(t => t.Id == movementTypeId);
             return index >= 0 ? index + 1 : 0;
+        }
+
+        // MÉTODOS HELPER PARA MAPEO INT <-> GUID
+        private static Guid GenerateGuidFromInt(int intId)
+        {
+            // Generar un Guid determinístico basado en el int ID
+            var bytes = new byte[16];
+            var intBytes = BitConverter.GetBytes(intId);
+            Array.Copy(intBytes, 0, bytes, 0, Math.Min(4, intBytes.Length));
+            
+            // Llenar el resto con un patrón predecible para que sea determinístico
+            for (int i = 4; i < 16; i++)
+            {
+                bytes[i] = (byte)(intId % 256);
+            }
+            
+            return new Guid(bytes);
+        }
+
+        private static int ExtractIntFromGuid(Guid guid)
+        {
+            // Extraer el int ID del Guid
+            var bytes = guid.ToByteArray();
+            return BitConverter.ToInt32(bytes, 0);
         }
     }
 }

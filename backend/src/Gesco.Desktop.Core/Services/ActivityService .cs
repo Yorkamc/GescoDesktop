@@ -34,9 +34,14 @@ namespace Gesco.Desktop.Core.Services
 
                 var activities = await query
                     .OrderByDescending(a => a.CreatedAt)
-                    .Select(a => new ActivityDto
+                    .ToListAsync();
+
+                var result = new List<ActivityDto>();
+                foreach (var a in activities)
+                {
+                    result.Add(new ActivityDto
                     {
-                        Id = a.Id,
+                        Id = GenerateGuidFromInt(a.Id), // Mapear int ID a Guid para DTO
                         Name = a.Name,
                         Description = a.Description,
                         StartDate = a.StartDate,
@@ -44,17 +49,17 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = (int)a.ActivityStatusId.GetHashCode(), // Temporal conversion
-                        StatusName = a.ActivityStatus.Name,
-                        ManagerUserId = a.ManagerUserId,
-                        OrganizationId = a.OrganizationId,
-                        OrganizationName = a.Organization != null ? a.Organization.Name : null,
+                        ActivityStatusId = a.ActivityStatusId, // int -> int (correcto)
+                        StatusName = a.ActivityStatus?.Name,
+                        ManagerUserId = a.ManagerUserId, // Guid -> Guid (correcto)
+                        OrganizationId = a.OrganizationId, // Guid -> Guid (correcto)
+                        OrganizationName = a.Organization?.Name,
                         CreatedAt = a.CreatedAt
-                    })
-                    .ToListAsync();
+                    });
+                }
 
-                _logger.LogInformation("Retrieved {Count} activities", activities.Count);
-                return activities;
+                _logger.LogInformation("Retrieved {Count} activities", result.Count);
+                return result;
             }
             catch (Exception ex)
             {
@@ -67,10 +72,13 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(id);
+                
                 var activity = await _context.Activities
                     .Include(a => a.ActivityStatus)
                     .Include(a => a.Organization)
-                    .FirstOrDefaultAsync(a => a.Id == id);
+                    .FirstOrDefaultAsync(a => a.Id == intId);
 
                 if (activity == null)
                 {
@@ -79,7 +87,7 @@ namespace Gesco.Desktop.Core.Services
 
                 return new ActivityDto
                 {
-                    Id = activity.Id,
+                    Id = id, // Mantener el Guid del parámetro
                     Name = activity.Name,
                     Description = activity.Description,
                     StartDate = activity.StartDate,
@@ -87,10 +95,10 @@ namespace Gesco.Desktop.Core.Services
                     EndDate = activity.EndDate,
                     EndTime = activity.EndTime,
                     Location = activity.Location,
-                    ActivityStatusId = (int)activity.ActivityStatusId.GetHashCode(), // Temporal conversion
-                    StatusName = activity.ActivityStatus.Name,
-                    ManagerUserId = activity.ManagerUserId,
-                    OrganizationId = activity.OrganizationId,
+                    ActivityStatusId = activity.ActivityStatusId, // int -> int (correcto)
+                    StatusName = activity.ActivityStatus?.Name,
+                    ManagerUserId = activity.ManagerUserId, // Guid -> Guid (correcto)
+                    OrganizationId = activity.OrganizationId, // Guid -> Guid (correcto)
                     OrganizationName = activity.Organization?.Name,
                     CreatedAt = activity.CreatedAt
                 };
@@ -117,7 +125,7 @@ namespace Gesco.Desktop.Core.Services
 
                 var activity = new Activity
                 {
-                    Id = Guid.NewGuid(),
+                    // Id se genera automáticamente como int
                     Name = request.Name,
                     Description = request.Description,
                     StartDate = request.StartDate,
@@ -125,9 +133,9 @@ namespace Gesco.Desktop.Core.Services
                     EndDate = request.EndDate,
                     EndTime = request.EndTime,
                     Location = request.Location,
-                    ActivityStatusId = defaultStatus?.Id ?? Guid.NewGuid(), // Use proper Guid
-                    ManagerUserId = request.ManagerUserId,
-                    OrganizationId = request.OrganizationId,
+                    ActivityStatusId = defaultStatus?.Id ?? 1, // int -> int (correcto)
+                    ManagerUserId = request.ManagerUserId, // Guid -> Guid (correcto)
+                    OrganizationId = request.OrganizationId, // Guid -> Guid (correcto)
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -137,9 +145,25 @@ namespace Gesco.Desktop.Core.Services
                 _logger.LogInformation("Created new activity: {ActivityName} with ID {ActivityId}", 
                     activity.Name, activity.Id);
 
-                // Return the created activity with includes
-                return await GetActivityByIdAsync(activity.Id) ?? 
-                    throw new InvalidOperationException("Failed to retrieve created activity");
+                // Generar Guid para el DTO de respuesta basado en el int ID
+                var responseGuid = GenerateGuidFromInt(activity.Id);
+                
+                return new ActivityDto
+                {
+                    Id = responseGuid,
+                    Name = activity.Name,
+                    Description = activity.Description,
+                    StartDate = activity.StartDate,
+                    StartTime = activity.StartTime,
+                    EndDate = activity.EndDate,
+                    EndTime = activity.EndTime,
+                    Location = activity.Location,
+                    ActivityStatusId = activity.ActivityStatusId, // int -> int (correcto)
+                    StatusName = defaultStatus?.Name,
+                    ManagerUserId = activity.ManagerUserId, // Guid -> Guid (correcto)
+                    OrganizationId = activity.OrganizationId, // Guid -> Guid (correcto)
+                    CreatedAt = activity.CreatedAt
+                };
             }
             catch (Exception ex)
             {
@@ -152,7 +176,10 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var activity = await _context.Activities.FindAsync(id);
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(id);
+                
+                var activity = await _context.Activities.FindAsync(intId);
                 if (activity == null)
                 {
                     return null;
@@ -166,19 +193,18 @@ namespace Gesco.Desktop.Core.Services
                 activity.EndTime = request.EndTime;
                 activity.Location = request.Location;
                 
-                // LÍNEA 128 CORREGIDA: Handle status update properly
+                // Manejar actualización de status correctamente
                 if (request.ActivityStatusId > 0)
                 {
-                    var statuses = await _context.ActivityStatuses.ToListAsync();
-                    if (request.ActivityStatusId <= statuses.Count)
+                    var status = await _context.ActivityStatuses.FindAsync(request.ActivityStatusId);
+                    if (status != null)
                     {
-                        var selectedStatus = statuses[request.ActivityStatusId - 1];
-                        activity.ActivityStatusId = selectedStatus.Id; // Esto asigna Guid a Guid
+                        activity.ActivityStatusId = status.Id; // int -> int (correcto)
                     }
                 }
 
-                activity.ManagerUserId = request.ManagerUserId;
-                activity.OrganizationId = request.OrganizationId;
+                activity.ManagerUserId = request.ManagerUserId; // Guid -> Guid (correcto)
+                activity.OrganizationId = request.OrganizationId; // Guid -> Guid (correcto)
                 activity.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -198,7 +224,10 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var activity = await _context.Activities.FindAsync(id);
+                // Convertir Guid del DTO a int de la entidad
+                var intId = ExtractIntFromGuid(id);
+                
+                var activity = await _context.Activities.FindAsync(intId);
                 if (activity == null)
                 {
                     return false;
@@ -232,9 +261,14 @@ namespace Gesco.Desktop.Core.Services
                     .Include(a => a.Organization)
                     .Where(a => activeStatuses.Contains(a.ActivityStatusId))
                     .OrderByDescending(a => a.StartDate)
-                    .Select(a => new ActivityDto
+                    .ToListAsync();
+
+                var result = new List<ActivityDto>();
+                foreach (var a in activities)
+                {
+                    result.Add(new ActivityDto
                     {
-                        Id = a.Id,
+                        Id = GenerateGuidFromInt(a.Id), // Mapear int ID a Guid
                         Name = a.Name,
                         Description = a.Description,
                         StartDate = a.StartDate,
@@ -242,17 +276,16 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        // LÍNEA 177 CORREGIDA: Usar un mapeo temporal más seguro
-                        ActivityStatusId = activeStatuses.IndexOf(a.ActivityStatusId) + 1,
-                        StatusName = a.ActivityStatus.Name,
-                        ManagerUserId = a.ManagerUserId,
-                        OrganizationId = a.OrganizationId,
-                        OrganizationName = a.Organization != null ? a.Organization.Name : null,
+                        ActivityStatusId = a.ActivityStatusId, // int -> int (correcto)
+                        StatusName = a.ActivityStatus?.Name,
+                        ManagerUserId = a.ManagerUserId, // Guid -> Guid (correcto)
+                        OrganizationId = a.OrganizationId, // Guid -> Guid (correcto)
+                        OrganizationName = a.Organization?.Name,
                         CreatedAt = a.CreatedAt
-                    })
-                    .ToListAsync();
+                    });
+                }
 
-                return activities;
+                return result;
             }
             catch (Exception ex)
             {
@@ -278,12 +311,10 @@ namespace Gesco.Desktop.Core.Services
                 var stats = new DashboardStatsDto
                 {
                     TotalActivities = await _context.Activities.CountAsync(),
-                    // LÍNEA 234 CORREGIDA: Usar comparación con Guid
                     ActiveActivities = inProgressStatus != null 
                         ? await _context.Activities.CountAsync(a => a.ActivityStatusId == inProgressStatus.Id)
                         : 0,
                     
-                    // LÍNEAS 282, 286, 294 CORREGIDAS: Usar comparación con Guid
                     TodaySales = completedSalesStatus != null
                         ? await _context.SalesTransactions
                             .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
@@ -326,5 +357,29 @@ namespace Gesco.Desktop.Core.Services
                 throw;
             }
         }
-    } // LÍNEA 320 CORREGIDA: Agregando la llave de cierre faltante
+
+        // MÉTODOS HELPER PARA MAPEO INT <-> GUID
+        private static Guid GenerateGuidFromInt(int intId)
+        {
+            // Generar un Guid determinístico basado en el int ID
+            var bytes = new byte[16];
+            var intBytes = BitConverter.GetBytes(intId);
+            Array.Copy(intBytes, 0, bytes, 0, Math.Min(4, intBytes.Length));
+            
+            // Llenar el resto con un patrón predecible para que sea determinístico
+            for (int i = 4; i < 16; i++)
+            {
+                bytes[i] = (byte)(intId % 256);
+            }
+            
+            return new Guid(bytes);
+        }
+
+        private static int ExtractIntFromGuid(Guid guid)
+        {
+            // Extraer el int ID del Guid
+            var bytes = guid.ToByteArray();
+            return BitConverter.ToInt32(bytes, 0);
+        }
+    }
 }

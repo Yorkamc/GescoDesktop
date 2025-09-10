@@ -170,16 +170,16 @@ namespace Gesco.Desktop.Core.Services
             }
             else
             {
-                // CORREGIDO: Obtener subscription como Guid
+                // CORREGIDO: Obtener subscription como int
                 var defaultSubscription = await _context.Subscriptions.FirstOrDefaultAsync();
-                var subscriptionId = defaultSubscription?.Id ?? Guid.NewGuid();
+                var subscriptionId = defaultSubscription?.Id ?? 1; // CORREGIDO: Usar int por defecto
 
-                // Create new activation
+                // Create new activation - ActivationKey ahora tiene int ID
                 var activation = new Gesco.Desktop.Data.Entities.ActivationKey
                 {
-                    Id = Guid.NewGuid(),
+                    // Id se genera automáticamente como int
                     ActivationCode = codigoActivacion,
-                    SubscriptionId = subscriptionId, // CORREGIDO: Usar Guid
+                    SubscriptionId = subscriptionId, // CORREGIDO: int -> int
                     GeneratedDate = DateTime.UtcNow,
                     ExpirationDate = fechaExpiracion,
                     UsedDate = DateTime.UtcNow,
@@ -189,7 +189,7 @@ namespace Gesco.Desktop.Core.Services
                     IsRevoked = false,
                     MaxUses = 1,
                     CurrentUses = 1,
-                    UsedByOrganizationId = organizacionId,
+                    UsedByOrganizationId = organizacionId, // Guid para Organization
                     CreatedAt = DateTime.UtcNow
                 };
 
