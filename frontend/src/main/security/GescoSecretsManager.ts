@@ -1,5 +1,4 @@
 import { safeStorage, app } from 'electron';
-import * as keytar from 'keytar';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -7,10 +6,16 @@ import * as path from 'path';
 interface SecretMetadata {
   id: string;
   level: 'critical' | 'important' | 'generated';
-  method: 'keytar' | 'safeStorage' | 'encrypted';
+  method: 'safeStorage' | 'encrypted' | 'memory';
   createdAt: Date;
   lastAccessed?: Date;
   expiresAt?: Date;
+  persistent: boolean;
+}
+
+interface StoredSecret {
+  data: string;
+  metadata: SecretMetadata;
 }
 
 export class GescoSecretsManager {
@@ -20,6 +25,8 @@ export class GescoSecretsManager {
   private readonly metadataFile: string;
   private readonly masterKey: Buffer;
   private metadata: Map<string, SecretMetadata> = new Map();
+  private memorySecrets: Map<string, string> = new Map();
+  private isInitialized = false;
 
   private constructor() {
     this.secretsDir = path.join(app.getPath('userData'), 'secure');
@@ -39,10 +46,13 @@ export class GescoSecretsManager {
   // ============================================
 
   public async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+
     try {
       await fs.mkdir(this.secretsDir, { recursive: true });
       await this.loadMetadata();
       await this.performMaintenanceTasks();
+      this.isInitialized = true;
       console.log('✅ GescoSecretsManager inicializado correctamente');
     } catch (error) {
       console.error('❌ Error inicializando GescoSecretsManager:', error);
@@ -56,22 +66,32 @@ export class GescoSecretsManager {
     const hash = crypto.createHash('sha256');
     hash.update(machineId);
     hash.update(app.getPath('exe')); // Ruta del ejecutable
+    hash.update(process.env.USERNAME || 'defaultuser');
     return hash.digest();
   }
 
   // ============================================
-  // GESTIÓN DE SECRETOS CRÍTICOS (KEYTAR)
+  // GESTIÓN DE SECRETOS CRÍTICOS (SAFESTORAGE)
   // ============================================
 
   public async setCriticalSecret(key: string, value: string, expiresIn?: number): Promise<void> {
+    if (!safeStorage.isEncryptionAvailable()) {
+      throw new Error('Electron safeStorage no está disponible para secretos críticos');
+    }
+
     try {
-      // Usar keytar para secretos críticos (PostgreSQL, API keys, etc.)
-      await keytar.setPassword(this.serviceName, key, value);
+      const encrypted = safeStorage.encryptString(value);
+      const encodedValue = encrypted.toString('base64');
+      
+      // Almacenar en archivo con prefijo crítico
+      const secretPath = path.join(this.secretsDir, `critical_${key}.enc`);
+      await fs.writeFile(secretPath, encodedValue, 'utf8');
       
       const metadata: SecretMetadata = {
         id: key,
         level: 'critical',
-        method: 'keytar',
+        method: 'safeStorage',
+        persistent: true,
         createdAt: new Date(),
         expiresAt: expiresIn ? new Date(Date.now() + expiresIn) : undefined
       };
@@ -79,7 +99,7 @@ export class GescoSecretsManager {
       this.metadata.set(key, metadata);
       await this.saveMetadata();
       
-      console.log(`🔐 Secret crítico '${key}' almacenado en OS keychain`);
+      console.log(`🔐 Secret crítico '${key}' almacenado con safeStorage`);
     } catch (error) {
       console.error(`❌ Error almacenando secret crítico '${key}':`, error);
       throw error;
@@ -89,7 +109,7 @@ export class GescoSecretsManager {
   public async getCriticalSecret(key: string): Promise<string | null> {
     try {
       const metadata = this.metadata.get(key);
-      if (!metadata || metadata.method !== 'keytar') {
+      if (!metadata || metadata.method !== 'safeStorage' || metadata.level !== 'critical') {
         return null;
       }
 
@@ -99,13 +119,17 @@ export class GescoSecretsManager {
         return null;
       }
 
-      const value = await keytar.getPassword(this.serviceName, key);
+      const secretPath = path.join(this.secretsDir, `critical_${key}.enc`);
+      const encodedValue = await fs.readFile(secretPath, 'utf8');
+      const encrypted = Buffer.from(encodedValue, 'base64');
+      
+      const decrypted = safeStorage.decryptString(encrypted);
       
       // Actualizar último acceso
       metadata.lastAccessed = new Date();
       await this.saveMetadata();
       
-      return value;
+      return decrypted;
     } catch (error) {
       console.error(`❌ Error obteniendo secret crítico '${key}':`, error);
       return null;
@@ -114,10 +138,11 @@ export class GescoSecretsManager {
 
   public async deleteCriticalSecret(key: string): Promise<boolean> {
     try {
-      const result = await keytar.deletePassword(this.serviceName, key);
+      const secretPath = path.join(this.secretsDir, `critical_${key}.enc`);
+      await fs.unlink(secretPath);
       this.metadata.delete(key);
       await this.saveMetadata();
-      return result;
+      return true;
     } catch (error) {
       console.error(`❌ Error eliminando secret crítico '${key}':`, error);
       return false;
@@ -137,7 +162,6 @@ export class GescoSecretsManager {
       const encrypted = safeStorage.encryptString(value);
       const encodedValue = encrypted.toString('base64');
       
-      // Almacenar en archivo local encriptado
       const secretPath = path.join(this.secretsDir, `${key}.enc`);
       await fs.writeFile(secretPath, encodedValue, 'utf8');
       
@@ -145,6 +169,7 @@ export class GescoSecretsManager {
         id: key,
         level: 'important',
         method: 'safeStorage',
+        persistent: true,
         createdAt: new Date(),
         expiresAt: expiresIn ? new Date(Date.now() + expiresIn) : undefined
       };
@@ -162,7 +187,7 @@ export class GescoSecretsManager {
   public async getImportantSecret(key: string): Promise<string | null> {
     try {
       const metadata = this.metadata.get(key);
-      if (!metadata || metadata.method !== 'safeStorage') {
+      if (!metadata || metadata.method !== 'safeStorage' || metadata.level !== 'important') {
         return null;
       }
 
@@ -203,6 +228,59 @@ export class GescoSecretsManager {
   }
 
   // ============================================
+  // GESTIÓN DE SECRETOS TEMPORALES (MEMORIA)
+  // ============================================
+
+  public setTemporarySecret(key: string, value: string, expiresIn: number = 3600000): void {
+    // Almacenar en memoria con expiración automática
+    this.memorySecrets.set(key, value);
+    
+    const metadata: SecretMetadata = {
+      id: key,
+      level: 'generated',
+      method: 'memory',
+      persistent: false,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + expiresIn)
+    };
+    
+    this.metadata.set(key, metadata);
+    
+    // Programar eliminación automática
+    setTimeout(() => {
+      this.deleteTemporarySecret(key);
+    }, expiresIn);
+    
+    console.log(`🔑 Secret temporal '${key}' almacenado en memoria`);
+  }
+
+  public getTemporarySecret(key: string): string | null {
+    const metadata = this.metadata.get(key);
+    if (!metadata || metadata.method !== 'memory') {
+      return null;
+    }
+
+    // Verificar expiración
+    if (metadata.expiresAt && metadata.expiresAt < new Date()) {
+      this.deleteTemporarySecret(key);
+      return null;
+    }
+
+    const value = this.memorySecrets.get(key);
+    if (value) {
+      metadata.lastAccessed = new Date();
+    }
+
+    return value || null;
+  }
+
+  public deleteTemporarySecret(key: string): boolean {
+    const deleted = this.memorySecrets.delete(key);
+    this.metadata.delete(key);
+    return deleted;
+  }
+
+  // ============================================
   // GESTIÓN DE SECRETOS GENERADOS (ENCRIPTACIÓN PERSONALIZADA)
   // ============================================
 
@@ -216,6 +294,7 @@ export class GescoSecretsManager {
         id: key,
         level: 'generated',
         method: 'encrypted',
+        persistent: true,
         createdAt: new Date(),
         expiresAt: expiresIn ? new Date(Date.now() + expiresIn) : undefined
       };
@@ -272,10 +351,26 @@ export class GescoSecretsManager {
   }
 
   // ============================================
-  // INTERFAZ UNIFICADA
+  // INTERFAZ UNIFICADA MEJORADA
   // ============================================
 
-  public async setSecret(key: string, value: string, level: 'critical' | 'important' | 'generated' = 'important', expiresIn?: number): Promise<void> {
+  public async setSecret(
+    key: string, 
+    value: string, 
+    options: {
+      level?: 'critical' | 'important' | 'generated' | 'temporary';
+      expiresIn?: number;
+      persistent?: boolean;
+    } = {}
+  ): Promise<void> {
+    const { level = 'important', expiresIn, persistent = true } = options;
+
+    // Si no es persistente, usar memoria
+    if (!persistent) {
+      this.setTemporarySecret(key, value, expiresIn || 3600000);
+      return;
+    }
+
     switch (level) {
       case 'critical':
         return this.setCriticalSecret(key, value, expiresIn);
@@ -283,6 +378,9 @@ export class GescoSecretsManager {
         return this.setImportantSecret(key, value, expiresIn);
       case 'generated':
         return this.setGeneratedSecret(key, value, expiresIn);
+      case 'temporary':
+        this.setTemporarySecret(key, value, expiresIn || 3600000);
+        return;
       default:
         throw new Error(`Nivel de seguridad inválido: ${level}`);
     }
@@ -295,12 +393,16 @@ export class GescoSecretsManager {
     }
 
     switch (metadata.method) {
-      case 'keytar':
-        return this.getCriticalSecret(key);
       case 'safeStorage':
-        return this.getImportantSecret(key);
+        if (metadata.level === 'critical') {
+          return this.getCriticalSecret(key);
+        } else {
+          return this.getImportantSecret(key);
+        }
       case 'encrypted':
         return this.getGeneratedSecret(key);
+      case 'memory':
+        return this.getTemporarySecret(key);
       default:
         return null;
     }
@@ -313,12 +415,16 @@ export class GescoSecretsManager {
     }
 
     switch (metadata.method) {
-      case 'keytar':
-        return this.deleteCriticalSecret(key);
       case 'safeStorage':
-        return this.deleteImportantSecret(key);
+        if (metadata.level === 'critical') {
+          return this.deleteCriticalSecret(key);
+        } else {
+          return this.deleteImportantSecret(key);
+        }
       case 'encrypted':
         return this.deleteGeneratedSecret(key);
+      case 'memory':
+        return this.deleteTemporarySecret(key);
       default:
         return false;
     }
@@ -336,7 +442,21 @@ export class GescoSecretsManager {
     return crypto.randomBytes(length).toString('hex');
   }
 
+  public async generateJWTSecret(): Promise<string> {
+    const secret = await this.generateSecureKey(64);
+    await this.setSecret('jwt_secret', secret, { level: 'critical' });
+    return secret;
+  }
+
+  public async generateEncryptionKey(): Promise<string> {
+    const key = await this.generateSecureKey(32);
+    await this.setSecret('encryption_key', key, { level: 'critical' });
+    return key;
+  }
+
   public async rotateMasterKey(): Promise<void> {
+    console.log('🔄 Iniciando rotación de clave maestra...');
+    
     // Re-encriptar todos los secretos generados con nueva clave maestra
     const generatedSecrets = Array.from(this.metadata.entries())
       .filter(([_, metadata]) => metadata.method === 'encrypted');
@@ -347,6 +467,8 @@ export class GescoSecretsManager {
         await this.setGeneratedSecret(key, value, undefined);
       }
     }
+    
+    console.log('✅ Rotación de clave maestra completada');
   }
 
   private async performMaintenanceTasks(): Promise<void> {
@@ -363,6 +485,38 @@ export class GescoSecretsManager {
     for (const key of expiredKeys) {
       await this.deleteSecret(key);
       console.log(`🧹 Secret expirado '${key}' eliminado`);
+    }
+
+    // Limpiar archivos huérfanos
+    await this.cleanupOrphanedFiles();
+  }
+
+  private async cleanupOrphanedFiles(): Promise<void> {
+    try {
+      const files = await fs.readdir(this.secretsDir);
+      const knownFiles = new Set([
+        'metadata.enc',
+        ...Array.from(this.metadata.entries()).map(([key, metadata]) => {
+          switch (metadata.method) {
+            case 'safeStorage':
+              return metadata.level === 'critical' ? `critical_${key}.enc` : `${key}.enc`;
+            case 'encrypted':
+              return `gen_${key}.enc`;
+            default:
+              return null;
+          }
+        }).filter(Boolean)
+      ]);
+
+      for (const file of files) {
+        if (!knownFiles.has(file) && file.endsWith('.enc')) {
+          const filePath = path.join(this.secretsDir, file);
+          await fs.unlink(filePath);
+          console.log(`🧹 Archivo huérfano eliminado: ${file}`);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error limpiando archivos huérfanos:', error);
     }
   }
 
@@ -432,15 +586,114 @@ export class GescoSecretsManager {
   }
 
   // ============================================
+  // BACKUP Y RESTORE
+  // ============================================
+
+  public async createBackup(): Promise<string> {
+    const backupData = {
+      metadata: Array.from(this.metadata.entries()),
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    };
+
+    const backupJson = JSON.stringify(backupData);
+    const encrypted = this.encryptWithMasterKey(backupJson);
+    
+    const backupPath = path.join(this.secretsDir, `backup_${Date.now()}.enc`);
+    await fs.writeFile(backupPath, encrypted, 'utf8');
+    
+    console.log(`💾 Backup creado: ${backupPath}`);
+    return backupPath;
+  }
+
+  public async restoreFromBackup(backupPath: string): Promise<void> {
+    try {
+      const encrypted = await fs.readFile(backupPath, 'utf8');
+      const decrypted = this.decryptWithMasterKey(encrypted);
+      const backupData = JSON.parse(decrypted);
+      
+      // Validar backup
+      if (!backupData.metadata || !backupData.timestamp) {
+        throw new Error('Formato de backup inválido');
+      }
+      
+      // Restaurar metadata
+      this.metadata.clear();
+      for (const [key, metadata] of backupData.metadata) {
+        this.metadata.set(key, {
+          ...metadata,
+          createdAt: new Date(metadata.createdAt),
+          lastAccessed: metadata.lastAccessed ? new Date(metadata.lastAccessed) : undefined,
+          expiresAt: metadata.expiresAt ? new Date(metadata.expiresAt) : undefined
+        });
+      }
+      
+      await this.saveMetadata();
+      console.log(`✅ Backup restaurado desde: ${backupPath}`);
+      
+    } catch (error) {
+      console.error('❌ Error restaurando backup:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
   // CLEANUP AL CERRAR LA APLICACIÓN
   // ============================================
 
   public async cleanup(): Promise<void> {
     try {
       await this.saveMetadata();
+      
+      // Limpiar secretos en memoria
+      this.memorySecrets.clear();
+      
+      // Crear backup automático
+      await this.createBackup();
+      
       console.log('✅ GescoSecretsManager cleanup completado');
     } catch (error) {
       console.error('❌ Error durante cleanup:', error);
     }
+  }
+
+  // ============================================
+  // MÉTODOS DE UTILIDAD PARA LA APLICACIÓN
+  // ============================================
+
+  public async setupApplicationSecrets(): Promise<void> {
+    console.log('🔧 Configurando secretos de aplicación...');
+
+    // Generar o recuperar JWT secret
+    let jwtSecret = await this.getSecret('jwt_secret');
+    if (!jwtSecret) {
+      jwtSecret = await this.generateJWTSecret();
+      console.log('🔑 JWT secret generado');
+    }
+
+    // Generar o recuperar encryption key
+    let encryptionKey = await this.getSecret('encryption_key');
+    if (!encryptionKey) {
+      encryptionKey = await this.generateEncryptionKey();
+      console.log('🔐 Encryption key generada');
+    }
+
+    console.log('✅ Secretos de aplicación configurados');
+  }
+
+  public async getJWTSecret(): Promise<string> {
+    const secret = await this.getSecret('jwt_secret');
+    if (!secret) {
+      return await this.generateJWTSecret();
+    }
+    return secret;
+  }
+
+  public async getEncryptionKey(): Promise<string> {
+    const key = await this.getSecret('encryption_key');
+    if (!key) {
+      return await this.generateEncryptionKey();
+    }
+    return key;
   }
 }
