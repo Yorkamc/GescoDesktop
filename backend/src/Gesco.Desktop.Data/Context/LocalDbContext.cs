@@ -88,6 +88,7 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<SystemConfiguration> ConfiguracionesSistema => SystemConfigurations;
         public DbSet<DesktopClient> ClientesEscritorio => DesktopClients;
         public DbSet<SyncQueueItem> ColaSincronizacion => SyncQueue;
+
         // ============================================
         // CONSTRUCTORS
         // ============================================
@@ -96,16 +97,19 @@ namespace Gesco.Desktop.Data.Context
         public LocalDbContext(DbContextOptions<LocalDbContext> options) : base(options) { }
 
         // ============================================
-        // DATABASE CONFIGURATION
+        // DATABASE CONFIGURATION - CORREGIDO CS8604
         // ============================================
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-       if (!optionsBuilder.IsConfigured)
+            if (!optionsBuilder.IsConfigured)
             {
                 var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "data", "gesco_local.db");
                 var directory = Path.GetDirectoryName(dbPath);
-                if (!Directory.Exists(directory))
+                
+                // CORRECCIÓN CS8604: Verificar que directory no sea null
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
+                    
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
                 optionsBuilder.EnableSensitiveDataLogging();
             }
@@ -116,7 +120,7 @@ namespace Gesco.Desktop.Data.Context
         // ============================================
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-     base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder);
 
             // Set default delete behavior to Restrict
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
@@ -370,7 +374,12 @@ namespace Gesco.Desktop.Data.Context
                 .WithMany()
                 .HasForeignKey(ac => ac.ActivityId) // int -> int ✅
                 .OnDelete(DeleteBehavior.Restrict);
-                 // DesktopClient relationships
+
+            // ============================================
+            // SYNC SYSTEM RELATIONSHIPS - CORREGIDO CS0452
+            // ============================================
+
+            // DesktopClient relationships
             modelBuilder.Entity<DesktopClient>()
                 .HasOne(dc => dc.Organization)
                 .WithMany()
@@ -396,17 +405,18 @@ namespace Gesco.Desktop.Data.Context
                 .HasForeignKey(sq => sq.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // SyncVersion relationships
+            // SyncVersion relationships - CORREGIDO CS0452
             modelBuilder.Entity<SyncVersion>()
                 .HasOne(sv => sv.Organization)
                 .WithMany()
                 .HasForeignKey(sv => sv.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // CORRECCIÓN PRINCIPAL CS0452: Usar navigation property, no FK property
             modelBuilder.Entity<SyncVersion>()
-                .HasOne(sv => sv.ChangedByUser)
+                .HasOne(sv => sv.ChangedByUserNavigation)  // ✅ Navigation property
                 .WithMany()
-                .HasForeignKey(sv => sv.ChangedByUser)
+                .HasForeignKey(sv => sv.ChangedByUser)     // ✅ FK property
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<SyncVersion>()
@@ -460,7 +470,7 @@ namespace Gesco.Desktop.Data.Context
                 .HasForeignKey(aal => aal.OrganizationId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // ActivationHistory relationships
+            // ActivationHistory relationships - CORREGIDO CS0452
             modelBuilder.Entity<ActivationHistory>()
                 .HasOne(ah => ah.Organization)
                 .WithMany()
@@ -473,16 +483,17 @@ namespace Gesco.Desktop.Data.Context
                 .HasForeignKey(ah => ah.ActivationKeyId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // CORRECCIÓN CS0452: Usar navigation properties
             modelBuilder.Entity<ActivationHistory>()
-                .HasOne(ah => ah.ActivatedByUser)
+                .HasOne(ah => ah.ActivatedByUser)          // ✅ Navigation property
                 .WithMany()
-                .HasForeignKey(ah => ah.ActivatedByUserId)
+                .HasForeignKey(ah => ah.ActivatedByUserId) // ✅ FK property
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ActivationHistory>()
-                .HasOne(ah => ah.DeactivatedByUser)
+                .HasOne(ah => ah.DeactivatedByUser)        // ✅ Navigation property
                 .WithMany()
-                .HasForeignKey(ah => ah.DeactivatedBy)
+                .HasForeignKey(ah => ah.DeactivatedBy)     // ✅ FK property
                 .OnDelete(DeleteBehavior.SetNull);
 
             // ============================================
@@ -509,170 +520,7 @@ namespace Gesco.Desktop.Data.Context
                 .HasIndex(aal => new { aal.OrganizationId, aal.CreatedAt })
                 .HasDatabaseName("idx_api_logs_org_date");
         }
-            private static void ConfigureSyncIndexes(ModelBuilder modelBuilder)
-        {
-            // [MANTENER TUS ÍNDICES EXISTENTES]
-            
-            // ============================================
-            // ÍNDICES ADICIONALES PARA NUEVAS ENTIDADES
-            // ============================================
-            
-            // DesktopClient - índices críticos para sync
-            modelBuilder.Entity<DesktopClient>()
-                .HasIndex(e => new { e.OrganizationId, e.Status, e.LastConnection })
-                .HasDatabaseName("idx_desktop_clients_org_status_connection");
 
-            modelBuilder.Entity<DesktopClient>()
-                .HasIndex(e => e.LastSyncVersion)
-                .HasDatabaseName("idx_desktop_clients_sync_version");
-
-            // SyncQueue - índices críticos para rendimiento
-            modelBuilder.Entity<SyncQueueItem>()
-                .HasIndex(e => new { e.OrganizationId, e.ClientId, e.Status, e.Priority, e.SyncVersion })
-                .HasDatabaseName("idx_sync_queue_delivery");
-
-            modelBuilder.Entity<SyncQueueItem>()
-                .HasIndex(e => new { e.Status, e.Attempts, e.CreatedAt })
-                .HasDatabaseName("idx_sync_queue_retry");
-
-            modelBuilder.Entity<SyncQueueItem>()
-                .HasIndex(e => e.ExpiresAt)
-                .HasDatabaseName("idx_sync_queue_cleanup");
-
-            // SyncVersion - índices para auditoría
-            modelBuilder.Entity<SyncVersion>()
-                .HasIndex(e => new { e.OrganizationId, e.TableName, e.RecordId, e.Version })
-                .HasDatabaseName("idx_sync_versions_lookup");
-
-            modelBuilder.Entity<SyncVersion>()
-                .HasIndex(e => new { e.ChangeDate, e.Operation })
-                .HasDatabaseName("idx_sync_versions_audit");
-
-            // Notification - índices para queries eficientes
-            modelBuilder.Entity<Notification>()
-                .HasIndex(e => new { e.UserId, e.IsRead, e.ScheduledDate })
-                .HasDatabaseName("idx_notifications_user_delivery");
-
-            // ApiActivityLog - índices para análisis
-            modelBuilder.Entity<ApiActivityLog>()
-                .HasIndex(e => new { e.OrganizationId, e.CreatedAt })
-                .HasDatabaseName("idx_api_logs_org_time");
-
-            modelBuilder.Entity<ApiActivityLog>()
-                .HasIndex(e => new { e.Endpoint, e.Method, e.ResponseStatus })
-                .HasDatabaseName("idx_api_logs_endpoint_analysis");
-
-            // OAuth - índices para autenticación
-            modelBuilder.Entity<OAuthAccessToken>()
-                .HasIndex(e => new { e.UserId, e.Revoked, e.ExpiresAt })
-                .HasDatabaseName("idx_oauth_tokens_user_valid");
-        }
-
-        // ============================================
-        // MÉTODOS HELPER PARA SYNC - MEJORADOS
-        // ============================================
-
-        /// <summary>
-        /// Registra un nuevo cliente desktop
-        /// </summary>
-        public async Task<DesktopClient> RegisterDesktopClientAsync(
-            Guid organizationId, 
-            Guid userId, 
-            string clientName, 
-            string? appVersion = null)
-        {
-            var client = new DesktopClient
-            {
-                OrganizationId = organizationId,
-                UserId = userId,
-                ClientName = clientName,
-                AppVersion = appVersion,
-                Status = "active",
-                RegisteredAt = DateTime.UtcNow
-            };
-
-            DesktopClients.Add(client);
-            await SaveChangesAsync();
-            return client;
-        }
-
-        /// <summary>
-        /// Encola cambios para sincronización
-        /// </summary>
-        public async Task<int> QueueSyncChangesAsync(
-            IEnumerable<SyncQueueItem> changes)
-        {
-            SyncQueue.AddRange(changes);
-            return await SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// Obtiene cambios pendientes para un cliente específico
-        /// </summary>
-        public async Task<List<SyncQueueItem>> GetPendingChangesAsync(
-            string clientId, 
-            long fromSyncVersion = 0,
-            int limit = 100)
-        {
-            return await SyncQueue
-                .Where(sq => sq.ClientId == clientId 
-                    && sq.Status == "pending" 
-                    && sq.SyncVersion > fromSyncVersion
-                    && sq.ExpiresAt > DateTime.UtcNow)
-                .OrderBy(sq => sq.Priority)
-                .ThenBy(sq => sq.SyncVersion)
-                .Take(limit)
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Marca cambios como confirmados
-        /// </summary>
-        public async Task ConfirmSyncChangesAsync(IEnumerable<int> syncQueueIds)
-        {
-            var items = await SyncQueue
-                .Where(sq => syncQueueIds.Contains(sq.Id))
-                .ToListAsync();
-
-            foreach (var item in items)
-            {
-                item.Status = "confirmed";
-                item.ConfirmedAt = DateTime.UtcNow;
-            }
-
-            await SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// Limpia elementos expirados de la cola de sync
-        /// </summary>
-        public async Task<int> CleanupExpiredSyncItemsAsync()
-        {
-            var expiredItems = await SyncQueue
-                .Where(sq => sq.ExpiresAt <= DateTime.UtcNow || 
-                    (sq.Status == "error" && sq.Attempts >= sq.MaxAttempts))
-                .ToListAsync();
-
-            SyncQueue.RemoveRange(expiredItems);
-            return await SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// Optimiza la base de datos
-        /// </summary>
-        public async Task OptimizeDatabaseAsync()
-        {
-            try
-            {
-                await Database.ExecuteSqlRawAsync("VACUUM ANALYZE;");
-                await Database.ExecuteSqlRawAsync("REINDEX DATABASE CONCURRENTLY;");
-                Console.WriteLine("✅ PostgreSQL database optimized successfully");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Database optimization warning: {ex.Message}");
-            }
-        }
         // ============================================
         // SEED DATA METHOD - CORREGIDO CON TIPOS EXACTOS
         // ============================================
@@ -1032,9 +880,13 @@ namespace Gesco.Desktop.Data.Context
                     GracePeriodEnd = DateTime.UtcNow.AddMonths(12).AddDays(30),
                     CreatedAt = DateTime.UtcNow
                 }
-
             );
-                       modelBuilder.Entity<NotificationType>().HasData(
+
+            // ============================================
+            // NOTIFICATION TYPES - INT IDS
+            // ============================================
+
+            modelBuilder.Entity<NotificationType>().HasData(
                 new NotificationType
                 {
                     Id = 1,
@@ -1076,6 +928,112 @@ namespace Gesco.Desktop.Data.Context
                     CreatedAt = DateTime.UtcNow
                 }
             );
+        }
+
+        // ============================================
+        // MÉTODOS HELPER PARA SYNC - MEJORADOS
+        // ============================================
+
+        /// <summary>
+        /// Registra un nuevo cliente desktop
+        /// </summary>
+        public async Task<DesktopClient> RegisterDesktopClientAsync(
+            Guid organizationId, 
+            Guid userId, 
+            string clientName, 
+            string? appVersion = null)
+        {
+            var client = new DesktopClient
+            {
+                OrganizationId = organizationId,
+                UserId = userId,
+                ClientName = clientName,
+                AppVersion = appVersion,
+                Status = "active",
+                RegisteredAt = DateTime.UtcNow
+            };
+
+            DesktopClients.Add(client);
+            await SaveChangesAsync();
+            return client;
+        }
+
+        /// <summary>
+        /// Encola cambios para sincronización
+        /// </summary>
+        public async Task<int> QueueSyncChangesAsync(
+            IEnumerable<SyncQueueItem> changes)
+        {
+            SyncQueue.AddRange(changes);
+            return await SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Obtiene cambios pendientes para un cliente específico
+        /// </summary>
+        public async Task<List<SyncQueueItem>> GetPendingChangesAsync(
+            string clientId, 
+            long fromSyncVersion = 0,
+            int limit = 100)
+        {
+            return await SyncQueue
+                .Where(sq => sq.ClientId == clientId 
+                    && sq.Status == "pending" 
+                    && sq.SyncVersion > fromSyncVersion
+                    && sq.ExpiresAt > DateTime.UtcNow)
+                .OrderBy(sq => sq.Priority)
+                .ThenBy(sq => sq.SyncVersion)
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Marca cambios como confirmados
+        /// </summary>
+        public async Task ConfirmSyncChangesAsync(IEnumerable<int> syncQueueIds)
+        {
+            var items = await SyncQueue
+                .Where(sq => syncQueueIds.Contains(sq.Id))
+                .ToListAsync();
+
+            foreach (var item in items)
+            {
+                item.Status = "confirmed";
+                item.ConfirmedAt = DateTime.UtcNow;
+            }
+
+            await SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Limpia elementos expirados de la cola de sync
+        /// </summary>
+        public async Task<int> CleanupExpiredSyncItemsAsync()
+        {
+            var expiredItems = await SyncQueue
+                .Where(sq => sq.ExpiresAt <= DateTime.UtcNow || 
+                    (sq.Status == "error" && sq.Attempts >= sq.MaxAttempts))
+                .ToListAsync();
+
+            SyncQueue.RemoveRange(expiredItems);
+            return await SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Optimiza la base de datos
+        /// </summary>
+        public async Task OptimizeDatabaseAsync()
+        {
+            try
+            {
+                await Database.ExecuteSqlRawAsync("VACUUM;");
+                await Database.ExecuteSqlRawAsync("ANALYZE;");
+                Console.WriteLine("✅ SQLite database optimized successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Database optimization warning: {ex.Message}");
+            }
         }
 
         // ============================================

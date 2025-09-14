@@ -75,6 +75,27 @@ namespace Gesco.Desktop.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "notification_types",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    code = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    description = table.Column<string>(type: "TEXT", nullable: true),
+                    level = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    created_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    updated_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_notification_types", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "organizations",
                 columns: table => new
                 {
@@ -176,37 +197,6 @@ namespace Gesco.Desktop.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "system_configuration",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    key = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    value = table.Column<string>(type: "TEXT", nullable: false),
-                    data_type = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    category = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    is_editable = table.Column<bool>(type: "INTEGER", nullable: false),
-                    access_level = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    display_order = table.Column<int>(type: "INTEGER", nullable: false),
-                    validation_pattern = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    min_value = table.Column<decimal>(type: "TEXT", nullable: true),
-                    max_value = table.Column<decimal>(type: "TEXT", nullable: true),
-                    allowed_values = table.Column<string>(type: "TEXT", nullable: true),
-                    is_sensitive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    environment = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    restart_required = table.Column<bool>(type: "INTEGER", nullable: false),
-                    created_by = table.Column<Guid>(type: "TEXT", nullable: true),
-                    updated_by = table.Column<Guid>(type: "TEXT", nullable: true),
-                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_system_configuration", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "activities",
                 columns: table => new
                 {
@@ -270,6 +260,44 @@ namespace Gesco.Desktop.Data.Migrations
                     table.PrimaryKey("PK_service_categories", x => x.id);
                     table.ForeignKey(
                         name: "FK_service_categories_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "system_configuration",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    key = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    value = table.Column<string>(type: "TEXT", nullable: false),
+                    data_type = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    category = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    is_editable = table.Column<bool>(type: "INTEGER", nullable: false),
+                    access_level = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    display_order = table.Column<int>(type: "INTEGER", nullable: false),
+                    validation_pattern = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    min_value = table.Column<decimal>(type: "TEXT", nullable: true),
+                    max_value = table.Column<decimal>(type: "TEXT", nullable: true),
+                    allowed_values = table.Column<string>(type: "TEXT", nullable: true),
+                    is_sensitive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    environment = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    restart_required = table.Column<bool>(type: "INTEGER", nullable: false),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    updated_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_system_configuration", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_system_configuration_organizations_organization_id",
                         column: x => x.organization_id,
                         principalTable: "organizations",
                         principalColumn: "id",
@@ -501,6 +529,151 @@ namespace Gesco.Desktop.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "api_activity_logs",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    user_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    method = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    endpoint = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    ip_address = table.Column<string>(type: "TEXT", maxLength: 45, nullable: true),
+                    user_agent = table.Column<string>(type: "TEXT", nullable: true),
+                    request_data = table.Column<string>(type: "TEXT", nullable: true),
+                    response_status = table.Column<int>(type: "INTEGER", nullable: false),
+                    response_time_ms = table.Column<decimal>(type: "TEXT", nullable: true),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    module = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_api_activity_logs", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_api_activity_logs_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_api_activity_logs_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "desktop_clients",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    client_name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    app_version = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    user_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    last_sync_version = table.Column<long>(type: "INTEGER", nullable: false),
+                    last_connection = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    ip_address = table.Column<string>(type: "TEXT", maxLength: 45, nullable: true),
+                    sync_interval_seconds = table.Column<int>(type: "INTEGER", nullable: false),
+                    read_only = table.Column<bool>(type: "INTEGER", nullable: false),
+                    receive_notifications = table.Column<bool>(type: "INTEGER", nullable: false),
+                    registered_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    created_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    updated_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_desktop_clients", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_desktop_clients_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_desktop_clients_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "notifications",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    user_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    notification_type_id = table.Column<int>(type: "INTEGER", nullable: false),
+                    title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    message = table.Column<string>(type: "TEXT", nullable: false),
+                    additional_data = table.Column<string>(type: "TEXT", nullable: true),
+                    is_read = table.Column<bool>(type: "INTEGER", nullable: false),
+                    read_at = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    important = table.Column<bool>(type: "INTEGER", nullable: false),
+                    scheduled_date = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    expiration_date = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    delivery_channels = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    created_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    updated_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_notifications", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_notifications_notification_types_notification_type_id",
+                        column: x => x.notification_type_id,
+                        principalTable: "notification_types",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_notifications_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_notifications_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "oauth_access_tokens",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false),
+                    user_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    client_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    scopes = table.Column<string>(type: "TEXT", nullable: true),
+                    revoked = table.Column<bool>(type: "INTEGER", nullable: false),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    expires_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_oauth_access_tokens", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_oauth_access_tokens_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "activation_keys",
                 columns: table => new
                 {
@@ -650,6 +823,157 @@ namespace Gesco.Desktop.Data.Migrations
                         principalTable: "activity_categories",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "sync_queue",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    client_id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false),
+                    affected_table = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    record_id = table.Column<long>(type: "INTEGER", nullable: false),
+                    operation = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    change_data = table.Column<string>(type: "TEXT", nullable: false),
+                    sync_version = table.Column<long>(type: "INTEGER", nullable: false),
+                    status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    attempts = table.Column<int>(type: "INTEGER", nullable: false),
+                    max_attempts = table.Column<int>(type: "INTEGER", nullable: false),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    sent_at = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    confirmed_at = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    expires_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    batch_id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: true),
+                    error_message = table.Column<string>(type: "TEXT", nullable: true),
+                    error_code = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_sync_queue", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_sync_queue_desktop_clients_client_id",
+                        column: x => x.client_id,
+                        principalTable: "desktop_clients",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_sync_queue_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "sync_versions",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    table_name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    record_id = table.Column<long>(type: "INTEGER", nullable: false),
+                    version = table.Column<long>(type: "INTEGER", nullable: false),
+                    operation = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    change_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    change_data = table.Column<string>(type: "TEXT", nullable: true),
+                    changed_by_user = table.Column<Guid>(type: "TEXT", nullable: true),
+                    origin_client_id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_sync_versions", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_sync_versions_desktop_clients_origin_client_id",
+                        column: x => x.origin_client_id,
+                        principalTable: "desktop_clients",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_sync_versions_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_sync_versions_users_changed_by_user",
+                        column: x => x.changed_by_user,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "oauth_refresh_tokens",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false),
+                    access_token_id = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
+                    revoked = table.Column<bool>(type: "INTEGER", nullable: false),
+                    expires_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_oauth_refresh_tokens", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_oauth_refresh_tokens_oauth_access_tokens_access_token_id",
+                        column: x => x.access_token_id,
+                        principalTable: "oauth_access_tokens",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "activation_history",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    activation_key_id = table.Column<int>(type: "INTEGER", nullable: false),
+                    activation_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    subscription_start_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    subscription_end_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    activated_by_user_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    activation_ip = table.Column<string>(type: "TEXT", maxLength: 45, nullable: true),
+                    user_agent = table.Column<string>(type: "TEXT", nullable: true),
+                    is_active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    deactivation_date = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    deactivation_reason = table.Column<string>(type: "TEXT", nullable: true),
+                    deactivated_by = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_activation_history", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_activation_history_activation_keys_activation_key_id",
+                        column: x => x.activation_key_id,
+                        principalTable: "activation_keys",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_activation_history_organizations_organization_id",
+                        column: x => x.organization_id,
+                        principalTable: "organizations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_activation_history_users_activated_by_user_id",
+                        column: x => x.activated_by_user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_activation_history_users_deactivated_by",
+                        column: x => x.deactivated_by,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -821,10 +1145,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4680), null, "Activity not started", "Not Started", null, null },
-                    { 2, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4682), null, "Activity in development", "In Progress", null, null },
-                    { 3, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4683), null, "Activity completed", "Completed", null, null },
-                    { 4, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4685), null, "Activity cancelled", "Cancelled", null, null }
+                    { 1, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8268), null, "Activity not started", "Not Started", null, null },
+                    { 2, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8273), null, "Activity in development", "In Progress", null, null },
+                    { 3, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8278), null, "Activity completed", "Completed", null, null },
+                    { 4, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8282), null, "Activity cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -832,9 +1156,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "requires_justification", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4795), null, "Merchandise entry to inventory", "Stock In", false, null, null },
-                    { 2, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4796), null, "Stock out by product sale", "Sale", false, null, null },
-                    { 3, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4840), null, "Inventory adjustment for differences", "Adjustment", true, null, null }
+                    { 1, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8517), null, "Merchandise entry to inventory", "Stock In", false, null, null },
+                    { 2, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8522), null, "Stock out by product sale", "Sale", false, null, null },
+                    { 3, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8527), null, "Inventory adjustment for differences", "Adjustment", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -842,24 +1166,35 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "annual_price", "created_at", "created_by", "description", "monthly_price", "name", "updated_at", "updated_by", "user_limit" },
                 values: new object[,]
                 {
-                    { 1, true, 299.99m, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4936), null, "Basic membership with essential features", 29.99m, "Basic", null, null, 5 },
-                    { 2, true, 599.99m, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4938), null, "Professional membership with advanced features", 59.99m, "Professional", null, null, 25 },
-                    { 3, true, 1299.99m, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4940), null, "Enterprise membership with unlimited features", 129.99m, "Enterprise", null, null, 100 }
+                    { 1, true, 299.99m, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8862), null, "Basic membership with essential features", 29.99m, "Basic", null, null, 5 },
+                    { 2, true, 599.99m, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8869), null, "Professional membership with advanced features", 59.99m, "Professional", null, null, 25 },
+                    { 3, true, 1299.99m, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8874), null, "Enterprise membership with unlimited features", 129.99m, "Enterprise", null, null, 100 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "notification_types",
+                columns: new[] { "id", "active", "code", "created_at", "created_by", "description", "level", "name", "updated_at", "updated_by" },
+                values: new object[,]
+                {
+                    { 1, true, "low_stock", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(9087), null, "Product inventory is running low", "warning", "Low Stock Alert", null, null },
+                    { 2, true, "activity_reminder", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(9093), null, "Upcoming activity notification", "info", "Activity Reminder", null, null },
+                    { 3, true, "system_alert", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(9098), null, "Critical system notification", "critical", "System Alert", null, null },
+                    { 4, true, "sync_error", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(9102), null, "Data synchronization failed", "error", "Sync Error", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "organizations",
                 columns: new[] { "id", "active", "address", "contact_email", "contact_phone", "created_at", "created_by", "integrity_hash", "last_sync", "name", "purchaser_name", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { new Guid("eeb4934a-6c06-4f45-8b3c-3f38acf53538"), true, "San José, Costa Rica", "demo@gesco.com", "2222-2222", new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4379), null, null, null, "Demo Organization", "Demo Administrator", 1L, null, null });
+                values: new object[] { new Guid("5247786b-aef3-4f2b-bbce-3b14947dc1e7"), true, "San José, Costa Rica", "demo@gesco.com", "2222-2222", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(7686), null, null, null, "Demo Organization", "Demo Administrator", 1L, null, null });
 
             migrationBuilder.InsertData(
                 table: "payment_methods",
                 columns: new[] { "id", "active", "created_at", "created_by", "name", "requires_reference", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4750), null, "Cash", false, null, null },
-                    { 2, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4752), null, "Card", true, null, null },
-                    { 3, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4759), null, "SINPE Mobile", true, null, null }
+                    { 1, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8437), null, "Cash", false, null, null },
+                    { 2, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8441), null, "Card", true, null, null },
+                    { 3, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8446), null, "SINPE Mobile", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -867,9 +1202,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4556), null, "Full system access", "Administrator", null, null },
-                    { 2, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4558), null, "Sales and cash register access", "Salesperson", null, null },
-                    { 3, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4560), null, "Activity supervision", "Supervisor", null, null }
+                    { 1, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8073), null, "Full system access", "Administrator", null, null },
+                    { 2, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8078), null, "Sales and cash register access", "Salesperson", null, null },
+                    { 3, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8083), null, "Activity supervision", "Supervisor", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -877,9 +1212,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4722), null, "Sale pending processing", "Pending", null, null },
-                    { 2, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4724), null, "Sale completed successfully", "Completed", null, null },
-                    { 3, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4726), null, "Sale cancelled", "Cancelled", null, null }
+                    { 1, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8351), null, "Sale pending processing", "Pending", null, null },
+                    { 2, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8357), null, "Sale completed successfully", "Completed", null, null },
+                    { 3, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8361), null, "Sale cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -887,30 +1222,50 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "allows_system_usage", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1, true, true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4870), null, "Active subscription", "Active", null, null },
-                    { 2, true, false, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4872), null, "Suspended subscription", "Suspended", null, null },
-                    { 3, true, false, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4874), null, "Cancelled subscription", "Cancelled", null, null }
+                    { 1, true, true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8611), null, "Active subscription", "Active", null, null },
+                    { 2, true, false, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8617), null, "Suspended subscription", "Suspended", null, null },
+                    { 3, true, false, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8621), null, "Cancelled subscription", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "system_configuration",
-                columns: new[] { "id", "access_level", "allowed_values", "category", "created_at", "created_by", "data_type", "description", "display_order", "environment", "is_editable", "is_sensitive", "key", "max_value", "min_value", "restart_required", "updated_at", "updated_by", "validation_pattern", "value" },
+                columns: new[] { "id", "access_level", "allowed_values", "category", "created_at", "created_by", "data_type", "description", "display_order", "environment", "is_editable", "is_sensitive", "key", "max_value", "min_value", "organization_id", "restart_required", "updated_at", "updated_by", "validation_pattern", "value" },
                 values: new object[,]
                 {
-                    { 1, "admin", null, "system", new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4901), null, "string", "System version", 0, "all", false, false, "system.version", null, null, false, null, null, null, "1.0.0" },
-                    { 2, "admin", null, "backup", new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4903), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, false, null, null, null, "6" },
-                    { 3, "admin", null, "license", new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4905), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, false, null, null, null, "7" }
+                    { 1, "admin", null, "system", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8724), null, "string", "System version", 0, "all", false, false, "system.version", null, null, null, false, null, null, null, "1.0.0" },
+                    { 2, "admin", null, "backup", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8732), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, null, false, null, null, null, "6" },
+                    { 3, "admin", null, "license", new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8773), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, null, false, null, null, null, "7" }
                 });
 
             migrationBuilder.InsertData(
                 table: "subscriptions",
                 columns: new[] { "id", "cancellation_date", "created_at", "created_by", "expiration_date", "grace_period_end", "integrity_hash", "last_sync", "membership_id", "organization_id", "start_date", "subscription_status_id", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { 1, null, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(5001), null, new DateTime(2026, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4974), new DateTime(2026, 10, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4981), null, null, 1, new Guid("eeb4934a-6c06-4f45-8b3c-3f38acf53538"), new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4974), 1, 1L, null, null });
+                values: new object[] { 1, null, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(9004), null, new DateTime(2026, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8956), new DateTime(2026, 10, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8966), null, null, 1, new Guid("5247786b-aef3-4f2b-bbce-3b14947dc1e7"), new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8954), 1, 1L, null, null });
 
             migrationBuilder.InsertData(
                 table: "users",
                 columns: new[] { "id", "active", "created_at", "created_by", "email", "email_verified_at", "first_login", "first_login_at", "full_name", "integrity_hash", "last_login_at", "last_sync", "organization_id", "password", "phone", "role_id", "sync_version", "updated_at", "updated_by", "username" },
-                values: new object[] { new Guid("a9b2cd97-dcda-4c97-84ab-7f55953f1688"), true, new DateTime(2025, 9, 10, 18, 59, 16, 169, DateTimeKind.Utc).AddTicks(4639), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, new Guid("eeb4934a-6c06-4f45-8b3c-3f38acf53538"), "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6", "8888-8888", 1, 1L, null, null, "admin" });
+                values: new object[] { new Guid("c6f83185-57ad-4ee0-9316-5972ba32a851"), true, new DateTime(2025, 9, 14, 17, 14, 51, 21, DateTimeKind.Utc).AddTicks(8189), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, new Guid("5247786b-aef3-4f2b-bbce-3b14947dc1e7"), "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6", "8888-8888", 1, 1L, null, null, "admin" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_activation_history_activated_by_user_id",
+                table: "activation_history",
+                column: "activated_by_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_activation_history_activation_key_id",
+                table: "activation_history",
+                column: "activation_key_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_activation_history_deactivated_by",
+                table: "activation_history",
+                column: "deactivated_by");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_activation_history_organization_id",
+                table: "activation_history",
+                column: "organization_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_activation_keys_subscription_id",
@@ -943,6 +1298,16 @@ namespace Gesco.Desktop.Data.Migrations
                 column: "activity_id");
 
             migrationBuilder.CreateIndex(
+                name: "idx_api_logs_org_date",
+                table: "api_activity_logs",
+                columns: new[] { "organization_id", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_api_activity_logs_user_id",
+                table: "api_activity_logs",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_cash_register_closures_cash_register_id",
                 table: "cash_register_closures",
                 column: "cash_register_id");
@@ -968,6 +1333,22 @@ namespace Gesco.Desktop.Data.Migrations
                 column: "product_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_desktop_clients_id",
+                table: "desktop_clients",
+                column: "id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_desktop_clients_organization_id",
+                table: "desktop_clients",
+                column: "organization_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_desktop_clients_user_id",
+                table: "desktop_clients",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_inventory_movements_movement_type_id",
                 table: "inventory_movements",
                 column: "movement_type_id");
@@ -981,6 +1362,31 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "IX_inventory_movements_sales_transaction_id",
                 table: "inventory_movements",
                 column: "sales_transaction_id");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_notifications_org_status",
+                table: "notifications",
+                columns: new[] { "organization_id", "is_read", "important" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_notifications_notification_type_id",
+                table: "notifications",
+                column: "notification_type_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_notifications_user_id",
+                table: "notifications",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_oauth_access_tokens_user_id",
+                table: "oauth_access_tokens",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_oauth_refresh_tokens_access_token_id",
+                table: "oauth_refresh_tokens",
+                column: "access_token_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_sales_combos_activity_id",
@@ -1016,6 +1422,36 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "IX_subscriptions_subscription_status_id",
                 table: "subscriptions",
                 column: "subscription_status_id");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_sync_queue_unique",
+                table: "sync_queue",
+                columns: new[] { "client_id", "affected_table", "record_id", "sync_version" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_sync_queue_organization_id",
+                table: "sync_queue",
+                column: "organization_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_sync_versions_changed_by_user",
+                table: "sync_versions",
+                column: "changed_by_user");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_sync_versions_organization_id",
+                table: "sync_versions",
+                column: "organization_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_sync_versions_origin_client_id",
+                table: "sync_versions",
+                column: "origin_client_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_system_configuration_organization_id",
+                table: "system_configuration",
+                column: "organization_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_transaction_details_combo_id",
@@ -1057,10 +1493,13 @@ namespace Gesco.Desktop.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "activation_keys");
+                name: "activation_history");
 
             migrationBuilder.DropTable(
                 name: "activity_closures");
+
+            migrationBuilder.DropTable(
+                name: "api_activity_logs");
 
             migrationBuilder.DropTable(
                 name: "cash_register_closures");
@@ -1072,6 +1511,18 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "inventory_movements");
 
             migrationBuilder.DropTable(
+                name: "notifications");
+
+            migrationBuilder.DropTable(
+                name: "oauth_refresh_tokens");
+
+            migrationBuilder.DropTable(
+                name: "sync_queue");
+
+            migrationBuilder.DropTable(
+                name: "sync_versions");
+
+            migrationBuilder.DropTable(
                 name: "system_configuration");
 
             migrationBuilder.DropTable(
@@ -1081,13 +1532,19 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "transaction_payments");
 
             migrationBuilder.DropTable(
-                name: "users");
-
-            migrationBuilder.DropTable(
-                name: "subscriptions");
+                name: "activation_keys");
 
             migrationBuilder.DropTable(
                 name: "inventory_movement_types");
+
+            migrationBuilder.DropTable(
+                name: "notification_types");
+
+            migrationBuilder.DropTable(
+                name: "oauth_access_tokens");
+
+            migrationBuilder.DropTable(
+                name: "desktop_clients");
 
             migrationBuilder.DropTable(
                 name: "category_products");
@@ -1102,13 +1559,10 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "sales_transactions");
 
             migrationBuilder.DropTable(
-                name: "roles");
+                name: "subscriptions");
 
             migrationBuilder.DropTable(
-                name: "memberships");
-
-            migrationBuilder.DropTable(
-                name: "subscription_statuses");
+                name: "users");
 
             migrationBuilder.DropTable(
                 name: "activity_categories");
@@ -1118,6 +1572,15 @@ namespace Gesco.Desktop.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "sales_statuses");
+
+            migrationBuilder.DropTable(
+                name: "memberships");
+
+            migrationBuilder.DropTable(
+                name: "subscription_statuses");
+
+            migrationBuilder.DropTable(
+                name: "roles");
 
             migrationBuilder.DropTable(
                 name: "service_categories");
