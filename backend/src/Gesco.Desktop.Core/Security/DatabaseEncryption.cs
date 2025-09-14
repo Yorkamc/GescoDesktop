@@ -3,22 +3,28 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore; // AGREGADO: Para ExecuteSqlRaw
 
 namespace Gesco.Desktop.Core.Security
 {
     /// <summary>
     /// Servicio mejorado de encriptación para la base de datos
+    /// Usa AES-256-CBC con HMAC-SHA256 para autenticación
     /// </summary>
     public class DatabaseEncryption : IDisposable
     {
         private readonly ILogger<DatabaseEncryption> _logger;
         private readonly byte[] _encryptionKey;
+        private readonly byte[] _hmacKey;
         private bool _disposed = false;
 
         public DatabaseEncryption(ILogger<DatabaseEncryption> logger)
         {
             _logger = logger;
-            _encryptionKey = GetOrCreateEncryptionKey();
+            var masterKey = GetOrCreateEncryptionKey();
+            
+            // Derivar claves separadas para encriptación y HMAC
+            (_encryptionKey, _hmacKey) = DeriveKeys(masterKey);
         }
 
         /// <summary>
@@ -92,7 +98,20 @@ namespace Gesco.Desktop.Core.Security
         }
 
         /// <summary>
-        /// Encripta un string usando AES-256-GCM (más seguro que CBC)
+        /// Deriva claves separadas para encriptación y HMAC desde la clave maestra
+        /// </summary>
+        private (byte[] encryptionKey, byte[] hmacKey) DeriveKeys(byte[] masterKey)
+        {
+            using (var kdf = new Rfc2898DeriveBytes(masterKey, Encoding.UTF8.GetBytes("GESCO_DERIVE_SALT"), 10000, HashAlgorithmName.SHA256))
+            {
+                var encKey = kdf.GetBytes(32); // 256 bits para AES
+                var hmacKey = kdf.GetBytes(32); // 256 bits para HMAC-SHA256
+                return (encKey, hmacKey);
+            }
+        }
+
+        /// <summary>
+        /// Encripta un string usando AES-256-CBC con HMAC-SHA256 para autenticación
         /// </summary>
         public string EncryptString(string plainText)
         {
@@ -104,34 +123,35 @@ namespace Gesco.Desktop.Core.Security
                 using (var aes = Aes.Create())
                 {
                     aes.Key = _encryptionKey;
-                    aes.Mode = CipherMode.GCM; // Más seguro que CBC
-                    
-                    // Generar IV aleatorio para cada encriptación
-                    var iv = new byte[12]; // GCM recomendado: 12 bytes
-                    RandomNumberGenerator.Fill(iv);
-                    
-                    var plainBytes = Encoding.UTF8.GetBytes(plainText);
-                    var cipherBytes = new byte[plainBytes.Length];
-                    var tag = new byte[16]; // Authentication tag para GCM
+                    aes.Mode = CipherMode.CBC; // Usar CBC que es ampliamente compatible
+                    aes.Padding = PaddingMode.PKCS7;
+                    aes.GenerateIV(); // Generar IV aleatorio para cada encriptación
 
-                    using (var cipher = aes.CreateEncryptor())
+                    var plainBytes = Encoding.UTF8.GetBytes(plainText);
+
+                    using (var encryptor = aes.CreateEncryptor())
+                    using (var ms = new MemoryStream())
                     {
-                        if (cipher is not AesGcm gcm)
+                        // Escribir IV al inicio
+                        ms.Write(aes.IV, 0, aes.IV.Length);
+                        
+                        using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
                         {
-                            // Fallback a CBC si GCM no está disponible
-                            return EncryptStringCBC(plainText);
+                            cs.Write(plainBytes, 0, plainBytes.Length);
                         }
                         
-                        gcm.Encrypt(iv, plainBytes, cipherBytes, tag);
+                        var encryptedData = ms.ToArray();
+                        
+                        // Calcular HMAC para autenticación
+                        var hmac = ComputeHmac(encryptedData);
+                        
+                        // Combinar HMAC + datos encriptados
+                        var result = new byte[hmac.Length + encryptedData.Length];
+                        Buffer.BlockCopy(hmac, 0, result, 0, hmac.Length);
+                        Buffer.BlockCopy(encryptedData, 0, result, hmac.Length, encryptedData.Length);
+
+                        return Convert.ToBase64String(result);
                     }
-
-                    // Combinar IV + Tag + Datos encriptados
-                    var result = new byte[iv.Length + tag.Length + cipherBytes.Length];
-                    Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
-                    Buffer.BlockCopy(tag, 0, result, iv.Length, tag.Length);
-                    Buffer.BlockCopy(cipherBytes, 0, result, iv.Length + tag.Length, cipherBytes.Length);
-
-                    return Convert.ToBase64String(result);
                 }
             }
             catch (Exception ex)
@@ -142,7 +162,7 @@ namespace Gesco.Desktop.Core.Security
         }
 
         /// <summary>
-        /// Desencripta un string usando AES-256-GCM
+        /// Desencripta un string usando AES-256-CBC con verificación HMAC
         /// </summary>
         public string DecryptString(string cipherText)
         {
@@ -153,40 +173,48 @@ namespace Gesco.Desktop.Core.Security
             {
                 var cipherBytes = Convert.FromBase64String(cipherText);
                 
-                if (cipherBytes.Length < 28) // IV(12) + Tag(16) = 28 bytes mínimo
+                if (cipherBytes.Length < 48) // HMAC(32) + IV(16) = 48 bytes mínimo
                 {
-                    // Podría ser formato CBC legacy, intentar desencriptar
-                    return DecryptStringCBC(cipherText);
+                    // Podría ser formato legacy, intentar desencriptar con método CBC simple
+                    return DecryptStringLegacy(cipherText);
+                }
+
+                // Extraer HMAC y datos encriptados
+                var hmac = new byte[32]; // SHA256 = 32 bytes
+                var encryptedData = new byte[cipherBytes.Length - 32];
+                
+                Buffer.BlockCopy(cipherBytes, 0, hmac, 0, 32);
+                Buffer.BlockCopy(cipherBytes, 32, encryptedData, 0, encryptedData.Length);
+
+                // Verificar HMAC
+                var computedHmac = ComputeHmac(encryptedData);
+                if (!AreEqual(hmac, computedHmac))
+                {
+                    throw new InvalidOperationException("HMAC verification failed - data may be corrupted");
                 }
 
                 using (var aes = Aes.Create())
                 {
                     aes.Key = _encryptionKey;
-                    aes.Mode = CipherMode.GCM;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
 
-                    // Extraer componentes
-                    var iv = new byte[12];
-                    var tag = new byte[16];
-                    var encrypted = new byte[cipherBytes.Length - 28];
+                    // Extraer IV (primeros 16 bytes de los datos encriptados)
+                    var iv = new byte[16];
+                    Buffer.BlockCopy(encryptedData, 0, iv, 0, 16);
+                    aes.IV = iv;
 
-                    Buffer.BlockCopy(cipherBytes, 0, iv, 0, 12);
-                    Buffer.BlockCopy(cipherBytes, 12, tag, 0, 16);
-                    Buffer.BlockCopy(cipherBytes, 28, encrypted, 0, encrypted.Length);
+                    // Extraer datos encriptados (resto de los bytes)
+                    var encrypted = new byte[encryptedData.Length - 16];
+                    Buffer.BlockCopy(encryptedData, 16, encrypted, 0, encrypted.Length);
 
-                    var decrypted = new byte[encrypted.Length];
-
-                    using (var cipher = aes.CreateDecryptor())
+                    using (var decryptor = aes.CreateDecryptor())
+                    using (var ms = new MemoryStream(encrypted))
+                    using (var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                    using (var reader = new StreamReader(cs))
                     {
-                        if (cipher is not AesGcm gcm)
-                        {
-                            // Fallback a CBC
-                            return DecryptStringCBC(cipherText);
-                        }
-                        
-                        gcm.Decrypt(iv, encrypted, tag, decrypted);
+                        return reader.ReadToEnd();
                     }
-
-                    return Encoding.UTF8.GetString(decrypted);
                 }
             }
             catch (Exception ex)
@@ -197,38 +225,9 @@ namespace Gesco.Desktop.Core.Security
         }
 
         /// <summary>
-        /// Encriptación CBC como fallback para compatibilidad
+        /// Desencriptación legacy para compatibilidad con datos antiguos
         /// </summary>
-        private string EncryptStringCBC(string plainText)
-        {
-            using (var aes = Aes.Create())
-            {
-                aes.Key = _encryptionKey;
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
-                aes.GenerateIV();
-
-                using (var encryptor = aes.CreateEncryptor())
-                using (var ms = new MemoryStream())
-                {
-                    // Escribir IV al inicio
-                    ms.Write(aes.IV, 0, aes.IV.Length);
-                    
-                    using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-                    using (var writer = new StreamWriter(cs))
-                    {
-                        writer.Write(plainText);
-                    }
-                    
-                    return Convert.ToBase64String(ms.ToArray());
-                }
-            }
-        }
-
-        /// <summary>
-        /// Desencriptación CBC como fallback para compatibilidad
-        /// </summary>
-        private string DecryptStringCBC(string cipherText)
+        private string DecryptStringLegacy(string cipherText)
         {
             var cipherBytes = Convert.FromBase64String(cipherText);
             
@@ -255,6 +254,32 @@ namespace Gesco.Desktop.Core.Security
                     return reader.ReadToEnd();
                 }
             }
+        }
+
+        /// <summary>
+        /// Calcula HMAC-SHA256 para autenticación
+        /// </summary>
+        private byte[] ComputeHmac(byte[] data)
+        {
+            using (var hmac = new HMACSHA256(_hmacKey))
+            {
+                return hmac.ComputeHash(data);
+            }
+        }
+
+        /// <summary>
+        /// Comparación segura de arrays para evitar timing attacks
+        /// </summary>
+        private static bool AreEqual(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            
+            int result = 0;
+            for (int i = 0; i < a.Length; i++)
+            {
+                result |= a[i] ^ b[i];
+            }
+            return result == 0;
         }
 
         /// <summary>
@@ -317,10 +342,15 @@ namespace Gesco.Desktop.Core.Security
         {
             if (!_disposed)
             {
-                // Limpiar la clave de memoria
+                // Limpiar las claves de memoria
                 if (_encryptionKey != null)
                 {
                     Array.Clear(_encryptionKey, 0, _encryptionKey.Length);
+                }
+                
+                if (_hmacKey != null)
+                {
+                    Array.Clear(_hmacKey, 0, _hmacKey.Length);
                 }
                 
                 _disposed = true;

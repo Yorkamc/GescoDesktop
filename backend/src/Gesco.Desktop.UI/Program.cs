@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.Json;
 using System.Reflection;
 using DotNetEnv;
+using Gesco.Desktop.Core.Security;
 
 // Cargar variables de entorno
 try { Env.Load(); } catch { /* Ignorar si no existe .env */ }
@@ -36,6 +37,9 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.WriteIndented = true;
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
 });
+
+// Servicios de encriptación
+builder.Services.AddSingleton<DatabaseEncryption>();
 
 // API Explorer y Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -87,19 +91,17 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // =====================================================
-// BASES DE DATOS - CONFIGURACIÓN HÍBRIDA
+// BASES DE DATOS - CONFIGURACIÓN HÍBRIDA (CORREGIDO)
 // =====================================================
 
-// SQLITE LOCAL - SIEMPRE DISPONIBLE (Base principal)
+// SQLITE LOCAL CON ENCRIPTACIÓN - CONFIGURACIÓN ÚNICA
 builder.Services.AddDbContext<LocalDbContext>(options =>
 {
-    var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "data", "gesco_local.db");
-    var directory = Path.GetDirectoryName(dbPath);
-    if (!Directory.Exists(directory))
-        Directory.CreateDirectory(directory);
+    // Usar configuración segura de SecureSettings
+    var connectionString = SecureSettings.GetSecureConnectionString();
+    options.UseSqlite(connectionString);
     
-    options.UseSqlite($"Data Source={dbPath}");
-    
+    // Configuración adicional para desarrollo
     if (builder.Environment.IsDevelopment())
     {
         options.EnableSensitiveDataLogging();
@@ -141,8 +143,8 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 
 // Servicios híbridos (pueden funcionar con o sin PostgreSQL)
-builder.Services.AddScoped<IAuthService, AuthService>(); // Mantener el original por ahora
-builder.Services.AddScoped<IActivationService, ActivationService>(); // Mantener el original por ahora
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IActivationService, ActivationService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 
 // Migration service como Singleton
@@ -164,7 +166,7 @@ if (!string.IsNullOrEmpty(laravelApiUrl))
 {
     builder.Services.AddHttpClient<ILaravelApiClient, LaravelApiClient>(client =>
     {
-        client.Timeout = TimeSpan.FromSeconds(10); // Timeout corto para no bloquear offline
+        client.Timeout = TimeSpan.FromSeconds(10);
         client.BaseAddress = new Uri(laravelApiUrl);
         client.DefaultRequestHeaders.Add("User-Agent", "GESCO-Desktop/1.0.0");
         client.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -174,7 +176,6 @@ if (!string.IsNullOrEmpty(laravelApiUrl))
 }
 else
 {
-    // Null object pattern para evitar errores cuando no hay API
     builder.Services.AddScoped<ILaravelApiClient, NullLaravelApiClient>();
     Console.WriteLine("⚠️ Laravel API no configurado - activación offline limitada");
 }
@@ -187,7 +188,7 @@ else
 builder.Services.AddScoped<ISyncService>(provider =>
 {
     var localContext = provider.GetRequiredService<LocalDbContext>();
-    var syncContext = provider.GetService<SyncDbContext>(); // Puede ser null
+    var syncContext = provider.GetService<SyncDbContext>();
     var logger = provider.GetRequiredService<ILogger<DualDatabaseSyncService>>();
     
     return new DualDatabaseSyncService(localContext, syncContext, logger);
@@ -265,6 +266,81 @@ else
 }
 
 var app = builder.Build();
+
+// =====================================================
+// INICIALIZACIÓN DE ENCRIPTACIÓN (CORREGIDO)
+// =====================================================
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+        var encryption = scope.ServiceProvider.GetRequiredService<DatabaseEncryption>();
+        var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        // Aplicar configuraciones de seguridad de SQLite
+        SecureSettings.ApplySecuritySettings(context);
+
+        // Probar que la encriptación funciona
+        var testText = "GESCO Encryption Test " + DateTime.Now.Ticks;
+        var encrypted = encryption.EncryptString(testText);
+        var decrypted = encryption.DecryptString(encrypted);
+
+        if (testText == decrypted)
+        {
+            startupLogger.LogInformation("✅ Database encryption initialized successfully");
+        }
+        else
+        {
+            startupLogger.LogError("❌ Database encryption test failed");
+            throw new InvalidOperationException("Database encryption is not working correctly");
+        }
+    }
+    catch (Exception ex)
+    {
+        var errorLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        errorLogger.LogError(ex, "Error initializing database encryption");
+        Console.WriteLine($"❌ Error en encriptación: {ex.Message}");
+        // No fallar el startup, pero mostrar advertencia
+    }
+}
+
+// =====================================================
+// ENDPOINTS DE TESTING
+// =====================================================
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapPost("/api/test/encryption", (DatabaseEncryption encryption, string text) =>
+    {
+        try
+        {
+            var encrypted = encryption.EncryptString(text);
+            var decrypted = encryption.DecryptString(encrypted);
+            var hash = encryption.ComputeHash(text);
+            
+            return Results.Ok(new
+            {
+                original = text,
+                encrypted = encrypted,
+                decrypted = decrypted,
+                hash = hash,
+                success = text == decrypted,
+                timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            return Results.BadRequest(new { error = ex.Message, timestamp = DateTime.UtcNow });
+        }
+    })
+    .WithTags("Testing")
+    .WithName("TestEncryption")
+    .Accepts<string>("text/plain")
+    .Produces<object>(200)
+    .Produces<object>(400);
+}
 
 // =====================================================
 // PIPELINE DE MIDDLEWARE
@@ -390,8 +466,8 @@ app.UseExceptionHandler(errorApp =>
         var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
         if (error != null)
         {
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError(error.Error, "Unhandled exception occurred");
+            var exceptionLogger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            exceptionLogger.LogError(error.Error, "Unhandled exception occurred");
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(new
             {
@@ -404,11 +480,15 @@ app.UseExceptionHandler(errorApp =>
 });
 
 // =====================================================
-// MENSAJES DE INICIO
+// MENSAJES DE INICIO (CORREGIDO)
 // =====================================================
 
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Starting GESCO Desktop API in Hybrid Mode...");
+var mainLogger = app.Services.GetRequiredService<ILogger<Program>>();
+mainLogger.LogInformation("Starting GESCO Desktop API in Hybrid Mode...");
+
+// CORREGIDO: Declarar variables de encriptación antes de usarlas
+var hasEncryptionKey = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SQLITE_ENCRYPTION_KEY"));
+var hasSqlitePassword = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SQLITE_PASSWORD"));
 
 Console.WriteLine("=========================================");
 Console.WriteLine("GESCO DESKTOP API - MODO HÍBRIDO");
@@ -421,6 +501,26 @@ Console.WriteLine("CONFIGURACIÓN:");
 Console.WriteLine($"✅ SQLite Local: ACTIVO (Principal)");
 Console.WriteLine($"{(!string.IsNullOrEmpty(postgresConnectionString) ? "✅" : "⚠️")} PostgreSQL Sync: {(!string.IsNullOrEmpty(postgresConnectionString) ? "ACTIVO" : "NO CONFIGURADO")}");
 Console.WriteLine($"{(!string.IsNullOrEmpty(laravelApiUrl) ? "✅" : "⚠️")} Laravel API: {(!string.IsNullOrEmpty(laravelApiUrl) ? "ACTIVO" : "NO CONFIGURADO")}");
+Console.WriteLine("=========================================");
+Console.WriteLine("CONFIGURACIÓN DE SEGURIDAD:");
+if (hasEncryptionKey)
+{
+    Console.WriteLine($"✅ Encriptación: AES-256-CBC+HMAC (Aplicación)");
+}
+else if (hasSqlitePassword)
+{
+    Console.WriteLine($"✅ Encriptación: SQLite Nativa");
+}
+else
+{
+    Console.WriteLine($"⚠️ Encriptación: Determinística (Sistema)");
+    Console.WriteLine($"   📝 Para mayor seguridad: SQLITE_ENCRYPTION_KEY en .env");
+}
+
+if (app.Environment.IsDevelopment())
+{
+    Console.WriteLine($"🧪 Testing: POST /api/test/encryption disponible");
+}
 Console.WriteLine("=========================================");
 Console.WriteLine("ENDPOINTS HÍBRIDOS:");
 Console.WriteLine($"Health: GET /ping");
@@ -462,7 +562,7 @@ if (string.IsNullOrEmpty(laravelApiUrl))
 
 Console.WriteLine("=========================================");
 
-logger.LogInformation("GESCO Desktop API started successfully in hybrid mode");
+mainLogger.LogInformation("GESCO Desktop API started successfully in hybrid mode");
 
 app.Run();
 
@@ -472,11 +572,6 @@ app.Run();
 
 static string GetPostgreSQLConnectionString(IConfiguration configuration)
 {
-    // Orden de precedencia:
-    // 1. Variable de entorno específica
-    // 2. Variable de entorno con prefijo
-    // 3. Configuration (appsettings)
-    
     return Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ??
            Environment.GetEnvironmentVariable("GESCO_ConnectionStrings__PostgreSQL") ??
            configuration.GetConnectionString("PostgreSQL") ??
@@ -495,7 +590,6 @@ static string MaskConnectionString(string connectionString)
 {
     if (string.IsNullOrEmpty(connectionString)) return "";
     
-    // Mask password in connection string for logging
     var masked = connectionString;
     var passwordIndex = masked.IndexOf("Password=", StringComparison.OrdinalIgnoreCase);
     if (passwordIndex >= 0)
@@ -536,7 +630,7 @@ public class NullLaravelApiClient : ILaravelApiClient
 }
 
 // =====================================================
-// SYNC SERVICE BÁSICO (implementación completa en siguiente paso)
+// SYNC SERVICE BÁSICO
 // =====================================================
 
 public interface ISyncService
@@ -585,9 +679,6 @@ public class DualDatabaseSyncService : ISyncService
         }
 
         _logger.LogInformation("Starting sync to PostgreSQL...");
-        
-        // TODO: Implementar lógica de sync
-        // Por ahora, solo log
         _logger.LogInformation("Sync to PostgreSQL completed (placeholder)");
     }
 
@@ -596,8 +687,6 @@ public class DualDatabaseSyncService : ISyncService
         if (!await CanSyncAsync()) return;
         
         _logger.LogInformation("Starting sync from PostgreSQL...");
-        
-        // TODO: Implementar lógica de sync
         _logger.LogInformation("Sync from PostgreSQL completed (placeholder)");
     }
 
@@ -608,8 +697,8 @@ public class DualDatabaseSyncService : ISyncService
         return new SyncStatus
         {
             CanSync = canSync,
-            LastSync = null, // TODO: Implementar
-            PendingChanges = 0, // TODO: Implementar
+            LastSync = null,
+            PendingChanges = 0,
             Message = canSync ? "Ready to sync" : "PostgreSQL not available"
         };
     }
@@ -628,7 +717,7 @@ public class BackgroundSyncService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<BackgroundSyncService> _logger;
-    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(30); // Sync cada 30 minutos
+    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(30);
 
     public BackgroundSyncService(IServiceProvider serviceProvider, ILogger<BackgroundSyncService> logger)
     {
