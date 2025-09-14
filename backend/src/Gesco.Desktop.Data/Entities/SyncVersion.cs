@@ -48,7 +48,7 @@ namespace Gesco.Desktop.Data.Entities
         public virtual Organization Organization { get; set; } = null!;
 
         [ForeignKey("ChangedByUser")]
-        public virtual User? ChangedByUser { get; set; }
+        public virtual User? ChangedByUserNavigation { get; set; }
 
         [ForeignKey("OriginClientId")]
         public virtual DesktopClient? OriginClient { get; set; }
