@@ -1,97 +1,268 @@
 {
-    "name": "gesco-desktop-frontend",
-    "version": "1.0.0",
-    "description": "GESCO Desktop - Frontend Electron + React",
-    "main": "electron-main.cjs",
-    "author": "GESCO Team",
-    "type": "module",
-    "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build",
-        "build:backend": "cd ../backend && dotnet publish src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj -c Release -o ../frontend/backend",
-        "build:complete": "npm run build:backend && npm run build && npm run electron:build",
-        "electron:build": "electron-builder",
-        "preview": "vite preview",
-        "electron": "electron .",
-        "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "test:build": "npm run build && npm run electron",
-        "clean": "rm -rf dist dist-electron node_modules/.vite backend",
-        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  "name": "gesco-desktop-frontend",
+  "version": "1.0.0",
+  "description": "GESCO Desktop - Frontend Electron + React",
+  "main": "electron-main.cjs",
+  "author": "GESCO Team",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:backend": "cd ../backend && dotnet publish src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj -c Release -o ../frontend/backend",
+    "build:complete": "npm run build:backend && npm run build && npm run electron:build",
+    "electron:build": "electron-builder --config electron-builder.config.js",
+    "electron:build:win": "electron-builder --win --config electron-builder.config.js",
+    "electron:build:mac": "electron-builder --mac --config electron-builder.config.js",
+    "electron:build:linux": "electron-builder --linux --config electron-builder.config.js",
+    "electron:build:all": "electron-builder --win --mac --linux --config electron-builder.config.js",
+    "sign:prepare": "node scripts/prepare-signing.js",
+    "security:audit": "node scripts/security-audit.js",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "test:build": "npm run build && npm run electron",
+    "clean": "rm -rf dist dist-electron node_modules/.vite backend",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.17.0",
+    "axios": "^1.6.5",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.3.1",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.7",
+    "keytar": "^7.9.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.49.3",
+    "react-router-dom": "^6.21.3",
+    "recharts": "^2.10.4",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-notarize": "^1.2.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.2.4",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.gesco.desktop",
+    "productName": "GESCO Desktop",
+    "copyright": "2025 GESCO",
+    "asar": true,
+    "asarUnpack": [
+      "backend/**/*",
+      "node_modules/keytar/**/*"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist-electron"
     },
-    "dependencies": {
-        "@tanstack/react-query": "^5.17.0",
-        "axios": "^1.6.5",
-        "clsx": "^2.1.0",
-        "date-fns": "^3.3.1",
-        "electron-store": "^8.1.0",
-        "electron-updater": "^6.1.7",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "react-hook-form": "^7.49.3",
-        "react-router-dom": "^6.21.3",
-        "recharts": "^2.10.4",
-        "zustand": "^4.5.0"
-    },
-    "devDependencies": {
-        "@types/node": "^20.11.5",
-        "@types/react": "^18.2.48",
-        "@types/react-dom": "^18.2.18",
-        "@typescript-eslint/eslint-plugin": "^6.19.0",
-        "@typescript-eslint/parser": "^6.19.0",
-        "@vitejs/plugin-react": "^4.2.1",
-        "autoprefixer": "^10.4.21",
-        "concurrently": "^8.2.2",
-        "electron": "^28.2.0",
-        "electron-builder": "^24.9.1",
-        "eslint": "^8.56.0",
-        "eslint-plugin-react": "^7.33.2",
-        "eslint-plugin-react-hooks": "^4.6.0",
-        "postcss": "^8.5.6",
-        "prettier": "^3.2.4",
-        "tailwindcss": "^3.4.17",
-        "typescript": "^5.3.3",
-        "vite": "^5.0.11",
-        "wait-on": "^7.2.0"
-    },
-    "build": {
-        "appId": "com.gesco.desktop",
-        "productName": "GESCO Desktop",
-        "copyright": "2025 GESCO",
-        "directories": {
-            "buildResources": "build",
-            "output": "dist-electron"
+    "files": [
+      "dist/**/*",
+      "backend/**/*",
+      "electron-main.cjs",
+      "package.json",
+      "!**/*.env*",
+      "!**/*.pem",
+      "!**/*.key",
+      "!**/*.p12",
+      "!**/*.pfx",
+      "!**/.env*",
+      "!**/appsettings.*.json",
+      "!**/secrets/**",
+      "!**/keys/**",
+      "!**/certificates/**"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/*.env*",
+          "!**/*.pem",
+          "!**/*.key",
+          "!**/*.pfx",
+          "!**/appsettings.Production.json",
+          "!**/appsettings.Development.json"
+        ]
+      }
+    ],
+    "afterSign": "scripts/notarize.js",
+    "protocols": [
+      {
+        "name": "gesco-desktop",
+        "schemes": ["gesco"]
+      }
+    ],
+    "fileAssociations": [
+      {
+        "ext": "gesco",
+        "name": "GESCO Project File",
+        "description": "GESCO Desktop Project File",
+        "icon": "build/file-icon.ico"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
         },
-        "files": [
-            "dist/**/*",
-            "backend/**/*",
-            "electron-main.cjs",
-            "package.json"
-        ],
-        "extraResources": [
-            {
-                "from": "backend",
-                "to": "backend",
-                "filter": ["**/*"]
-            }
-        ],
-        "win": {
-            "target": "nsis",
-            "icon": "build/icon.ico"
-        },
-        "nsis": {
-            "oneClick": false,
-            "allowToChangeInstallationDirectory": true,
-            "createDesktopShortcut": true,
-            "createStartMenuShortcut": true,
-            "installerHeaderIcon": "build/icon.ico"
-        },
-        "mac": {
-            "target": "dmg",
-            "icon": "build/icon.icns"
-        },
-        "linux": {
-            "target": "AppImage",
-            "icon": "build/icon.png"
+        {
+          "target": "portable",
+          "arch": ["x64"]
         }
-    }
+      ],
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": true,
+      "signDlls": true,
+      "verifyUpdateCodeSignature": true,
+      "certificateFile": "certificates/windows-cert.p12",
+      "certificatePassword": "",
+      "publisherName": "GESCO Technologies",
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+      "timeStampServer": "http://timestamp.digicert.com"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerHeaderIcon": "build/icon.ico",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": true,
+      "packElevateHelper": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "include": "scripts/installer.nsh"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.business",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "provisioningProfile": "build/GESCO_Desktop.provisionprofile",
+      "identity": "GESCO Technologies",
+      "minimumSystemVersion": "10.15.0",
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "background": "build/dmg-background.png",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 380,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 110,
+          "y": 280,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "sign": true
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Office",
+      "synopsis": "Sistema de Gestión de Actividades y Ventas",
+      "description": "GESCO Desktop es un sistema completo para la gestión de actividades comunitarias y ventas.",
+      "desktop": {
+        "Name": "GESCO Desktop",
+        "Comment": "Sistema de Gestión de Actividades",
+        "Keywords": "gesco;management;sales;activities"
+      }
+    },
+    "appImage": {
+      "license": "LICENSE"
+    },
+    "deb": {
+      "priority": "optional",
+      "depends": [
+        "gconf2",
+        "gconf-service",
+        "libnotify4",
+        "libappindicator1",
+        "libxtst6",
+        "libnss3",
+        "libsecret-1-0"
+      ]
+    },
+    "rpm": {
+      "depends": [
+        "libsecret",
+        "libnotify",
+        "nss"
+      ]
+    },
+    "snap": {
+      "grade": "stable",
+      "summary": "Sistema de Gestión GESCO",
+      "plugs": [
+        "default",
+        "keyring",
+        "password-manager-service"
+      ]
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "gesco-team",
+        "repo": "gesco-desktop",
+        "releaseType": "release"
+      }
+    ]
+  }
 }
