@@ -89,4 +89,27 @@ namespace Gesco.Desktop.Data.Entities.Base
         [MaxLength(64)]
         public string? IntegrityHash { get; set; }
     }
+    public abstract class BaseEntityString : BaseEntity
+    {
+        [Key]
+        [Column("id")]
+        [MaxLength(36)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        public override object GetId() => Id;
+    }
+        public abstract class AuditableEntityString : BaseEntityString
+    {
+        [Column("created_by")]
+        public Guid? CreatedBy { get; set; }
+
+        [Column("updated_by")]
+        public Guid? UpdatedBy { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+    }
 }

@@ -23,7 +23,7 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<Membership> Memberships { get; set; }
         public DbSet<SubscriptionStatus> SubscriptionStatuses { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
-        public DbSet<ActivationKey> ActivationKeys { get; set; } // CORREGIDO: int ID
+        public DbSet<ActivationKey> ActivationKeys { get; set; }
 
         // Activities - INT (con FKs mixed)
         public DbSet<ActivityStatus> ActivityStatuses { get; set; }
@@ -56,6 +56,27 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<SystemConfiguration> SystemConfigurations { get; set; }
 
         // ============================================
+        // NUEVAS ENTIDADES - CRÍTICAS PARA SYNC
+        // ============================================
+        
+        // Sync System
+        public DbSet<DesktopClient> DesktopClients { get; set; }
+        public DbSet<SyncQueueItem> SyncQueue { get; set; }
+        public DbSet<SyncVersion> SyncVersions { get; set; }
+
+        // Notifications (Opcional)
+        public DbSet<NotificationType> NotificationTypes { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+
+        // OAuth (Solo si usas Laravel Passport)
+        public DbSet<OAuthAccessToken> OAuthAccessTokens { get; set; }
+        public DbSet<OAuthRefreshToken> OAuthRefreshTokens { get; set; }
+
+        // Auditing
+        public DbSet<ApiActivityLog> ApiActivityLogs { get; set; }
+        public DbSet<ActivationHistory> ActivationHistories { get; set; }
+
+        // ============================================
         // ALIAS PARA COMPATIBILIDAD CON NOMBRES EN ESPAÑOL
         // ============================================
         
@@ -65,7 +86,8 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<SalesTransaction> TransaccionesVenta => SalesTransactions;
         public DbSet<CategoryProduct> ProductosCategorias => CategoryProducts;
         public DbSet<SystemConfiguration> ConfiguracionesSistema => SystemConfigurations;
-
+        public DbSet<DesktopClient> ClientesEscritorio => DesktopClients;
+        public DbSet<SyncQueueItem> ColaSincronizacion => SyncQueue;
         // ============================================
         // CONSTRUCTORS
         // ============================================
@@ -78,7 +100,7 @@ namespace Gesco.Desktop.Data.Context
         // ============================================
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
+       if (!optionsBuilder.IsConfigured)
             {
                 var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "data", "gesco_local.db");
                 var directory = Path.GetDirectoryName(dbPath);
@@ -94,7 +116,7 @@ namespace Gesco.Desktop.Data.Context
         // ============================================
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+     base.OnModelCreating(modelBuilder);
 
             // Set default delete behavior to Restrict
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
@@ -114,7 +136,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // USER RELATIONSHIPS - MIXED GUID/INT
             // ============================================
-            
+
             // User (Guid) -> Organization (Guid)
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Organization)
@@ -132,7 +154,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // ACTIVITY RELATIONSHIPS - MIXED
             // ============================================
-            
+
             // Activity (int) -> ActivityStatus (int)
             modelBuilder.Entity<Activity>()
                 .HasOne(a => a.ActivityStatus)
@@ -150,7 +172,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // SALES RELATIONSHIPS - INT TO INT
             // ============================================
-            
+
             // SalesTransaction (int) -> SalesStatus (int)
             modelBuilder.Entity<SalesTransaction>()
                 .HasOne(st => st.SalesStatus)
@@ -168,7 +190,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // ACTIVITY CATEGORY RELATIONSHIPS - INT TO INT
             // ============================================
-            
+
             // ActivityCategory (int) -> Activity (int)
             modelBuilder.Entity<ActivityCategory>()
                 .HasOne(ac => ac.Activity)
@@ -186,7 +208,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // CATEGORY PRODUCT RELATIONSHIPS - INT TO INT
             // ============================================
-            
+
             // CategoryProduct (int) -> ActivityCategory (int)
             modelBuilder.Entity<CategoryProduct>()
                 .HasOne(cp => cp.ActivityCategory)
@@ -197,7 +219,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // INVENTORY RELATIONSHIPS - INT TO INT
             // ============================================
-            
+
             // InventoryMovement (int) -> CategoryProduct (int)
             modelBuilder.Entity<InventoryMovement>()
                 .HasOne(im => im.Product)
@@ -215,7 +237,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // TRANSACTION DETAIL RELATIONSHIPS - INT TO INT
             // ============================================
-            
+
             // TransactionDetail (int) -> SalesTransaction (int)
             modelBuilder.Entity<TransactionDetail>()
                 .HasOne(td => td.SalesTransaction)
@@ -233,7 +255,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // SUBSCRIPTION RELATIONSHIPS - MIXED GUID/INT
             // ============================================
-            
+
             // Subscription (int) -> Organization (Guid)
             modelBuilder.Entity<Subscription>()
                 .HasOne(s => s.Organization)
@@ -258,7 +280,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // ACTIVATION KEY RELATIONSHIPS - CORREGIDO
             // ============================================
-            
+
             // ActivationKey (int) -> Subscription (int)
             modelBuilder.Entity<ActivationKey>()
                 .HasOne(ak => ak.Subscription)
@@ -269,7 +291,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // SERVICE CATEGORY RELATIONSHIPS
             // ============================================
-            
+
             // ServiceCategory (int) -> Organization (Guid)
             modelBuilder.Entity<ServiceCategory>()
                 .HasOne(sc => sc.Organization)
@@ -280,7 +302,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // CASH REGISTER RELATIONSHIPS
             // ============================================
-            
+
             // CashRegister (int) -> Activity (int)
             modelBuilder.Entity<CashRegister>()
                 .HasOne(cr => cr.Activity)
@@ -291,7 +313,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // COMBO RELATIONSHIPS
             // ============================================
-            
+
             // SalesCombo (int) -> Activity (int)
             modelBuilder.Entity<SalesCombo>()
                 .HasOne(sc => sc.Activity)
@@ -316,7 +338,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // PAYMENT RELATIONSHIPS
             // ============================================
-            
+
             // TransactionPayment (int) -> SalesTransaction (int)
             modelBuilder.Entity<TransactionPayment>()
                 .HasOne(tp => tp.SalesTransaction)
@@ -334,7 +356,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // CLOSURE RELATIONSHIPS
             // ============================================
-            
+
             // CashRegisterClosure (int) -> CashRegister (int)
             modelBuilder.Entity<CashRegisterClosure>()
                 .HasOne(crc => crc.CashRegister)
@@ -348,8 +370,309 @@ namespace Gesco.Desktop.Data.Context
                 .WithMany()
                 .HasForeignKey(ac => ac.ActivityId) // int -> int ✅
                 .OnDelete(DeleteBehavior.Restrict);
+                 // DesktopClient relationships
+            modelBuilder.Entity<DesktopClient>()
+                .HasOne(dc => dc.Organization)
+                .WithMany()
+                .HasForeignKey(dc => dc.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DesktopClient>()
+                .HasOne(dc => dc.User)
+                .WithMany()
+                .HasForeignKey(dc => dc.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // SyncQueueItem relationships
+            modelBuilder.Entity<SyncQueueItem>()
+                .HasOne(sq => sq.Organization)
+                .WithMany()
+                .HasForeignKey(sq => sq.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SyncQueueItem>()
+                .HasOne(sq => sq.DesktopClient)
+                .WithMany(dc => dc.SyncQueueItems)
+                .HasForeignKey(sq => sq.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // SyncVersion relationships
+            modelBuilder.Entity<SyncVersion>()
+                .HasOne(sv => sv.Organization)
+                .WithMany()
+                .HasForeignKey(sv => sv.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SyncVersion>()
+                .HasOne(sv => sv.ChangedByUser)
+                .WithMany()
+                .HasForeignKey(sv => sv.ChangedByUser)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<SyncVersion>()
+                .HasOne(sv => sv.OriginClient)
+                .WithMany()
+                .HasForeignKey(sv => sv.OriginClientId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Notification relationships
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.Organization)
+                .WithMany()
+                .HasForeignKey(n => n.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.NotificationType)
+                .WithMany(nt => nt.Notifications)
+                .HasForeignKey(n => n.NotificationTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // OAuth relationships
+            modelBuilder.Entity<OAuthAccessToken>()
+                .HasOne(oat => oat.User)
+                .WithMany()
+                .HasForeignKey(oat => oat.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<OAuthRefreshToken>()
+                .HasOne(ort => ort.AccessToken)
+                .WithMany()
+                .HasForeignKey(ort => ort.AccessTokenId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ApiActivityLog relationships
+            modelBuilder.Entity<ApiActivityLog>()
+                .HasOne(aal => aal.User)
+                .WithMany()
+                .HasForeignKey(aal => aal.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ApiActivityLog>()
+                .HasOne(aal => aal.Organization)
+                .WithMany()
+                .HasForeignKey(aal => aal.OrganizationId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ActivationHistory relationships
+            modelBuilder.Entity<ActivationHistory>()
+                .HasOne(ah => ah.Organization)
+                .WithMany()
+                .HasForeignKey(ah => ah.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ActivationHistory>()
+                .HasOne(ah => ah.ActivationKey)
+                .WithMany()
+                .HasForeignKey(ah => ah.ActivationKeyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ActivationHistory>()
+                .HasOne(ah => ah.ActivatedByUser)
+                .WithMany()
+                .HasForeignKey(ah => ah.ActivatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ActivationHistory>()
+                .HasOne(ah => ah.DeactivatedByUser)
+                .WithMany()
+                .HasForeignKey(ah => ah.DeactivatedBy)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ============================================
+            // ÍNDICES ÚNICOS IMPORTANTES
+            // ============================================
+            
+            // DesktopClient - cliente único por organización
+            modelBuilder.Entity<DesktopClient>()
+                .HasIndex(dc => dc.Id)
+                .IsUnique();
+
+            // SyncQueue - evitar duplicados
+            modelBuilder.Entity<SyncQueueItem>()
+                .HasIndex(sq => new { sq.ClientId, sq.AffectedTable, sq.RecordId, sq.SyncVersion })
+                .HasDatabaseName("idx_sync_queue_unique");
+
+            // Notification - índices para queries frecuentes
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.OrganizationId, n.IsRead, n.Important })
+                .HasDatabaseName("idx_notifications_org_status");
+
+            // ApiActivityLog - índices para auditoría
+            modelBuilder.Entity<ApiActivityLog>()
+                .HasIndex(aal => new { aal.OrganizationId, aal.CreatedAt })
+                .HasDatabaseName("idx_api_logs_org_date");
+        }
+            private static void ConfigureSyncIndexes(ModelBuilder modelBuilder)
+        {
+            // [MANTENER TUS ÍNDICES EXISTENTES]
+            
+            // ============================================
+            // ÍNDICES ADICIONALES PARA NUEVAS ENTIDADES
+            // ============================================
+            
+            // DesktopClient - índices críticos para sync
+            modelBuilder.Entity<DesktopClient>()
+                .HasIndex(e => new { e.OrganizationId, e.Status, e.LastConnection })
+                .HasDatabaseName("idx_desktop_clients_org_status_connection");
+
+            modelBuilder.Entity<DesktopClient>()
+                .HasIndex(e => e.LastSyncVersion)
+                .HasDatabaseName("idx_desktop_clients_sync_version");
+
+            // SyncQueue - índices críticos para rendimiento
+            modelBuilder.Entity<SyncQueueItem>()
+                .HasIndex(e => new { e.OrganizationId, e.ClientId, e.Status, e.Priority, e.SyncVersion })
+                .HasDatabaseName("idx_sync_queue_delivery");
+
+            modelBuilder.Entity<SyncQueueItem>()
+                .HasIndex(e => new { e.Status, e.Attempts, e.CreatedAt })
+                .HasDatabaseName("idx_sync_queue_retry");
+
+            modelBuilder.Entity<SyncQueueItem>()
+                .HasIndex(e => e.ExpiresAt)
+                .HasDatabaseName("idx_sync_queue_cleanup");
+
+            // SyncVersion - índices para auditoría
+            modelBuilder.Entity<SyncVersion>()
+                .HasIndex(e => new { e.OrganizationId, e.TableName, e.RecordId, e.Version })
+                .HasDatabaseName("idx_sync_versions_lookup");
+
+            modelBuilder.Entity<SyncVersion>()
+                .HasIndex(e => new { e.ChangeDate, e.Operation })
+                .HasDatabaseName("idx_sync_versions_audit");
+
+            // Notification - índices para queries eficientes
+            modelBuilder.Entity<Notification>()
+                .HasIndex(e => new { e.UserId, e.IsRead, e.ScheduledDate })
+                .HasDatabaseName("idx_notifications_user_delivery");
+
+            // ApiActivityLog - índices para análisis
+            modelBuilder.Entity<ApiActivityLog>()
+                .HasIndex(e => new { e.OrganizationId, e.CreatedAt })
+                .HasDatabaseName("idx_api_logs_org_time");
+
+            modelBuilder.Entity<ApiActivityLog>()
+                .HasIndex(e => new { e.Endpoint, e.Method, e.ResponseStatus })
+                .HasDatabaseName("idx_api_logs_endpoint_analysis");
+
+            // OAuth - índices para autenticación
+            modelBuilder.Entity<OAuthAccessToken>()
+                .HasIndex(e => new { e.UserId, e.Revoked, e.ExpiresAt })
+                .HasDatabaseName("idx_oauth_tokens_user_valid");
         }
 
+        // ============================================
+        // MÉTODOS HELPER PARA SYNC - MEJORADOS
+        // ============================================
+
+        /// <summary>
+        /// Registra un nuevo cliente desktop
+        /// </summary>
+        public async Task<DesktopClient> RegisterDesktopClientAsync(
+            Guid organizationId, 
+            Guid userId, 
+            string clientName, 
+            string? appVersion = null)
+        {
+            var client = new DesktopClient
+            {
+                OrganizationId = organizationId,
+                UserId = userId,
+                ClientName = clientName,
+                AppVersion = appVersion,
+                Status = "active",
+                RegisteredAt = DateTime.UtcNow
+            };
+
+            DesktopClients.Add(client);
+            await SaveChangesAsync();
+            return client;
+        }
+
+        /// <summary>
+        /// Encola cambios para sincronización
+        /// </summary>
+        public async Task<int> QueueSyncChangesAsync(
+            IEnumerable<SyncQueueItem> changes)
+        {
+            SyncQueue.AddRange(changes);
+            return await SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Obtiene cambios pendientes para un cliente específico
+        /// </summary>
+        public async Task<List<SyncQueueItem>> GetPendingChangesAsync(
+            string clientId, 
+            long fromSyncVersion = 0,
+            int limit = 100)
+        {
+            return await SyncQueue
+                .Where(sq => sq.ClientId == clientId 
+                    && sq.Status == "pending" 
+                    && sq.SyncVersion > fromSyncVersion
+                    && sq.ExpiresAt > DateTime.UtcNow)
+                .OrderBy(sq => sq.Priority)
+                .ThenBy(sq => sq.SyncVersion)
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Marca cambios como confirmados
+        /// </summary>
+        public async Task ConfirmSyncChangesAsync(IEnumerable<int> syncQueueIds)
+        {
+            var items = await SyncQueue
+                .Where(sq => syncQueueIds.Contains(sq.Id))
+                .ToListAsync();
+
+            foreach (var item in items)
+            {
+                item.Status = "confirmed";
+                item.ConfirmedAt = DateTime.UtcNow;
+            }
+
+            await SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Limpia elementos expirados de la cola de sync
+        /// </summary>
+        public async Task<int> CleanupExpiredSyncItemsAsync()
+        {
+            var expiredItems = await SyncQueue
+                .Where(sq => sq.ExpiresAt <= DateTime.UtcNow || 
+                    (sq.Status == "error" && sq.Attempts >= sq.MaxAttempts))
+                .ToListAsync();
+
+            SyncQueue.RemoveRange(expiredItems);
+            return await SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Optimiza la base de datos
+        /// </summary>
+        public async Task OptimizeDatabaseAsync()
+        {
+            try
+            {
+                await Database.ExecuteSqlRawAsync("VACUUM ANALYZE;");
+                await Database.ExecuteSqlRawAsync("REINDEX DATABASE CONCURRENTLY;");
+                Console.WriteLine("✅ PostgreSQL database optimized successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Database optimization warning: {ex.Message}");
+            }
+        }
         // ============================================
         // SEED DATA METHOD - CORREGIDO CON TIPOS EXACTOS
         // ============================================
@@ -358,11 +681,11 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // IDS PARA SEED DATA - TIPOS CORRECTOS
             // ============================================
-            
+
             // GUID IDs (Solo Organization y User)
             var orgId = Guid.NewGuid(); // Organization
             var adminUserId = Guid.NewGuid(); // User
-            
+
             // INT IDs (Todos los demás)
             var adminRoleId = 1; // Role
             var salesRoleId = 2; // Role  
@@ -371,7 +694,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // DEFAULT ORGANIZATION - GUID ID
             // ============================================
-            
+
             modelBuilder.Entity<Organization>().HasData(
                 new Organization
                 {
@@ -389,41 +712,41 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // SYSTEM ROLES - INT ID
             // ============================================
-            
+
             modelBuilder.Entity<Role>().HasData(
-                new Role 
-                { 
+                new Role
+                {
                     Id = adminRoleId, // ✅ int
-                    Name = "Administrator", 
-                    Description = "Full system access", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Administrator",
+                    Description = "Full system access",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new Role 
-                { 
+                new Role
+                {
                     Id = salesRoleId, // ✅ int
-                    Name = "Salesperson", 
-                    Description = "Sales and cash register access", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Salesperson",
+                    Description = "Sales and cash register access",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new Role 
-                { 
+                new Role
+                {
                     Id = supervisorRoleId, // ✅ int
-                    Name = "Supervisor", 
-                    Description = "Activity supervision", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Supervisor",
+                    Description = "Activity supervision",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 
             // ============================================
             // ADMIN USER - GUID ID CON FKS MIXED
             // ============================================
-            
+
             // BCrypt hash para "admin123"
             var adminPasswordHash = "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6";
-            
+
             modelBuilder.Entity<User>().HasData(
                 new User
                 {
@@ -444,167 +767,167 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // ACTIVITY STATUSES - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<ActivityStatus>().HasData(
-                new ActivityStatus 
-                { 
+                new ActivityStatus
+                {
                     Id = 1, // ✅ int
-                    Name = "Not Started", 
-                    Description = "Activity not started", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Not Started",
+                    Description = "Activity not started",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new ActivityStatus 
-                { 
+                new ActivityStatus
+                {
                     Id = 2, // ✅ int
-                    Name = "In Progress", 
-                    Description = "Activity in development", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "In Progress",
+                    Description = "Activity in development",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new ActivityStatus 
-                { 
+                new ActivityStatus
+                {
                     Id = 3, // ✅ int
-                    Name = "Completed", 
-                    Description = "Activity completed", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Completed",
+                    Description = "Activity completed",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new ActivityStatus 
-                { 
+                new ActivityStatus
+                {
                     Id = 4, // ✅ int
-                    Name = "Cancelled", 
-                    Description = "Activity cancelled", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Cancelled",
+                    Description = "Activity cancelled",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 
             // ============================================
             // SALES STATUSES - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<SalesStatus>().HasData(
-                new SalesStatus 
-                { 
+                new SalesStatus
+                {
                     Id = 1, // ✅ int
-                    Name = "Pending", 
-                    Description = "Sale pending processing", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Pending",
+                    Description = "Sale pending processing",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new SalesStatus 
-                { 
+                new SalesStatus
+                {
                     Id = 2, // ✅ int
-                    Name = "Completed", 
-                    Description = "Sale completed successfully", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Completed",
+                    Description = "Sale completed successfully",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new SalesStatus 
-                { 
+                new SalesStatus
+                {
                     Id = 3, // ✅ int
-                    Name = "Cancelled", 
-                    Description = "Sale cancelled", 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Cancelled",
+                    Description = "Sale cancelled",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 
             // ============================================
             // PAYMENT METHODS - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<PaymentMethod>().HasData(
-                new PaymentMethod 
-                { 
+                new PaymentMethod
+                {
                     Id = 1, // ✅ int
-                    Name = "Cash", 
-                    RequiresReference = false, 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Cash",
+                    RequiresReference = false,
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new PaymentMethod 
-                { 
+                new PaymentMethod
+                {
                     Id = 2, // ✅ int
-                    Name = "Card", 
-                    RequiresReference = true, 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Card",
+                    RequiresReference = true,
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new PaymentMethod 
-                { 
+                new PaymentMethod
+                {
                     Id = 3, // ✅ int
-                    Name = "SINPE Mobile", 
-                    RequiresReference = true, 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "SINPE Mobile",
+                    RequiresReference = true,
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 
             // ============================================
             // INVENTORY MOVEMENT TYPES - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<InventoryMovementType>().HasData(
-                new InventoryMovementType 
-                { 
+                new InventoryMovementType
+                {
                     Id = 1, // ✅ int
-                    Name = "Stock In", 
-                    Description = "Merchandise entry to inventory", 
-                    RequiresJustification = false, 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Stock In",
+                    Description = "Merchandise entry to inventory",
+                    RequiresJustification = false,
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new InventoryMovementType 
-                { 
+                new InventoryMovementType
+                {
                     Id = 2, // ✅ int
-                    Name = "Sale", 
-                    Description = "Stock out by product sale", 
-                    RequiresJustification = false, 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Sale",
+                    Description = "Stock out by product sale",
+                    RequiresJustification = false,
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 },
-                new InventoryMovementType 
-                { 
+                new InventoryMovementType
+                {
                     Id = 3, // ✅ int
-                    Name = "Adjustment", 
-                    Description = "Inventory adjustment for differences", 
-                    RequiresJustification = true, 
-                    Active = true, 
-                    CreatedAt = DateTime.UtcNow 
+                    Name = "Adjustment",
+                    Description = "Inventory adjustment for differences",
+                    RequiresJustification = true,
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 
             // ============================================
             // SUBSCRIPTION STATUSES - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<SubscriptionStatus>().HasData(
-                new SubscriptionStatus 
-                { 
+                new SubscriptionStatus
+                {
                     Id = 1, // ✅ int
-                    Name = "Active", 
-                    Description = "Active subscription", 
-                    AllowsSystemUsage = true, 
+                    Name = "Active",
+                    Description = "Active subscription",
+                    AllowsSystemUsage = true,
                     Active = true,
                     CreatedAt = DateTime.UtcNow
                 },
-                new SubscriptionStatus 
-                { 
+                new SubscriptionStatus
+                {
                     Id = 2, // ✅ int
-                    Name = "Suspended", 
-                    Description = "Suspended subscription", 
-                    AllowsSystemUsage = false, 
+                    Name = "Suspended",
+                    Description = "Suspended subscription",
+                    AllowsSystemUsage = false,
                     Active = true,
                     CreatedAt = DateTime.UtcNow
                 },
-                new SubscriptionStatus 
-                { 
+                new SubscriptionStatus
+                {
                     Id = 3, // ✅ int
-                    Name = "Cancelled", 
-                    Description = "Cancelled subscription", 
-                    AllowsSystemUsage = false, 
+                    Name = "Cancelled",
+                    Description = "Cancelled subscription",
+                    AllowsSystemUsage = false,
                     Active = true,
                     CreatedAt = DateTime.UtcNow
                 }
@@ -613,7 +936,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // SYSTEM CONFIGURATION - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<SystemConfiguration>().HasData(
                 new SystemConfiguration
                 {
@@ -656,7 +979,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // MEMBERSHIPS - INT IDS
             // ============================================
-            
+
             modelBuilder.Entity<Membership>().HasData(
                 new Membership
                 {
@@ -696,7 +1019,7 @@ namespace Gesco.Desktop.Data.Context
             // ============================================
             // DEFAULT SUBSCRIPTION - INT ID CON FK MIXED
             // ============================================
-            
+
             modelBuilder.Entity<Subscription>().HasData(
                 new Subscription
                 {
@@ -707,6 +1030,49 @@ namespace Gesco.Desktop.Data.Context
                     StartDate = DateTime.UtcNow,
                     ExpirationDate = DateTime.UtcNow.AddMonths(12),
                     GracePeriodEnd = DateTime.UtcNow.AddMonths(12).AddDays(30),
+                    CreatedAt = DateTime.UtcNow
+                }
+
+            );
+                       modelBuilder.Entity<NotificationType>().HasData(
+                new NotificationType
+                {
+                    Id = 1,
+                    Code = "low_stock",
+                    Name = "Low Stock Alert",
+                    Description = "Product inventory is running low",
+                    Level = "warning",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new NotificationType
+                {
+                    Id = 2,
+                    Code = "activity_reminder",
+                    Name = "Activity Reminder",
+                    Description = "Upcoming activity notification",
+                    Level = "info",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new NotificationType
+                {
+                    Id = 3,
+                    Code = "system_alert",
+                    Name = "System Alert",
+                    Description = "Critical system notification",
+                    Level = "critical",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new NotificationType
+                {
+                    Id = 4,
+                    Code = "sync_error",
+                    Name = "Sync Error",
+                    Description = "Data synchronization failed",
+                    Level = "error",
+                    Active = true,
                     CreatedAt = DateTime.UtcNow
                 }
             );

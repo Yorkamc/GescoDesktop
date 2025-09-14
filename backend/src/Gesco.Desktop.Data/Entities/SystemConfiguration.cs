@@ -61,6 +61,11 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("restart_required")]
         public bool RestartRequired { get; set; } = false;
+        [Column("organization_id")]
+public Guid? OrganizationId { get; set; } // Faltaba este campo
+
+[ForeignKey("OrganizationId")]
+public virtual Organization? Organization { get; set; }
 
         // Métodos de utilidad
         public T? GetValue<T>()
