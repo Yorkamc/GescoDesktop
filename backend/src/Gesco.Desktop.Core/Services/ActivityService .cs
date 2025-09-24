@@ -39,6 +39,17 @@ namespace Gesco.Desktop.Core.Services
                 var result = new List<ActivityDto>();
                 foreach (var a in activities)
                 {
+                    // ✅ ACTUALIZADO: Obtener información del manager si existe
+                    string? managerUserName = null;
+                    if (!string.IsNullOrEmpty(a.ManagerUserId))
+                    {
+                        var manager = await _context.Users
+                            .Where(u => u.Id == a.ManagerUserId)
+                            .Select(u => u.FullName ?? u.Username)
+                            .FirstOrDefaultAsync();
+                        managerUserName = manager;
+                    }
+
                     result.Add(new ActivityDto
                     {
                         Id = GenerateGuidFromInt(a.Id), // Mapear int ID a Guid para DTO
@@ -51,7 +62,8 @@ namespace Gesco.Desktop.Core.Services
                         Location = a.Location,
                         ActivityStatusId = a.ActivityStatusId, // int -> int (correcto)
                         StatusName = a.ActivityStatus?.Name,
-                        ManagerUserId = a.ManagerUserId, // Guid -> Guid (correcto)
+                        ManagerUserId = a.ManagerUserId, // ✅ string -> string (cédula)
+                        ManagerUserName = managerUserName, // ✅ Nombre del manager
                         OrganizationId = a.OrganizationId, // Guid -> Guid (correcto)
                         OrganizationName = a.Organization?.Name,
                         CreatedAt = a.CreatedAt
@@ -85,6 +97,17 @@ namespace Gesco.Desktop.Core.Services
                     return null;
                 }
 
+                // ✅ ACTUALIZADO: Obtener información del manager
+                string? managerUserName = null;
+                if (!string.IsNullOrEmpty(activity.ManagerUserId))
+                {
+                    var manager = await _context.Users
+                        .Where(u => u.Id == activity.ManagerUserId)
+                        .Select(u => u.FullName ?? u.Username)
+                        .FirstOrDefaultAsync();
+                    managerUserName = manager;
+                }
+
                 return new ActivityDto
                 {
                     Id = id, // Mantener el Guid del parámetro
@@ -97,7 +120,8 @@ namespace Gesco.Desktop.Core.Services
                     Location = activity.Location,
                     ActivityStatusId = activity.ActivityStatusId, // int -> int (correcto)
                     StatusName = activity.ActivityStatus?.Name,
-                    ManagerUserId = activity.ManagerUserId, // Guid -> Guid (correcto)
+                    ManagerUserId = activity.ManagerUserId, // ✅ string -> string (cédula)
+                    ManagerUserName = managerUserName, // ✅ Nombre del manager
                     OrganizationId = activity.OrganizationId, // Guid -> Guid (correcto)
                     OrganizationName = activity.Organization?.Name,
                     CreatedAt = activity.CreatedAt
@@ -123,6 +147,19 @@ namespace Gesco.Desktop.Core.Services
                     defaultStatus = await _context.ActivityStatuses.FirstOrDefaultAsync();
                 }
 
+                // ✅ ACTUALIZADO: Validar que el manager existe si se proporciona cédula
+                if (!string.IsNullOrEmpty(request.ManagerUserId))
+                {
+                    var managerExists = await _context.Users
+                        .AnyAsync(u => u.Id == request.ManagerUserId && u.Active);
+                    
+                    if (!managerExists)
+                    {
+                        _logger.LogWarning("Manager user with cédula {Cedula} not found or inactive", request.ManagerUserId);
+                        throw new ArgumentException($"Usuario manager con cédula {request.ManagerUserId} no encontrado o inactivo");
+                    }
+                }
+
                 var activity = new Activity
                 {
                     // Id se genera automáticamente como int
@@ -134,19 +171,31 @@ namespace Gesco.Desktop.Core.Services
                     EndTime = request.EndTime,
                     Location = request.Location,
                     ActivityStatusId = defaultStatus?.Id ?? 1, // int -> int (correcto)
-                    ManagerUserId = request.ManagerUserId, // Guid -> Guid (correcto)
+                    ManagerUserId = request.ManagerUserId, // ✅ string -> string (cédula)
                     OrganizationId = request.OrganizationId, // Guid -> Guid (correcto)
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = request.ManagerUserId // ✅ Creado por el manager (cédula)
                 };
 
                 _context.Activities.Add(activity);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Created new activity: {ActivityName} with ID {ActivityId}", 
-                    activity.Name, activity.Id);
+                _logger.LogInformation("Created new activity: {ActivityName} with ID {ActivityId}, Manager: {ManagerId}", 
+                    activity.Name, activity.Id, request.ManagerUserId);
 
                 // Generar Guid para el DTO de respuesta basado en el int ID
                 var responseGuid = GenerateGuidFromInt(activity.Id);
+                
+                // Obtener nombre del manager para la respuesta
+                string? managerUserName = null;
+                if (!string.IsNullOrEmpty(request.ManagerUserId))
+                {
+                    var manager = await _context.Users
+                        .Where(u => u.Id == request.ManagerUserId)
+                        .Select(u => u.FullName ?? u.Username)
+                        .FirstOrDefaultAsync();
+                    managerUserName = manager;
+                }
                 
                 return new ActivityDto
                 {
@@ -160,7 +209,8 @@ namespace Gesco.Desktop.Core.Services
                     Location = activity.Location,
                     ActivityStatusId = activity.ActivityStatusId, // int -> int (correcto)
                     StatusName = defaultStatus?.Name,
-                    ManagerUserId = activity.ManagerUserId, // Guid -> Guid (correcto)
+                    ManagerUserId = activity.ManagerUserId, // ✅ string -> string (cédula)
+                    ManagerUserName = managerUserName, // ✅ Nombre del manager
                     OrganizationId = activity.OrganizationId, // Guid -> Guid (correcto)
                     CreatedAt = activity.CreatedAt
                 };
@@ -185,6 +235,19 @@ namespace Gesco.Desktop.Core.Services
                     return null;
                 }
 
+                // ✅ ACTUALIZADO: Validar que el manager existe si se cambia
+                if (!string.IsNullOrEmpty(request.ManagerUserId) && request.ManagerUserId != activity.ManagerUserId)
+                {
+                    var managerExists = await _context.Users
+                        .AnyAsync(u => u.Id == request.ManagerUserId && u.Active);
+                    
+                    if (!managerExists)
+                    {
+                        _logger.LogWarning("Manager user with cédula {Cedula} not found or inactive", request.ManagerUserId);
+                        throw new ArgumentException($"Usuario manager con cédula {request.ManagerUserId} no encontrado o inactivo");
+                    }
+                }
+
                 activity.Name = request.Name;
                 activity.Description = request.Description;
                 activity.StartDate = request.StartDate;
@@ -203,13 +266,14 @@ namespace Gesco.Desktop.Core.Services
                     }
                 }
 
-                activity.ManagerUserId = request.ManagerUserId; // Guid -> Guid (correcto)
+                activity.ManagerUserId = request.ManagerUserId; // ✅ string -> string (cédula)
                 activity.OrganizationId = request.OrganizationId; // Guid -> Guid (correcto)
                 activity.UpdatedAt = DateTime.UtcNow;
+                activity.UpdatedBy = request.ManagerUserId; // ✅ Actualizado por el manager (cédula)
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Updated activity: {ActivityId}", id);
+                _logger.LogInformation("Updated activity: {ActivityId}, New Manager: {ManagerId}", id, request.ManagerUserId);
 
                 return await GetActivityByIdAsync(id);
             }
@@ -266,6 +330,17 @@ namespace Gesco.Desktop.Core.Services
                 var result = new List<ActivityDto>();
                 foreach (var a in activities)
                 {
+                    // ✅ ACTUALIZADO: Obtener información del manager
+                    string? managerUserName = null;
+                    if (!string.IsNullOrEmpty(a.ManagerUserId))
+                    {
+                        var manager = await _context.Users
+                            .Where(u => u.Id == a.ManagerUserId)
+                            .Select(u => u.FullName ?? u.Username)
+                            .FirstOrDefaultAsync();
+                        managerUserName = manager;
+                    }
+
                     result.Add(new ActivityDto
                     {
                         Id = GenerateGuidFromInt(a.Id), // Mapear int ID a Guid
@@ -278,7 +353,8 @@ namespace Gesco.Desktop.Core.Services
                         Location = a.Location,
                         ActivityStatusId = a.ActivityStatusId, // int -> int (correcto)
                         StatusName = a.ActivityStatus?.Name,
-                        ManagerUserId = a.ManagerUserId, // Guid -> Guid (correcto)
+                        ManagerUserId = a.ManagerUserId, // ✅ string -> string (cédula)
+                        ManagerUserName = managerUserName, // ✅ Nombre del manager
                         OrganizationId = a.OrganizationId, // Guid -> Guid (correcto)
                         OrganizationName = a.Organization?.Name,
                         CreatedAt = a.CreatedAt

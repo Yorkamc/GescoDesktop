@@ -8,16 +8,9 @@ namespace Gesco.Desktop.Data.Context
 {
     public class LocalDbContext : DbContext
     {
-        // ============================================
-        // DBSETS - ENTIDADES CON TIPOS DE ID CORREGIDOS
-        // ============================================
-        
-        // Core System - GUID (Solo estos dos)
-        public DbSet<Organization> Organizations { get; set; }
-        public DbSet<User> Users { get; set; }
-
-        // Core System - INT (Todos los demás)
-        public DbSet<Role> Roles { get; set; }
+        public DbSet<Organization> Organizations { get; set; }  // Guid
+        public DbSet<User> Users { get; set; }                 // String (cédula) ✅
+        public DbSet<Role> Roles { get; set; }                 // Int
 
         // Memberships and Subscriptions - INT
         public DbSet<Membership> Memberships { get; set; }
@@ -56,23 +49,22 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<SystemConfiguration> SystemConfigurations { get; set; }
 
         // ============================================
-        // NUEVAS ENTIDADES - CRÍTICAS PARA SYNC
+        // SYNC SYSTEM - STRING Y INT IDs
         // ============================================
         
-        // Sync System
-        public DbSet<DesktopClient> DesktopClients { get; set; }
-        public DbSet<SyncQueueItem> SyncQueue { get; set; }
-        public DbSet<SyncVersion> SyncVersions { get; set; }
+        public DbSet<DesktopClient> DesktopClients { get; set; }        // String (UUID)
+        public DbSet<SyncQueueItem> SyncQueue { get; set; }             // Int
+        public DbSet<SyncVersion> SyncVersions { get; set; }            // Int
 
-        // Notifications (Opcional)
+        // Notifications - INT
         public DbSet<NotificationType> NotificationTypes { get; set; }
         public DbSet<Notification> Notifications { get; set; }
 
-        // OAuth (Solo si usas Laravel Passport)
+        // OAuth - STRING
         public DbSet<OAuthAccessToken> OAuthAccessTokens { get; set; }
         public DbSet<OAuthRefreshToken> OAuthRefreshTokens { get; set; }
 
-        // Auditing
+        // Auditing - INT
         public DbSet<ApiActivityLog> ApiActivityLogs { get; set; }
         public DbSet<ActivationHistory> ActivationHistories { get; set; }
 
@@ -138,21 +130,21 @@ namespace Gesco.Desktop.Data.Context
         private static void ConfigureRelationships(ModelBuilder modelBuilder)
         {
             // ============================================
-            // USER RELATIONSHIPS - MIXED GUID/INT
+            // USER RELATIONSHIPS - STRING (CÉDULA) COMO PK
             // ============================================
 
-            // User (Guid) -> Organization (Guid)
+            // User (string/cédula) -> Organization (Guid)
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Organization)
                 .WithMany(o => o.Users)
-                .HasForeignKey(u => u.OrganizationId) // Guid -> Guid ✅
+                .HasForeignKey(u => u.OrganizationId) // string -> Guid ✅
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // User (Guid) -> Role (int)
+            // User (string/cédula) -> Role (int)
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
-                .HasForeignKey(u => u.RoleId) // Guid -> int ✅
+                .HasForeignKey(u => u.RoleId) // string -> int ✅
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ============================================
@@ -172,6 +164,10 @@ namespace Gesco.Desktop.Data.Context
                 .WithMany(o => o.Activities)
                 .HasForeignKey(a => a.OrganizationId) // int -> Guid ✅
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Activity (int) -> User (string/cédula) para Manager
+            // NOTA: No se define navegación explícita para evitar problemas,
+            // pero la FK se mantiene como string para la cédula
 
             // ============================================
             // SALES RELATIONSHIPS - INT TO INT
@@ -282,7 +278,7 @@ namespace Gesco.Desktop.Data.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ============================================
-            // ACTIVATION KEY RELATIONSHIPS - CORREGIDO
+            // ACTIVATION KEY RELATIONSHIPS
             // ============================================
 
             // ActivationKey (int) -> Subscription (int)
@@ -376,131 +372,174 @@ namespace Gesco.Desktop.Data.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ============================================
-            // SYNC SYSTEM RELATIONSHIPS - CORREGIDO CS0452
+            // SYNC SYSTEM RELATIONSHIPS - CON CÉDULAS
             // ============================================
 
-            // DesktopClient relationships
+            // DesktopClient (string) -> Organization (Guid)
             modelBuilder.Entity<DesktopClient>()
                 .HasOne(dc => dc.Organization)
                 .WithMany()
                 .HasForeignKey(dc => dc.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // DesktopClient (string) -> User (string/cédula)
             modelBuilder.Entity<DesktopClient>()
                 .HasOne(dc => dc.User)
                 .WithMany()
-                .HasForeignKey(dc => dc.UserId)
+                .HasForeignKey(dc => dc.UserId) // string -> string ✅
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // SyncQueueItem relationships
+            // SyncQueueItem (int) -> Organization (Guid)
             modelBuilder.Entity<SyncQueueItem>()
                 .HasOne(sq => sq.Organization)
                 .WithMany()
                 .HasForeignKey(sq => sq.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // SyncQueueItem (int) -> DesktopClient (string)
             modelBuilder.Entity<SyncQueueItem>()
                 .HasOne(sq => sq.DesktopClient)
                 .WithMany(dc => dc.SyncQueueItems)
-                .HasForeignKey(sq => sq.ClientId)
+                .HasForeignKey(sq => sq.ClientId) // int -> string ✅
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // SyncVersion relationships - CORREGIDO CS0452
+            // SyncVersion (int) -> Organization (Guid)
             modelBuilder.Entity<SyncVersion>()
                 .HasOne(sv => sv.Organization)
                 .WithMany()
                 .HasForeignKey(sv => sv.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // CORRECCIÓN PRINCIPAL CS0452: Usar navigation property, no FK property
+            // SyncVersion (int) -> User (string/cédula)
             modelBuilder.Entity<SyncVersion>()
-                .HasOne(sv => sv.ChangedByUserNavigation)  // ✅ Navigation property
+                .HasOne(sv => sv.ChangedByUserNavigation)
                 .WithMany()
-                .HasForeignKey(sv => sv.ChangedByUser)     // ✅ FK property
+                .HasForeignKey(sv => sv.ChangedByUser) // int -> string ✅
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // SyncVersion (int) -> DesktopClient (string)
             modelBuilder.Entity<SyncVersion>()
                 .HasOne(sv => sv.OriginClient)
                 .WithMany()
                 .HasForeignKey(sv => sv.OriginClientId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Notification relationships
+            // ============================================
+            // NOTIFICATION RELATIONSHIPS - CON CÉDULAS
+            // ============================================
+
+            // Notification (int) -> Organization (Guid)
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.Organization)
                 .WithMany()
                 .HasForeignKey(n => n.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Notification (int) -> User (string/cédula)
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.User)
                 .WithMany()
-                .HasForeignKey(n => n.UserId)
+                .HasForeignKey(n => n.UserId) // int -> string ✅
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Notification (int) -> NotificationType (int)
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.NotificationType)
                 .WithMany(nt => nt.Notifications)
                 .HasForeignKey(n => n.NotificationTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // OAuth relationships
+            // ============================================
+            // OAUTH RELATIONSHIPS - CON CÉDULAS
+            // ============================================
+
+            // OAuthAccessToken (string) -> User (string/cédula)
             modelBuilder.Entity<OAuthAccessToken>()
                 .HasOne(oat => oat.User)
                 .WithMany()
-                .HasForeignKey(oat => oat.UserId)
+                .HasForeignKey(oat => oat.UserId) // string -> string ✅
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // OAuthRefreshToken (string) -> OAuthAccessToken (string)
             modelBuilder.Entity<OAuthRefreshToken>()
                 .HasOne(ort => ort.AccessToken)
                 .WithMany()
                 .HasForeignKey(ort => ort.AccessTokenId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ApiActivityLog relationships
+            // ============================================
+            // API ACTIVITY LOG RELATIONSHIPS - CON CÉDULAS
+            // ============================================
+
+            // ApiActivityLog (int) -> User (string/cédula)
             modelBuilder.Entity<ApiActivityLog>()
                 .HasOne(aal => aal.User)
                 .WithMany()
-                .HasForeignKey(aal => aal.UserId)
+                .HasForeignKey(aal => aal.UserId) // int -> string ✅
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // ApiActivityLog (int) -> Organization (Guid)
             modelBuilder.Entity<ApiActivityLog>()
                 .HasOne(aal => aal.Organization)
                 .WithMany()
                 .HasForeignKey(aal => aal.OrganizationId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // ActivationHistory relationships - CORREGIDO CS0452
+            // ============================================
+            // ACTIVATION HISTORY RELATIONSHIPS - CON CÉDULAS
+            // ============================================
+
+            // ActivationHistory (int) -> Organization (Guid)
             modelBuilder.Entity<ActivationHistory>()
                 .HasOne(ah => ah.Organization)
                 .WithMany()
                 .HasForeignKey(ah => ah.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // ActivationHistory (int) -> ActivationKey (int)
             modelBuilder.Entity<ActivationHistory>()
                 .HasOne(ah => ah.ActivationKey)
                 .WithMany()
                 .HasForeignKey(ah => ah.ActivationKeyId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // CORRECCIÓN CS0452: Usar navigation properties
+            // ActivationHistory (int) -> User (string/cédula) - ActivatedBy
             modelBuilder.Entity<ActivationHistory>()
-                .HasOne(ah => ah.ActivatedByUser)          // ✅ Navigation property
+                .HasOne(ah => ah.ActivatedByUser)
                 .WithMany()
-                .HasForeignKey(ah => ah.ActivatedByUserId) // ✅ FK property
+                .HasForeignKey(ah => ah.ActivatedByUserId) // int -> string ✅
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // ActivationHistory (int) -> User (string/cédula) - DeactivatedBy
             modelBuilder.Entity<ActivationHistory>()
-                .HasOne(ah => ah.DeactivatedByUser)        // ✅ Navigation property
+                .HasOne(ah => ah.DeactivatedByUser)
                 .WithMany()
-                .HasForeignKey(ah => ah.DeactivatedBy)     // ✅ FK property
+                .HasForeignKey(ah => ah.DeactivatedBy) // int -> string ✅
                 .OnDelete(DeleteBehavior.SetNull);
 
             // ============================================
             // ÍNDICES ÚNICOS IMPORTANTES
             // ============================================
             
-            // DesktopClient - cliente único por organización
+            // User - cédula única
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Id) // Cédula única
+                .IsUnique()
+                .HasDatabaseName("idx_users_cedula_unique");
+
+            // User - username único
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique()
+                .HasDatabaseName("idx_users_username_unique");
+
+            // User - email único
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique()
+                .HasDatabaseName("idx_users_email_unique");
+
+            // DesktopClient - cliente único
             modelBuilder.Entity<DesktopClient>()
                 .HasIndex(dc => dc.Id)
                 .IsUnique();
@@ -519,8 +558,26 @@ namespace Gesco.Desktop.Data.Context
             modelBuilder.Entity<ApiActivityLog>()
                 .HasIndex(aal => new { aal.OrganizationId, aal.CreatedAt })
                 .HasDatabaseName("idx_api_logs_org_date");
-        }
 
+            // ============================================
+            // ÍNDICES PARA SINCRONIZACIÓN
+            // ============================================
+            
+            // Users - índices de sync
+            modelBuilder.Entity<User>()
+                .HasIndex(u => new { u.SyncVersion, u.LastSync })
+                .HasDatabaseName("idx_users_sync_tracking");
+
+            // Activities - índices de sync
+            modelBuilder.Entity<Activity>()
+                .HasIndex(a => new { a.SyncVersion, a.LastSync })
+                .HasDatabaseName("idx_activities_sync_tracking");
+
+            // Organizations - índices de sync
+            modelBuilder.Entity<Organization>()
+                .HasIndex(o => new { o.SyncVersion, o.LastSync })
+                .HasDatabaseName("idx_organizations_sync_tracking");
+        }
         // ============================================
         // SEED DATA METHOD - CORREGIDO CON TIPOS EXACTOS
         // ============================================

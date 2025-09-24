@@ -1,14 +1,18 @@
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
- // USUARIOS
-   [Table("users")]
-    public class User : SyncableEntityGuid
+    // USUARIOS - CAMBIADO DE GUID A STRING (CÉDULA)
+    [Table("users")]
+    public class User : SyncableEntityString  
     {
+        [Column("cedula")] 
+        [Required]
+        [MaxLength(20)]
+        public override string Id { get; set; } = string.Empty; 
+
         [Column("username")]
         [Required]
         [MaxLength(100)]
@@ -41,10 +45,10 @@ namespace Gesco.Desktop.Data.Entities
         public bool Active { get; set; } = true;
 
         [Column("organization_id")]
-        public Guid OrganizationId { get; set; } // MANTIENE Guid
+        public Guid OrganizationId { get; set; } // MANTIENE Guid para Organization
 
         [Column("role_id")]
-        public int RoleId { get; set; } // CAMBIA a int
+        public int RoleId { get; set; } // MANTIENE int para Role
 
         [Column("first_login_at")]
         public DateTime? FirstLoginAt { get; set; }
@@ -59,5 +63,4 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("RoleId")]
         public virtual Role Role { get; set; } = null!;
     }
-
 }
