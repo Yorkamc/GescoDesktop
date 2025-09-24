@@ -8,11 +8,13 @@ using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
-[Table("oauth_access_tokens")]
+    [Table("oauth_access_tokens")]
     public class OAuthAccessToken : BaseEntityString
     {
+        // ✅ CORREGIDO: UserId debe ser string para coincidir con User.Id (cédula)
         [Column("user_id")]
-        public Guid? UserId { get; set; }
+        [MaxLength(50)]
+        public string? UserId { get; set; } // CAMBIADO DE Guid? A string?
 
         [Column("client_id")]
         public Guid ClientId { get; set; }
@@ -36,7 +38,7 @@ namespace Gesco.Desktop.Data.Entities
         [Column("expires_at")]
         public DateTime? ExpiresAt { get; set; }
 
-        // Navegación
+        // ✅ CORREGIDO: Navegación debe usar string (cédula)
         [ForeignKey("UserId")]
         public virtual User? User { get; set; }
     }

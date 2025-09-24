@@ -352,20 +352,18 @@ namespace Gesco.Desktop.Data.Context
     // OAUTH RELATIONSHIPS - CON CÉDULAS
     // ============================================
 
-    // ✅ CORREGIDO: OAuthAccessToken (string) -> User (string/cédula)
     modelBuilder.Entity<OAuthAccessToken>()
-        .HasOne(oat => oat.User)
-        .WithMany()
-        .HasForeignKey(oat => oat.UserId) // string -> string ✅
-        .OnDelete(DeleteBehavior.SetNull);
+    .HasOne(oat => oat.User)
+    .WithMany()
+    .HasForeignKey(oat => oat.UserId) // string -> string ✅ AHORA ES COMPATIBLE
+    .OnDelete(DeleteBehavior.SetNull);
 
-    // OAuthRefreshToken (string) -> OAuthAccessToken (string)
-    modelBuilder.Entity<OAuthRefreshToken>()
-        .HasOne(ort => ort.AccessToken)
-        .WithMany()
-        .HasForeignKey(ort => ort.AccessTokenId)
-        .OnDelete(DeleteBehavior.Restrict);
-
+// OAuthRefreshToken (string) -> OAuthAccessToken (string)
+modelBuilder.Entity<OAuthRefreshToken>()
+    .HasOne(ort => ort.AccessToken)
+    .WithMany()
+    .HasForeignKey(ort => ort.AccessTokenId)
+    .OnDelete(DeleteBehavior.Restrict);
     // ============================================
     // API ACTIVITY LOG RELATIONSHIPS - CON CÉDULAS
     // ============================================
