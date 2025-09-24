@@ -37,7 +37,8 @@ namespace Gesco.Desktop.Data.Entities
         public string? ChangeData { get; set; }
 
         [Column("changed_by_user")]
-        public Guid? ChangedByUser { get; set; }
+        [MaxLength(50)]
+        public string? ChangedByUser { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("origin_client_id")]
         [MaxLength(36)]

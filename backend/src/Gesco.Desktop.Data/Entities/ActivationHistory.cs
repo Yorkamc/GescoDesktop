@@ -8,7 +8,7 @@ using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
- [Table("activation_history")]
+[Table("activation_history")]
     public class ActivationHistory : BaseEntityInt
     {
         [Column("organization_id")]
@@ -27,7 +27,8 @@ namespace Gesco.Desktop.Data.Entities
         public DateTime SubscriptionEndDate { get; set; }
 
         [Column("activated_by_user_id")]
-        public Guid? ActivatedByUserId { get; set; }
+        [MaxLength(50)]
+        public string? ActivatedByUserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("activation_ip")]
         [MaxLength(45)]
@@ -46,7 +47,8 @@ namespace Gesco.Desktop.Data.Entities
         public string? DeactivationReason { get; set; }
 
         [Column("deactivated_by")]
-        public Guid? DeactivatedBy { get; set; }
+        [MaxLength(50)]
+        public string? DeactivatedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

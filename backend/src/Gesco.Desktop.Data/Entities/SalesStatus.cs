@@ -75,18 +75,28 @@ namespace Gesco.Desktop.Data.Entities
         public DateTime? ClosedAt { get; set; }
 
         [Column("operator_user_id")]
-        public Guid? OperatorUserId { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? OperatorUserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("supervisor_user_id")]
-        public Guid? SupervisorUserId { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? SupervisorUserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         // Navegación
         [ForeignKey("ActivityId")]
         public virtual Activity Activity { get; set; } = null!;
 
+        // ✅ CORREGIDO: Navegación a User usando string (cédula)
+        [ForeignKey("OperatorUserId")]
+        public virtual User? OperatorUser { get; set; }
+
+        [ForeignKey("SupervisorUserId")]
+        public virtual User? SupervisorUser { get; set; }
+
         public virtual ICollection<SalesTransaction> SalesTransactions { get; set; } = new List<SalesTransaction>();
         public virtual ICollection<CashRegisterClosure> CashRegisterClosures { get; set; } = new List<CashRegisterClosure>();
     }
+
 
     // TRANSACCIONES DE VENTA - CAMBIA A int
     [Table("sales_transactions")]
@@ -186,7 +196,8 @@ namespace Gesco.Desktop.Data.Entities
         public DateTime ProcessedAt { get; set; }
 
         [Column("processed_by")]
-        public Guid ProcessedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string ProcessedBy { get; set; } = string.Empty; // ✅ CORREGIDO: string para cédula
 
         // Navegación
         [ForeignKey("SalesTransactionId")]
@@ -194,7 +205,12 @@ namespace Gesco.Desktop.Data.Entities
 
         [ForeignKey("PaymentMethodId")]
         public virtual PaymentMethod PaymentMethod { get; set; } = null!;
+
+        // ✅ CORREGIDO: Navegación a User usando string (cédula)
+        [ForeignKey("ProcessedBy")]
+        public virtual User ProcessedByUser { get; set; } = null!;
     }
+    // CIERRES DE CAJA - CAMBIA A int
     // CIERRES DE CAJA - CAMBIA A int
     [Table("cash_register_closures")]
     public class CashRegisterClosure : SyncableEntityInt
@@ -239,10 +255,12 @@ namespace Gesco.Desktop.Data.Entities
         public decimal? CashDifference { get; set; }
 
         [Column("closed_by")]
-        public Guid? ClosedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? ClosedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("supervised_by")]
-        public Guid? SupervisedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? SupervisedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("observations")]
         public string? Observations { get; set; }
@@ -250,7 +268,15 @@ namespace Gesco.Desktop.Data.Entities
         // Navegación
         [ForeignKey("CashRegisterId")]
         public virtual CashRegister CashRegister { get; set; } = null!;
+
+        // ✅ CORREGIDO: Navegación a User usando string (cédula)
+        [ForeignKey("ClosedBy")]
+        public virtual User? ClosedByUser { get; set; }
+
+        [ForeignKey("SupervisedBy")]
+        public virtual User? SupervisedByUser { get; set; }
     }
+
     [Table("sales_combos")]
     public class SalesCombo : SyncableEntityInt
     {

@@ -8,7 +8,7 @@ using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
-    [Table("activation_keys")]
+   [Table("activation_keys")]
     public class ActivationKey : AuditableEntityInt
     {
         [Column("activation_code")]
@@ -17,7 +17,7 @@ namespace Gesco.Desktop.Data.Entities
         public string ActivationCode { get; set; } = string.Empty;
 
         [Column("subscription_id")]
-        public int SubscriptionId { get; set; } // CAMBIA a int
+        public int SubscriptionId { get; set; }
 
         [Column("is_generated")]
         public bool IsGenerated { get; set; } = true;
@@ -57,20 +57,23 @@ namespace Gesco.Desktop.Data.Entities
         public string? Notes { get; set; }
 
         [Column("used_by_organization_id")]
-        public Guid? UsedByOrganizationId { get; set; } // MANTIENE Guid
+        public Guid? UsedByOrganizationId { get; set; }
 
         [Column("used_by_user_id")]
-        public Guid? UsedByUserId { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? UsedByUserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("activation_ip")]
         [MaxLength(45)]
         public string? ActivationIp { get; set; }
 
         [Column("generated_by")]
-        public Guid? GeneratedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? GeneratedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("revoked_by")]
-        public Guid? RevokedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? RevokedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("revocation_reason")]
         public string? RevocationReason { get; set; }
@@ -78,5 +81,15 @@ namespace Gesco.Desktop.Data.Entities
         // Navegación
         [ForeignKey("SubscriptionId")]
         public virtual Subscription Subscription { get; set; } = null!;
+
+        // ✅ CORREGIDO: Navegaciones a User usando string (cédula)
+        [ForeignKey("UsedByUserId")]
+        public virtual User? UsedByUser { get; set; }
+
+        [ForeignKey("GeneratedBy")]
+        public virtual User? GeneratedByUser { get; set; }
+
+        [ForeignKey("RevokedBy")]
+        public virtual User? RevokedByUser { get; set; }
     }
 }

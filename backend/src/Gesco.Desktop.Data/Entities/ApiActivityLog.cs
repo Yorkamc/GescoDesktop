@@ -8,11 +8,12 @@ using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
-  [Table("api_activity_logs")]
+   [Table("api_activity_logs")]
     public class ApiActivityLog : BaseEntityInt
     {
         [Column("user_id")]
-        public Guid? UserId { get; set; }
+        [MaxLength(50)]
+        public string? UserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("method")]
         [Required]

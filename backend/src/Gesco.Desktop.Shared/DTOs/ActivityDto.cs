@@ -15,8 +15,8 @@ namespace Gesco.Desktop.Shared.DTOs
         public string? Location { get; set; }
         public int ActivityStatusId { get; set; } // Mantener como int para compatibilidad con frontend
         public string? StatusName { get; set; }
-        public Guid? ManagerUserId { get; set; }
-        public string? ManagerName { get; set; }
+        public string? ManagerUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? ManagerUserName { get; set; } // ✅ CORREGIDO: propiedad renombrada
         public Guid? OrganizationId { get; set; }
         public string? OrganizationName { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -45,7 +45,8 @@ namespace Gesco.Desktop.Shared.DTOs
         
         public int ActivityStatusId { get; set; } = 1; // Default to first status
         
-        public Guid? ManagerUserId { get; set; }
+        [MaxLength(50)]
+        public string? ManagerUserId { get; set; } // ✅ CORREGIDO: string para cédula
         
         public Guid? OrganizationId { get; set; }
     }
@@ -87,6 +88,8 @@ namespace Gesco.Desktop.Shared.DTOs
         public decimal Amount { get; set; }
         public string? Reference { get; set; }
         public DateTime ProcessedAt { get; set; }
+        public string ProcessedBy { get; set; } = string.Empty; // ✅ CORREGIDO: string para cédula
+        public string? ProcessedByName { get; set; } // ✅ NUEVO: nombre del usuario que procesó
     }
 
     // ============================================
@@ -149,6 +152,52 @@ namespace Gesco.Desktop.Shared.DTOs
         public decimal? TotalValue { get; set; }
         public string? Justification { get; set; }
         public DateTime MovementDate { get; set; }
+        public string? PerformedBy { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? PerformedByName { get; set; } // ✅ NUEVO: nombre del usuario
+        public string? AuthorizedBy { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? AuthorizedByName { get; set; } // ✅ NUEVO: nombre del usuario
+    }
+
+    // ============================================
+    // CASH REGISTER DTOs - CORREGIDOS
+    // ============================================
+    public class CashRegisterDto
+    {
+        public Guid Id { get; set; }
+        public Guid ActivityId { get; set; }
+        public string? ActivityName { get; set; }
+        public int RegisterNumber { get; set; }
+        public string? Name { get; set; }
+        public string? Location { get; set; }
+        public bool IsOpen { get; set; }
+        public DateTime? OpenedAt { get; set; }
+        public DateTime? ClosedAt { get; set; }
+        public string? OperatorUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? OperatorUserName { get; set; } // ✅ NUEVO: nombre del operador
+        public string? SupervisorUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? SupervisorUserName { get; set; } // ✅ NUEVO: nombre del supervisor
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class CreateCashRegisterRequest
+    {
+        [Required]
+        public Guid ActivityId { get; set; }
+        
+        [Required]
+        public int RegisterNumber { get; set; }
+        
+        [MaxLength(100)]
+        public string? Name { get; set; }
+        
+        [MaxLength(200)]
+        public string? Location { get; set; }
+        
+        [MaxLength(50)]
+        public string? OperatorUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        
+        [MaxLength(50)]
+        public string? SupervisorUserId { get; set; } // ✅ CORREGIDO: string para cédula
     }
 
     // ============================================
@@ -199,6 +248,56 @@ namespace Gesco.Desktop.Shared.DTOs
     }
 
     // ============================================
+    // USER DTOs - CORREGIDOS
+    // ============================================
+    public class UserDto
+    {
+        public string Id { get; set; } = string.Empty; // ✅ CORREGIDO: string para cédula
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? FullName { get; set; }
+        public string? Phone { get; set; }
+        public bool Active { get; set; }
+        public Guid OrganizationId { get; set; }
+        public int RoleId { get; set; }
+        public string? RoleName { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? LastLoginAt { get; set; }
+    }
+
+    public class CreateUserRequest
+    {
+        [Required]
+        [MaxLength(50)]
+        public string Id { get; set; } = string.Empty; // ✅ CORREGIDO: cédula como string
+        
+        [Required]
+        [MaxLength(100)]
+        public string Username { get; set; } = string.Empty;
+        
+        [Required]
+        [EmailAddress]
+        [MaxLength(200)]
+        public string Email { get; set; } = string.Empty;
+        
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string? FullName { get; set; }
+        
+        [MaxLength(50)]
+        public string? Phone { get; set; }
+        
+        [Required]
+        public Guid OrganizationId { get; set; }
+        
+        [Required]
+        public int RoleId { get; set; }
+    }
+
+    // ============================================
     // HELPER METHODS PARA MAPEO DE TIPOS
     // ============================================
     public static class EntityMappingHelpers
@@ -224,6 +323,25 @@ namespace Gesco.Desktop.Shared.DTOs
             if (index > 0 && index <= entities.Count)
                 return entities[index - 1].Id;
             return null;
+        }
+
+        /// <summary>
+        /// Mapea cédula string a User entity ID
+        /// </summary>
+        public static string? MapCedulaToUserId(string? cedula)
+        {
+            return string.IsNullOrEmpty(cedula) ? null : cedula.Trim();
+        }
+
+        /// <summary>
+        /// Valida formato de cédula costarricense
+        /// </summary>
+        public static bool IsValidCedula(string? cedula)
+        {
+            if (string.IsNullOrEmpty(cedula)) return false;
+            
+            // Formato básico: 9 dígitos para físicas, 10 para jurídicas
+            return cedula.Length >= 9 && cedula.Length <= 12 && cedula.All(char.IsDigit);
         }
     }
 }

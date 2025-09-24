@@ -24,7 +24,8 @@ namespace Gesco.Desktop.Data.Entities
         public string? AppVersion { get; set; }
 
         [Column("user_id")]
-        public Guid UserId { get; set; }
+        [MaxLength(50)]
+        public string UserId { get; set; } = string.Empty; // ✅ CORREGIDO: string para cédula
 
         [Column("last_sync_version")]
         public long LastSyncVersion { get; set; } = 0;

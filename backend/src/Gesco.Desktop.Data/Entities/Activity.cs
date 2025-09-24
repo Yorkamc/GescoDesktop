@@ -59,7 +59,8 @@ namespace Gesco.Desktop.Data.Entities
         public int ActivityStatusId { get; set; } // CAMBIA a int
 
         [Column("manager_user_id")]
-        public Guid? ManagerUserId { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? ManagerUserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("organization_id")]
         public Guid? OrganizationId { get; set; } // MANTIENE Guid
@@ -71,10 +72,15 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("OrganizationId")]
         public virtual Organization? Organization { get; set; }
 
+        // ✅ CORREGIDO: Navegación a User usando string (cédula)
+        [ForeignKey("ManagerUserId")]
+        public virtual User? ManagerUser { get; set; }
+
         public virtual ICollection<ActivityCategory> ActivityCategories { get; set; } = new List<ActivityCategory>();
         public virtual ICollection<CashRegister> CashRegisters { get; set; } = new List<CashRegister>();
         public virtual ICollection<SalesCombo> SalesCombos { get; set; } = new List<SalesCombo>();
     }
+
     // ACTIVIDAD-CATEGORÍAS (Tabla pivote) - CAMBIA A int
     [Table("activity_categories")]
     public class ActivityCategory : SyncableEntityInt
@@ -143,10 +149,12 @@ namespace Gesco.Desktop.Data.Entities
         public decimal ShrinkageValue { get; set; }
 
         [Column("closed_by")]
-        public Guid? ClosedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? ClosedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("supervised_by")]
-        public Guid? SupervisedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? SupervisedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("observations")]
         public string? Observations { get; set; }
@@ -154,9 +162,14 @@ namespace Gesco.Desktop.Data.Entities
         // Navegación
         [ForeignKey("ActivityId")]
         public virtual Activity Activity { get; set; } = null!;
-    }
 
-    
+        // ✅ CORREGIDO: Navegación a User usando string (cédula)
+        [ForeignKey("ClosedBy")]
+        public virtual User? ClosedByUser { get; set; }
+
+        [ForeignKey("SupervisedBy")]
+        public virtual User? SupervisedByUser { get; set; }
+    }
 
     // TIPOS DE MOVIMIENTO DE INVENTARIO - CAMBIA A int
     [Table("inventory_movement_types")]
@@ -179,5 +192,4 @@ namespace Gesco.Desktop.Data.Entities
         // Navegación
         public virtual ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
     }
-
 }

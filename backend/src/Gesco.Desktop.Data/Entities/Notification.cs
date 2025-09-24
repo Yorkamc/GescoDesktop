@@ -15,7 +15,8 @@ namespace Gesco.Desktop.Data.Entities
         public Guid OrganizationId { get; set; }
 
         [Column("user_id")]
-        public Guid? UserId { get; set; }
+        [MaxLength(50)]
+        public string? UserId { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("notification_type_id")]
         public int NotificationTypeId { get; set; }
@@ -61,5 +62,4 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("NotificationTypeId")]
         public virtual NotificationType NotificationType { get; set; } = null!;
     }
-
 }
