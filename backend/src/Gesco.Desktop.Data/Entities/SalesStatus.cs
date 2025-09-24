@@ -97,7 +97,6 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<CashRegisterClosure> CashRegisterClosures { get; set; } = new List<CashRegisterClosure>();
     }
 
-
     // TRANSACCIONES DE VENTA - CAMBIA A int
     [Table("sales_transactions")]
     public class SalesTransaction : SyncableEntityInt
@@ -210,7 +209,7 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("ProcessedBy")]
         public virtual User ProcessedByUser { get; set; } = null!;
     }
-    // CIERRES DE CAJA - CAMBIA A int
+
     // CIERRES DE CAJA - CAMBIA A int
     [Table("cash_register_closures")]
     public class CashRegisterClosure : SyncableEntityInt
@@ -326,5 +325,6 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("ProductId")]
         public virtual CategoryProduct Product { get; set; } = null!;
     }
+    
 
 }

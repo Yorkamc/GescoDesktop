@@ -1077,7 +1077,7 @@ private static void SeedData(ModelBuilder modelBuilder)
         /// </summary>
         public async Task<DesktopClient> RegisterDesktopClientAsync(
             Guid organizationId, 
-            Guid userId, 
+            string userId, 
             string clientName, 
             string? appVersion = null)
         {

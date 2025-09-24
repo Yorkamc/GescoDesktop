@@ -136,25 +136,15 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                // Convertir string a DateOnly si es necesario
-                if (!DateOnly.TryParse(request.StartDate.ToString(), out var startDate))
-                {
-                    return BadRequest(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Formato de fecha inválido",
-                        Errors = new List<string> { "Invalid date format" }
-                    });
-                }
-
-                // Obtener el primer usuario como manager por defecto si no se especifica
-                if (!request.ManagerUserId.HasValue || request.ManagerUserId == Guid.Empty)
+                // ✅ CORREGIDO: Manejo de ManagerUserId como string (cédula)
+                if (string.IsNullOrEmpty(request.ManagerUserId))
                 {
                     // Obtener el ID del usuario actual del token si está disponible
                     var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                    if (!string.IsNullOrEmpty(currentUserId) && Guid.TryParse(currentUserId, out var userId))
+                    if (!string.IsNullOrEmpty(currentUserId))
                     {
-                        request.ManagerUserId = userId;
+                        // ✅ CORREGIDO: El token ahora contiene la cédula directamente
+                        request.ManagerUserId = currentUserId;
                     }
                 }
 

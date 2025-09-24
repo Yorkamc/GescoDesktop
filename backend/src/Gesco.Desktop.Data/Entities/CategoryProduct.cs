@@ -54,7 +54,7 @@ namespace Gesco.Desktop.Data.Entities
     }
     // MOVIMIENTOS DE INVENTARIO
     // MOVIMIENTOS DE INVENTARIO - CAMBIA A int
-    [Table("inventory_movements")]
+[Table("inventory_movements")]
     public class InventoryMovement : SyncableEntityInt
     {
         [Column("product_id")]
@@ -87,10 +87,12 @@ namespace Gesco.Desktop.Data.Entities
         public string? Justification { get; set; }
 
         [Column("performed_by")]
-        public Guid? PerformedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? PerformedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("authorized_by")]
-        public Guid? AuthorizedBy { get; set; } // MANTIENE Guid
+        [MaxLength(50)]
+        public string? AuthorizedBy { get; set; } // ✅ CORREGIDO: string para cédula
 
         [Column("movement_date")]
         public DateTime MovementDate { get; set; }
@@ -104,5 +106,12 @@ namespace Gesco.Desktop.Data.Entities
 
         [ForeignKey("SalesTransactionId")]
         public virtual SalesTransaction? SalesTransaction { get; set; }
+
+        // ✅ CORREGIDO: Navegación a User usando string (cédula)
+        [ForeignKey("PerformedBy")]
+        public virtual User? PerformedByUser { get; set; }
+
+        [ForeignKey("AuthorizedBy")]
+        public virtual User? AuthorizedByUser { get; set; }
     }
 }
