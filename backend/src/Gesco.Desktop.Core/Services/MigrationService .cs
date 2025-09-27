@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Gesco.Desktop.Data.Context;
 using Gesco.Desktop.Data.Entities;
 using Gesco.Desktop.Core.Interfaces;
+using Gesco.Desktop.Core.Utils;
 
 namespace Gesco.Desktop.Core.Services
 {
@@ -26,87 +27,78 @@ namespace Gesco.Desktop.Core.Services
 
             try
             {
-                _logger.LogInformation("Checking database state...");
+                _logger.LogInformation("🔄 Checking database state...");
 
-                // Verificar si la base de datos existe
                 var canConnect = await context.Database.CanConnectAsync();
                 if (!canConnect)
                 {
-                    _logger.LogInformation("Database doesn't exist, creating...");
+                    _logger.LogInformation("📦 Database doesn't exist, creating...");
                     await context.Database.EnsureCreatedAsync();
-                    _logger.LogInformation("Database created successfully");
+                    _logger.LogInformation("✅ Database created successfully");
                 }
 
-                // Aplicar migraciones pendientes si las hay
                 var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
                 if (pendingMigrations.Any())
                 {
-                    _logger.LogInformation("Applying {Count} pending migrations...", pendingMigrations.Count());
+                    _logger.LogInformation("🔄 Applying {Count} pending migrations...", pendingMigrations.Count());
                     await context.Database.MigrateAsync();
-                    _logger.LogInformation("Migrations applied successfully");
+                    _logger.LogInformation("✅ Migrations applied successfully");
                 }
 
-                // ✅ EJECUTAR SEED DATA MANUALMENTE
+                // EJECUTAR SEED DATA MANUALMENTE
                 await EnsureSeedDataAsync(context);
 
-                // Ejecutar script de optimización después de las migraciones
+                // Ejecutar script de optimización
                 await RunOptimizationScriptAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during database initialization");
+                _logger.LogError(ex, "❌ Error during database initialization");
                 throw;
             }
         }
 
-        // ✅ MÉTODO PARA FORZAR SEED DATA
         private async Task EnsureSeedDataAsync(LocalDbContext context)
         {
             try
             {
-                _logger.LogInformation("Checking seed data...");
+                _logger.LogInformation("🔍 Checking seed data...");
 
-                // Verificar si ya hay datos
                 var hasUsers = await context.Users.AnyAsync();
                 var hasOrganizations = await context.Organizations.AnyAsync();
                 var hasRoles = await context.Roles.AnyAsync();
 
                 if (!hasUsers || !hasOrganizations || !hasRoles)
                 {
-                    _logger.LogInformation("Seed data missing, creating...");
+                    _logger.LogInformation("🌱 Seed data missing, creating...");
                     await CreateSeedDataAsync(context);
-                    _logger.LogInformation("Seed data created successfully");
+                    _logger.LogInformation("✅ Seed data created successfully");
                 }
                 else
                 {
-                    _logger.LogInformation("Seed data already exists");
+                    _logger.LogInformation("✅ Seed data already exists");
                     
-                    // ✅ VERIFICAR QUE EL ADMIN TENGA LA CONTRASEÑA CORRECTA
-                    await VerifyAdminPasswordAsync(context);
+                    // VERIFICAR Y CORREGIR CONTRASEÑA DEL ADMIN
+                    await VerifyAndFixAdminPasswordAsync(context);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error ensuring seed data");
+                _logger.LogError(ex, "❌ Error ensuring seed data");
                 throw;
             }
         }
 
-        // ✅ CREAR SEED DATA MANUALMENTE
         private async Task CreateSeedDataAsync(LocalDbContext context)
         {
-            // ============================================
             // IDS PARA SEED DATA
-            // ============================================
             var orgId = Guid.NewGuid();
             var adminUserId = "118640123";
             var adminRoleId = 1;
             var salesRoleId = 2;
             var supervisorRoleId = 3;
 
-            // ============================================
             // ORGANIZACIÓN
-            // ============================================
             if (!await context.Organizations.AnyAsync())
             {
                 var organization = new Organization
@@ -122,12 +114,10 @@ namespace Gesco.Desktop.Core.Services
                 };
                 context.Organizations.Add(organization);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Organization created: {Name}", organization.Name);
+                _logger.LogInformation("✅ Organization created: {Name}", organization.Name);
             }
 
-            // ============================================
             // ROLES
-            // ============================================
             if (!await context.Roles.AnyAsync())
             {
                 var roles = new[]
@@ -160,23 +150,34 @@ namespace Gesco.Desktop.Core.Services
 
                 context.Roles.AddRange(roles);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Roles created: {Count}", roles.Length);
+                _logger.LogInformation("✅ Roles created: {Count}", roles.Length);
             }
 
-            // ============================================
-            // USUARIO ADMIN CON CONTRASEÑA CORRECTA
-            // ============================================
+            // USUARIO ADMIN CON HASH CORRECTO
             if (!await context.Users.AnyAsync(u => u.Username == "admin"))
             {
-                // ✅ USAR EL HASH QUE REALMENTE FUNCIONA CON TU PASSWORDHELPER
-                var adminPasswordHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a";
+                // GENERAR HASH CORRECTO USANDO PasswordHelper
+                _logger.LogInformation("🔐 Generating admin password hash...");
+                var adminPasswordHash = PasswordHelper.HashPassword("admin123");
+                
+                _logger.LogInformation("📝 Generated hash: {Hash}", adminPasswordHash);
+                _logger.LogInformation("📏 Hash length: {Length}", adminPasswordHash.Length);
+                
+                // Verificar que el hash funciona inmediatamente
+                var testVerification = PasswordHelper.VerifyPassword("admin123", adminPasswordHash);
+                _logger.LogInformation("🧪 Hash verification test: {Result}", testVerification);
+                
+                if (!testVerification)
+                {
+                    throw new InvalidOperationException("Generated password hash failed verification test");
+                }
 
                 var adminUser = new User
                 {
                     Id = adminUserId,
                     Username = "admin",
                     Email = "admin@gesco.com",
-                    Password = adminPasswordHash, // ✅ Hash que funciona
+                    Password = adminPasswordHash, // HASH CORRECTO
                     FullName = "System Administrator",
                     Phone = "8888-8888",
                     OrganizationId = orgId,
@@ -188,12 +189,17 @@ namespace Gesco.Desktop.Core.Services
 
                 context.Users.Add(adminUser);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Admin user created: {Username} with ID: {UserId}", adminUser.Username, adminUser.Id);
+                _logger.LogInformation("✅ Admin user created: {Username} with ID: {UserId}", 
+                    adminUser.Username, adminUser.Id);
             }
 
-            // ============================================
+            // CREAR RESTO DE SEED DATA
+            await CreateAdditionalSeedDataAsync(context);
+        }
+
+        private async Task CreateAdditionalSeedDataAsync(LocalDbContext context)
+        {
             // ACTIVITY STATUSES
-            // ============================================
             if (!await context.ActivityStatuses.AnyAsync())
             {
                 var statuses = new[]
@@ -206,12 +212,10 @@ namespace Gesco.Desktop.Core.Services
 
                 context.ActivityStatuses.AddRange(statuses);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Activity statuses created: {Count}", statuses.Length);
+                _logger.LogInformation("✅ Activity statuses created: {Count}", statuses.Length);
             }
 
-            // ============================================
             // SALES STATUSES
-            // ============================================
             if (!await context.SalesStatuses.AnyAsync())
             {
                 var salesStatuses = new[]
@@ -223,12 +227,10 @@ namespace Gesco.Desktop.Core.Services
 
                 context.SalesStatuses.AddRange(salesStatuses);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Sales statuses created: {Count}", salesStatuses.Length);
+                _logger.LogInformation("✅ Sales statuses created: {Count}", salesStatuses.Length);
             }
 
-            // ============================================
             // PAYMENT METHODS
-            // ============================================
             if (!await context.PaymentMethods.AnyAsync())
             {
                 var paymentMethods = new[]
@@ -240,12 +242,10 @@ namespace Gesco.Desktop.Core.Services
 
                 context.PaymentMethods.AddRange(paymentMethods);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Payment methods created: {Count}", paymentMethods.Length);
+                _logger.LogInformation("✅ Payment methods created: {Count}", paymentMethods.Length);
             }
 
-            // ============================================
             // INVENTORY MOVEMENT TYPES
-            // ============================================
             if (!await context.InventoryMovementTypes.AnyAsync())
             {
                 var movementTypes = new[]
@@ -257,12 +257,10 @@ namespace Gesco.Desktop.Core.Services
 
                 context.InventoryMovementTypes.AddRange(movementTypes);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("Inventory movement types created: {Count}", movementTypes.Length);
+                _logger.LogInformation("✅ Inventory movement types created: {Count}", movementTypes.Length);
             }
 
-            // ============================================
             // SYSTEM CONFIGURATION
-            // ============================================
             if (!await context.SystemConfigurations.AnyAsync())
             {
                 var configs = new[]
@@ -274,52 +272,99 @@ namespace Gesco.Desktop.Core.Services
 
                 context.SystemConfigurations.AddRange(configs);
                 await context.SaveChangesAsync();
-                _logger.LogInformation("System configurations created: {Count}", configs.Length);
+                _logger.LogInformation("✅ System configurations created: {Count}", configs.Length);
             }
-
-            _logger.LogInformation("✅ All seed data created successfully");
         }
 
-        // ✅ VERIFICAR Y CORREGIR CONTRASEÑA DEL ADMIN
-        private async Task VerifyAdminPasswordAsync(LocalDbContext context)
+        /// <summary>
+        /// Verifica y corrige la contraseña del admin si es necesario
+        /// </summary>
+        private async Task VerifyAndFixAdminPasswordAsync(LocalDbContext context)
         {
             try
             {
                 var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "admin");
-                if (adminUser != null)
+                if (adminUser == null)
                 {
-                    // ✅ TU HASH QUE FUNCIONA
-                    var correctHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a";
-                    
-                    if (adminUser.Password != correctHash)
-                    {
-                        _logger.LogInformation("Updating admin password hash...");
-                        adminUser.Password = correctHash;
-                        adminUser.UpdatedAt = DateTime.UtcNow;
-                        await context.SaveChangesAsync();
-                        _logger.LogInformation("Admin password hash updated to working hash");
-                    }
-                    
-                    // ✅ VERIFICAR QUE FUNCIONA CON PASSWORDHELPER
-                    try 
-                    {
-                        var testVerify = Gesco.Desktop.Core.Utils.PasswordHelper.VerifyPassword("admin123", adminUser.Password);
-                        _logger.LogInformation("Password verification test result: {Result}", testVerify);
-                        
-                        if (!testVerify)
-                        {
-                            _logger.LogWarning("Password verification failed! Hash may be incompatible with PasswordHelper");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error testing password verification");
-                    }
+                    _logger.LogWarning("⚠️ Admin user not found");
+                    return;
+                }
+
+                _logger.LogInformation("🔍 Verifying admin password hash...");
+                _logger.LogInformation("📝 Current hash: {Hash}", adminUser.Password);
+                _logger.LogInformation("📏 Hash length: {Length}", adminUser.Password?.Length ?? 0);
+
+                // Verificar si el hash actual es válido
+                var isValidFormat = PasswordHelper.IsValidBCryptHash(adminUser.Password);
+                _logger.LogInformation("🔍 Hash format valid: {IsValid}", isValidFormat);
+
+                if (!isValidFormat)
+                {
+                    _logger.LogWarning("⚠️ Admin password hash is invalid, regenerating...");
+                    await RegenerateAdminPasswordAsync(context, adminUser);
+                    return;
+                }
+
+                // Verificar que la contraseña funciona
+                var passwordWorks = PasswordHelper.VerifyPassword("admin123", adminUser.Password);
+                _logger.LogInformation("🧪 Password verification test: {Works}", passwordWorks);
+
+                if (!passwordWorks)
+                {
+                    _logger.LogWarning("⚠️ Admin password verification failed, regenerating...");
+                    await RegenerateAdminPasswordAsync(context, adminUser);
+                }
+                else
+                {
+                    _logger.LogInformation("✅ Admin password is working correctly");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error verifying admin password");
+                _logger.LogError(ex, "❌ Error verifying admin password");
+            }
+        }
+
+        /// <summary>
+        /// Regenera la contraseña del admin
+        /// </summary>
+        private async Task RegenerateAdminPasswordAsync(LocalDbContext context, User adminUser)
+        {
+            try
+            {
+                _logger.LogInformation("🔧 Regenerating admin password...");
+                
+                // Generar nuevo hash
+                var newHash = PasswordHelper.HashPassword("admin123");
+                _logger.LogInformation("📝 New hash generated: {Hash}", newHash);
+                _logger.LogInformation("📏 New hash length: {Length}", newHash.Length);
+                
+                // Verificar inmediatamente que funciona
+                var testResult = PasswordHelper.VerifyPassword("admin123", newHash);
+                _logger.LogInformation("🧪 New hash verification test: {Result}", testResult);
+                
+                if (!testResult)
+                {
+                    throw new InvalidOperationException("Generated hash failed verification test");
+                }
+                
+                // Actualizar en base de datos
+                adminUser.Password = newHash;
+                adminUser.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+                
+                _logger.LogInformation("✅ Admin password regenerated successfully");
+                
+                // Log adicional para debugging
+                _logger.LogInformation("🔍 Final verification test...");
+                var finalTest = PasswordHelper.VerifyPassword("admin123", adminUser.Password);
+                _logger.LogInformation("🧪 Final test result: {Result}", finalTest);
+                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error regenerating admin password");
+                throw;
             }
         }
 
@@ -330,19 +375,19 @@ namespace Gesco.Desktop.Core.Services
 
             try
             {
-                _logger.LogInformation("Running SQLite optimization script...");
+                _logger.LogInformation("🔧 Running SQLite optimization script...");
                 await context.RunOptimizationScriptAsync();
-                _logger.LogInformation("Optimization script completed successfully");
+                _logger.LogInformation("✅ Optimization script completed successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error running optimization script");
+                _logger.LogError(ex, "❌ Error running optimization script");
                 // No relanzar la excepción para que no falle el startup
             }
         }
     }
 
-    // CORREGIDO: DatabaseInitializationService ahora funciona con IMigrationService como Singleton
+    // CORREGIDO: DatabaseInitializationService funciona con IMigrationService
     public class DatabaseInitializationService : IHostedService
     {
         private readonly IMigrationService _migrationService;
@@ -360,14 +405,13 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                _logger.LogInformation("Starting database initialization...");
+                _logger.LogInformation("🚀 Starting database initialization...");
                 await _migrationService.EnsureDatabaseCreatedAsync();
-                _logger.LogInformation("Database initialization completed");
+                _logger.LogInformation("✅ Database initialization completed");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Database initialization failed");
-                // Decidir si fallar el startup o continuar
+                _logger.LogError(ex, "❌ Database initialization failed");
                 throw; // Fallar startup si la DB no se puede inicializar
             }
         }
