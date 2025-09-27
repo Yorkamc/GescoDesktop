@@ -33,7 +33,7 @@ namespace Gesco.Desktop.Core.Services
             {
                 _logger.LogInformation("Attempting login for user: {Usuario}", usuario);
 
-                // Find user by username or email (using new entity structure)
+                // ✅ CORREGIDO: Buscar por username O email (usando nueva estructura de cédula)
                 var user = await _context.Users
                     .Include(u => u.Organization)
                     .Include(u => u.Role)
@@ -62,7 +62,7 @@ namespace Gesco.Desktop.Core.Services
                 // Debug logging
                 _logger.LogDebug("Found user: {UserId}, checking password...", user.Id);
 
-                // Verify password with BCrypt using PasswordHelper
+                // ✅ VERIFICAR PASSWORD CON BCRYPT
                 bool passwordValid = false;
                 try
                 {
@@ -101,7 +101,7 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
-                // Generate JWT token
+                // ✅ GENERAR JWT TOKEN CON CÉDULA
                 var token = GenerateJwtToken(user);
 
                 // Update last login
@@ -120,12 +120,12 @@ namespace Gesco.Desktop.Core.Services
                     IsOffline = false,
                     Usuario = new UsuarioDto
                     {
-                        Id = user.Id.ToString(), // Convert Guid to string
+                        Id = user.Id, // ✅ CORREGIDO: Ya es string (cédula)
                         NombreUsuario = user.Username,
                         Correo = user.Email,
                         NombreCompleto = user.FullName ?? user.Username,
-                        OrganizacionId = user.OrganizationId.ToString(),
-                        RolId = user.RoleId.ToString(),
+                        OrganizacionId = user.OrganizationId.ToString(), // Convert Guid to string
+                        RolId = user.RoleId.ToString(), // Convert int to string
                         NombreRol = user.Role?.Name ?? "Unknown"
                     }
                 };
@@ -185,11 +185,12 @@ namespace Gesco.Desktop.Core.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id), // ✅ CÉDULA en lugar de Guid
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim("organization_id", user.OrganizationId.ToString()),
-                    new Claim("role_id", user.RoleId.ToString())
+                    new Claim("role_id", user.RoleId.ToString()),
+                    new Claim("cedula", user.Id) // ✅ Claim adicional específico para cédula
                 }),
                 Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(

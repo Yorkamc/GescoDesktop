@@ -36,7 +36,7 @@ namespace Gesco.Desktop.UI.Controllers
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-                // Get status entities by name to avoid hardcoded IDs - Con manejo de errores
+                // ✅ MÉTODO SEGURO: Verificar existencia antes de usar
                 var inProgressActivityStatus = await _context.ActivityStatuses
                     .FirstOrDefaultAsync(s => s.Name == "In Progress");
 
@@ -46,7 +46,7 @@ namespace Gesco.Desktop.UI.Controllers
                 _logger.LogInformation("Found activity status: {StatusFound}", inProgressActivityStatus != null);
                 _logger.LogInformation("Found sales status: {StatusFound}", completedSalesStatus != null);
 
-                // Calcular estadísticas con manejo de errores individual
+                // ✅ CÁLCULO SEGURO DE ESTADÍSTICAS - CADA UNO EN TRY-CATCH INDIVIDUAL
                 var totalActivities = 0;
                 var activeActivities = 0;
                 var todaySales = 0m;
@@ -198,7 +198,7 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 _logger.LogError(ex, "Error getting dashboard stats");
                 
-                // Devolver estadísticas por defecto en caso de error
+                // ✅ DEVOLVER ESTADÍSTICAS POR DEFECTO EN CASO DE ERROR
                 var defaultStats = new DashboardStatsDto
                 {
                     TotalActivities = 0,
@@ -216,15 +216,13 @@ namespace Gesco.Desktop.UI.Controllers
                     ReportPeriod = "Error al cargar datos"
                 };
 
-                return Ok(defaultStats);
+                return Ok(defaultStats); // ✅ NO devolver error 500, sino datos por defecto
             }
         }
 
         /// <summary>
         /// Obtener resumen de ventas por período
         /// </summary>
-        /// <param name="dias">Número de días hacia atrás (por defecto 7)</param>
-        /// <returns>Datos de ventas por día</returns>
         [HttpGet("sales-summary")]
         [ProducesResponseType(typeof(List<SalesSummaryDto>), 200)]
         public async Task<IActionResult> GetSalesSummary([FromQuery] int dias = 7)
@@ -261,8 +259,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Obtener actividades recientes
         /// </summary>
-        /// <param name="limite">Número máximo de actividades (por defecto 10)</param>
-        /// <returns>Lista de actividades recientes</returns>
         [HttpGet("recent-activities")]
         [Authorize]
         [ProducesResponseType(typeof(List<ActivitySummaryDto>), 200)]
@@ -277,7 +273,7 @@ namespace Gesco.Desktop.UI.Controllers
                     .Take(limite)
                     .Select(a => new ActivitySummaryDto
                     {
-                        Id = a.Id, // NOTA: int -> Guid automáticamente a través del mapeo
+                        Id = a.Id, // int -> int (no conversión necesaria)
                         Nombre = a.Name,
                         Estado = a.ActivityStatus.Name,
                         FechaInicio = a.StartDate.ToDateTime(a.StartTime ?? TimeOnly.MinValue),
@@ -296,7 +292,7 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // DTOs locales específicos del StatsController
+    // ✅ DTOs LOCALES PARA EVITAR CONFLICTOS
     public class SalesSummaryDto
     {
         public DateTime Fecha { get; set; }
@@ -307,7 +303,7 @@ namespace Gesco.Desktop.UI.Controllers
 
     public class ActivitySummaryDto
     {
-        public int Id { get; set; } // CORREGIDO: int en lugar de Guid para coincidir con la entidad
+        public int Id { get; set; } // int para coincidir con la entidad Activity
         public string Nombre { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public DateTime FechaInicio { get; set; }

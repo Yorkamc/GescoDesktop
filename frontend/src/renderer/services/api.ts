@@ -62,7 +62,15 @@ api.interceptors.response.use(
 interface LoginResponse {
   success: boolean;
   message?: string;
-  usuario?: any;
+  usuario?: {
+    id: string; // CAMBIADO: ahora es string (cédula)
+    nombreUsuario: string;
+    correo: string;
+    nombreCompleto: string;
+    organizacionId: string;
+    rolId: string;
+    nombreRol: string;
+  };
   token?: string;
   isOffline?: boolean;
   tokenExpiration?: string;
