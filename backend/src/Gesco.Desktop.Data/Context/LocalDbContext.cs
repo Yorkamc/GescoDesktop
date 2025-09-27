@@ -707,7 +707,7 @@ private static void SeedData(ModelBuilder modelBuilder)
     // ============================================
 
     // BCrypt hash para "admin123"
-    var adminPasswordHash = "$2a$12$6nybiEVKavFp/iZhsQrSLuNIhhAnRx2STs6Fmzj.BCF4gUAwMtCV6";
+    var adminPasswordHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a";
 
     modelBuilder.Entity<User>().HasData(
         new User
