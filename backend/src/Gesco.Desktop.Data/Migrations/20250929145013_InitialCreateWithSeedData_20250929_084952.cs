@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Gesco.Desktop.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateWithSeedData_20250927_134305 : Migration
+    public partial class InitialCreateWithSeedData_20250929_084952 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

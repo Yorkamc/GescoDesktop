@@ -1,8 +1,6 @@
-﻿using System;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
@@ -18,30 +16,33 @@ namespace Gesco.Desktop.Core.Services
         private readonly LocalDbContext _context;
         private readonly ILogger<AuthService> _logger;
         private readonly string _jwtSecret;
+        private readonly JwtSecurityTokenHandler _tokenHandler;
 
         public AuthService(LocalDbContext context, ILogger<AuthService> logger)
         {
             _context = context;
             _logger = logger;
             _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? 
-                        "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
+                        "GescoDesktop2024SecretKey12345678901234567890";
+            _tokenHandler = new JwtSecurityTokenHandler();
         }
 
         public async Task<LoginResultDto> LoginAsync(string usuario, string password)
         {
             try
             {
-                _logger.LogInformation("🔐 Attempting login for user: {Usuario}", usuario);
+                _logger.LogInformation("Login attempt for user: {Usuario}", usuario);
 
-                // Buscar por username O email
+                // Buscar usuario de forma optimizada
                 var user = await _context.Users
                     .Include(u => u.Organization)
                     .Include(u => u.Role)
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Username == usuario || u.Email == usuario);
 
                 if (user == null)
                 {
-                    _logger.LogWarning("❌ User not found: {Usuario}", usuario);
+                    _logger.LogWarning("User not found: {Usuario}", usuario);
                     return new LoginResultDto
                     {
                         Success = false,
@@ -51,7 +52,7 @@ namespace Gesco.Desktop.Core.Services
 
                 if (!user.Active)
                 {
-                    _logger.LogWarning("❌ User inactive: {Usuario}", usuario);
+                    _logger.LogWarning("User inactive: {Usuario}", usuario);
                     return new LoginResultDto
                     {
                         Success = false,
@@ -59,101 +60,49 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
-                _logger.LogInformation("✅ User found: {UserId}, verifying password...", user.Id);
-                _logger.LogInformation("📝 Stored hash: {Hash}", user.Password);
-                _logger.LogInformation("📝 Password to verify: {Password}", password);
-
-                // VERIFICACIÓN MEJORADA DE CONTRASEÑA
+                // Verificación de contraseña optimizada
                 bool passwordValid = false;
-                string verificationMethod = "";
-
                 try
                 {
-                    // Verificar si el hash tiene formato válido
                     if (!PasswordHelper.IsValidBCryptHash(user.Password))
                     {
-                        _logger.LogWarning("⚠️ Invalid BCrypt hash format in database for user: {Usuario}", usuario);
-                        _logger.LogWarning("⚠️ Hash: {Hash} (Length: {Length})", user.Password, user.Password?.Length ?? 0);
-                        
-                        // Si el hash es inválido, generar uno nuevo y actualizar
-                        await RegenerateUserPasswordHash(user, password);
-                        
+                        _logger.LogWarning("Invalid password hash format for user: {Usuario}", usuario);
                         return new LoginResultDto
                         {
                             Success = false,
-                            Message = "Hash de contraseña corrupto. Se ha regenerado un nuevo hash. Intente nuevamente."
+                            Message = "Error de configuración de usuario"
                         };
                     }
 
-                    // Verificación BCrypt normal
                     passwordValid = PasswordHelper.VerifyPassword(password, user.Password);
-                    verificationMethod = "BCrypt";
-                    
-                    _logger.LogInformation("🔍 BCrypt verification result: {Valid} for user: {Usuario}", 
-                        passwordValid, usuario);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error verifying password for user: {Usuario}", usuario);
-                    
-                    // Fallback verification usando BCrypt directo
-                    try
+                    _logger.LogError(ex, "Password verification error for user: {Usuario}", usuario);
+                    return new LoginResultDto
                     {
-                        passwordValid = BCrypt.Net.BCrypt.Verify(password, user.Password);
-                        verificationMethod = "BCrypt Direct";
-                        _logger.LogInformation("🔍 Fallback BCrypt verification result: {Valid}", passwordValid);
-                    }
-                    catch (Exception fallbackEx)
-                    {
-                        _logger.LogError(fallbackEx, "❌ Fallback password verification also failed");
-                        
-                        // Último intento: regenerar hash si sabemos que la contraseña debería ser correcta
-                        if (usuario == "admin" && password == "admin123")
-                        {
-                            _logger.LogWarning("🔧 Regenerating admin password hash due to verification failure");
-                            await RegenerateUserPasswordHash(user, password);
-                            
-                            return new LoginResultDto
-                            {
-                                Success = false,
-                                Message = "Hash de contraseña regenerado. Intente login nuevamente."
-                            };
-                        }
-                        
-                        return new LoginResultDto
-                        {
-                            Success = false,
-                            Message = "Error al verificar credenciales"
-                        };
-                    }
+                        Success = false,
+                        Message = "Error al verificar credenciales"
+                    };
                 }
 
                 if (!passwordValid)
                 {
-                    _logger.LogWarning("❌ Invalid password for user: {Usuario} (Method: {Method})", 
-                        usuario, verificationMethod);
-                    
-                    // Log detallado para debug
-                    _logger.LogDebug("Debug info - Password: '{Password}', Hash: '{Hash}'", 
-                        password, user.Password);
-                    
+                    _logger.LogWarning("Invalid password for user: {Usuario}", usuario);
                     return new LoginResultDto
                     {
                         Success = false,
-                        Message = "Contraseña incorrecta"
+                        Message = "Contraseña incorreta"
                     };
                 }
 
                 // Generar JWT Token
                 var token = GenerateJwtToken(user);
 
-                // Update last login
-                user.LastLoginAt = DateTime.UtcNow;
-                user.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
+                // Actualizar ultimo login (sin tracking para optimizar)
+                await UpdateLastLoginAsync(user.Id);
 
-                _logger.LogInformation("✅ Successful login for user: {Usuario} using {Method}", 
-                    usuario, verificationMethod);
+                _logger.LogInformation("Successful login for user: {Usuario}", usuario);
 
                 return new LoginResultDto
                 {
@@ -164,7 +113,7 @@ namespace Gesco.Desktop.Core.Services
                     IsOffline = false,
                     Usuario = new UsuarioDto
                     {
-                        Id = user.Id, // Cédula como string
+                        Id = user.Id,
                         NombreUsuario = user.Username,
                         Correo = user.Email,
                         NombreCompleto = user.FullName ?? user.Username,
@@ -176,36 +125,12 @@ namespace Gesco.Desktop.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Unexpected error during login for user: {Usuario}", usuario);
+                _logger.LogError(ex, "Unexpected error during login for user: {Usuario}", usuario);
                 return new LoginResultDto
                 {
                     Success = false,
-                    Message = $"Error en autenticación: {ex.Message}"
+                    Message = "Error interno del servidor"
                 };
-            }
-        }
-
-        /// <summary>
-        /// Regenera el hash de contraseña para un usuario
-        /// </summary>
-        private async Task RegenerateUserPasswordHash(Gesco.Desktop.Data.Entities.User user, string plainPassword)
-        {
-            try
-            {
-                _logger.LogInformation("🔧 Regenerating password hash for user: {UserId}", user.Id);
-                
-                var newHash = PasswordHelper.HashPassword(plainPassword);
-                user.Password = newHash;
-                user.UpdatedAt = DateTime.UtcNow;
-                
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation("✅ Password hash regenerated successfully for user: {UserId}", user.Id);
-                _logger.LogInformation("📝 New hash: {Hash}", newHash);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error regenerating password hash for user: {UserId}", user.Id);
             }
         }
 
@@ -218,10 +143,8 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_jwtSecret);
-
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                _tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
@@ -246,19 +169,18 @@ namespace Gesco.Desktop.Core.Services
 
         private string GenerateJwtToken(Gesco.Desktop.Data.Entities.User user)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSecret);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id), // Cédula
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim("organization_id", user.OrganizationId.ToString()),
                     new Claim("role_id", user.RoleId.ToString()),
-                    new Claim("cedula", user.Id) // Claim adicional para cédula
+                    new Claim("cedula", user.Id)
                 }),
                 Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(
@@ -266,8 +188,22 @@ namespace Gesco.Desktop.Core.Services
                     SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var token = _tokenHandler.CreateToken(tokenDescriptor);
+            return _tokenHandler.WriteToken(token);
+        }
+
+        private async Task UpdateLastLoginAsync(string userId)
+        {
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync(
+                    "UPDATE users SET last_login_at = {0}, updated_at = {1} WHERE id = {2}",
+                    DateTime.UtcNow, DateTime.UtcNow, userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to update last login for user: {UserId}", userId);
+            }
         }
     }
 }

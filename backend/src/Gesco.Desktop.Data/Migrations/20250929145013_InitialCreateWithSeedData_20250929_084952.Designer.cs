@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gesco.Desktop.Data.Migrations
 {
     [DbContext(typeof(LocalDbContext))]
-    [Migration("20250927194345_InitialCreateWithSeedData_20250927_134305")]
-    partial class InitialCreateWithSeedData_20250927_134305
+    [Migration("20250929145013_InitialCreateWithSeedData_20250929_084952")]
+    partial class InitialCreateWithSeedData_20250929_084952
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
