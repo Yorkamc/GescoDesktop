@@ -11,12 +11,10 @@
     "build:backend": "cd ../backend && dotnet publish src/Gesco.Desktop.UI/Gesco.Desktop.UI.csproj -c Release -o ../frontend/backend",
     "build:complete": "npm run build:backend && npm run build && npm run electron:build",
     "electron:build": "electron-builder",
-    "electron:build:win": "electron-builder --win --config electron-builder.config.js",
-    "electron:build:mac": "electron-builder --mac --config electron-builder.config.js",
-    "electron:build:linux": "electron-builder --linux --config electron-builder.config.js",
-    "electron:build:all": "electron-builder --win --mac --linux --config electron-builder.config.js",
-    "sign:prepare": "node scripts/prepare-signing.js",
-    "security:audit": "node scripts/security-audit.js",
+    "electron:build:win": "electron-builder --win",
+    "electron:build:mac": "electron-builder --mac",
+    "electron:build:linux": "electron-builder --linux",
+    "electron:build:all": "electron-builder --win --mac --linux",
     "preview": "vite preview",
     "electron": "electron .",
     "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
@@ -61,7 +59,7 @@
     "vite": "^5.0.11",
     "wait-on": "^7.2.0"
   },
-"build": {
+  "build": {
     "appId": "com.gesco.desktop",
     "productName": "GESCO Desktop",
     "copyright": "2025 GESCO",
@@ -77,6 +75,7 @@
     "files": [
       "dist/**/*",
       "backend/**/*",
+      "build/icon-512.png",
       "electron-main.cjs",
       "package.json",
       "!**/*.env*",
@@ -118,22 +117,23 @@
         "description": "GESCO Desktop Project File"
       }
     ],
-"win": {
-  "target": [
-    {
-      "target": "nsis",
-      "arch": ["x64"]
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": false,
+      "signDlls": false,
+      "verifyUpdateCodeSignature": false
     },
-    {
-      "target": "portable",
-      "arch": ["x64"]
-    }
-  ],
-  "requestedExecutionLevel": "asInvoker",
-  "signAndEditExecutable": false,
-  "signDlls": false,
-  "verifyUpdateCodeSignature": false
-},
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -145,6 +145,7 @@
       "allowElevation": true
     },
     "mac": {
+      "icon": "build/icon.icns",
       "target": [
         {
           "target": "dmg",
@@ -156,6 +157,7 @@
       "gatekeeperAssess": false
     },
     "linux": {
+      "icon": "build/icon-512.png",
       "target": [
         {
           "target": "AppImage",

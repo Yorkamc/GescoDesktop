@@ -6,6 +6,7 @@ const { spawn } = require('child_process');
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 let mainWindow;
 let backendProcess;
+let backendReady = false;
 
 console.log('=== GESCO DESKTOP STANDALONE ===');
 console.log('isDev:', isDev);
@@ -16,10 +17,9 @@ function startBackend() {
     return Promise.resolve();
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     console.log('🚀 Iniciando backend integrado...');
     
-    // Buscar el ejecutable del backend
     const backendPaths = [
       path.join(process.resourcesPath, 'backend', 'Gesco.Desktop.UI.exe'),
       path.join(__dirname, 'backend', 'Gesco.Desktop.UI.exe'),
@@ -37,11 +37,10 @@ function startBackend() {
     
     if (!backendPath) {
       console.error('❌ Backend no encontrado');
-      reject(new Error('Backend no encontrado'));
+      resolve();
       return;
     }
 
-    // Iniciar el backend
     backendProcess = spawn(backendPath, [], {
       detached: false,
       stdio: ['ignore', 'pipe', 'pipe']
@@ -51,10 +50,13 @@ function startBackend() {
       const output = data.toString();
       console.log('[BACKEND]', output);
       
-      // Detectar cuando el backend está listo
       if (output.includes('Now listening on: http://localhost:5100')) {
         console.log('✅ Backend listo');
-        resolve();
+        backendReady = true;
+        
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('backend-ready');
+        }
       }
     });
 
@@ -64,25 +66,50 @@ function startBackend() {
 
     backendProcess.on('error', (error) => {
       console.error('❌ Error iniciando backend:', error);
-      reject(error);
     });
 
     backendProcess.on('exit', (code) => {
       console.log(`🔄 Backend terminó con código: ${code}`);
+      backendReady = false;
     });
 
-    // Timeout si el backend no inicia en 30 segundos
-    setTimeout(() => {
-      if (backendProcess && !backendProcess.killed) {
-        console.log('⏰ Backend tardó mucho, continuando de cualquier manera...');
-        resolve();
-      }
-    }, 30000);
+    console.log('⚡ Backend iniciándose en segundo plano...');
+    setTimeout(resolve, 500);
   });
+}
+
+function getIconPath() {
+  // En desarrollo, usar el icono desde build
+  if (isDev) {
+    const devIconPath = path.join(__dirname, 'build', 'icon-512.png');
+    if (existsSync(devIconPath)) {
+      console.log('🎨 Usando icono de desarrollo:', devIconPath);
+      return devIconPath;
+    }
+  }
+  
+  // En producción, intentar diferentes rutas
+  const possibleIconPaths = [
+    path.join(__dirname, 'build', 'icon-512.png'),
+    path.join(process.resourcesPath, 'app', 'build', 'icon-512.png'),
+    path.join(app.getAppPath(), 'build', 'icon-512.png')
+  ];
+  
+  for (const iconPath of possibleIconPaths) {
+    if (existsSync(iconPath)) {
+      console.log('🎨 Usando icono:', iconPath);
+      return iconPath;
+    }
+  }
+  
+  console.warn('⚠️ No se encontró icono personalizado, usando icono por defecto');
+  return undefined;
 }
 
 function createWindow() {
   console.log('📱 Creando ventana principal...');
+  
+  const iconPath = getIconPath();
   
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -97,7 +124,7 @@ function createWindow() {
     show: false,
     backgroundColor: '#f8fafc',
     autoHideMenuBar: true,
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    icon: iconPath,
     title: 'GESCO Desktop'
   });
 
@@ -140,43 +167,8 @@ function createWindow() {
 
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('✅ Ventana cargada');
-    
-    // Verificar conectividad con backend
-    mainWindow.webContents.executeJavaScript(`
-      console.log('🔍 Verificando conectividad con backend...');
-      
-      fetch('http://localhost:5100/api/system/health')
-        .then(response => response.json())
-        .then(data => {
-          console.log('✅ Backend conectado:', data);
-          document.title = 'GESCO Desktop - Conectado';
-        })
-        .catch(error => {
-          console.error('❌ Backend no conectado:', error);
-          document.title = 'GESCO Desktop - Sin Conexión';
-          
-          // Mostrar mensaje de error si no hay backend
-          const root = document.getElementById('root');
-          if (root && root.innerHTML.trim() === '') {
-            root.innerHTML = \`
-              <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Arial;">
-                <div style="text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                  <h1 style="color: #dc2626; margin-bottom: 20px;">🚫 Sin Conexión al Servidor</h1>
-                  <p style="margin-bottom: 20px;">No se puede conectar al servidor backend.</p>
-                  <p style="margin-bottom: 20px; color: #6b7280;">Verifica que el servidor esté corriendo en localhost:5100</p>
-                  <button onclick="location.reload()" style="background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">
-                    🔄 Reintentar
-                  </button>
-                </div>
-              </div>
-            \`;
-          }
-        });
-    `);
-    
-    setTimeout(() => {
-      mainWindow.show();
-    }, 1000);
+    mainWindow.show();
+    checkBackendConnection();
   });
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
@@ -191,6 +183,56 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+}
+
+function checkBackendConnection() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  
+  mainWindow.webContents.executeJavaScript(`
+    (async () => {
+      console.log('🔍 Verificando conectividad con backend...');
+      
+      let retries = 0;
+      const maxRetries = 30;
+      
+      const checkConnection = async () => {
+        try {
+          const response = await fetch('http://localhost:5100/api/system/health', {
+            signal: AbortSignal.timeout(3000)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Backend conectado:', data);
+            document.title = 'GESCO Desktop - Conectado';
+            window.dispatchEvent(new CustomEvent('backend-connected', { detail: data }));
+            return true;
+          }
+        } catch (error) {
+          console.log(\`🔄 Intento \${retries + 1}/\${maxRetries} - Backend no responde aún...\`);
+        }
+        return false;
+      };
+      
+      if (await checkConnection()) return;
+      
+      const interval = setInterval(async () => {
+        retries++;
+        
+        if (await checkConnection()) {
+          clearInterval(interval);
+          return;
+        }
+        
+        if (retries >= maxRetries) {
+          clearInterval(interval);
+          console.error('❌ Backend no conectado después de 30 segundos');
+          document.title = 'GESCO Desktop - Sin Conexión';
+          window.dispatchEvent(new CustomEvent('backend-connection-failed'));
+        }
+      }, 1000);
+    })();
+  `);
 }
 
 function createErrorPage(message) {
@@ -234,9 +276,6 @@ function createErrorPage(message) {
         <h1>⚠️ Error</h1>
         <p>${message}</p>
         <button onclick="location.reload()">🔄 Reintentar</button>
-        <button onclick="require('electron').shell.openExternal('https://github.com/tu-usuario/gesco-desktop/issues')">
-          📋 Reportar Problema
-        </button>
       </div>
     </body>
   </html>`;
@@ -244,29 +283,22 @@ function createErrorPage(message) {
   return 'data:text/html;charset=utf-8,' + encodeURIComponent(errorHtml);
 }
 
-// Secuencia de inicio
 app.whenReady().then(async () => {
   console.log('⚡ Electron listo');
   
-  try {
-    // Iniciar backend primero (solo en producción)
-    await startBackend();
-    
-    // Crear ventana
-    createWindow();
-    
-    console.log('🎉 GESCO Desktop iniciado completamente');
-    
-  } catch (error) {
-    console.error('❌ Error durante el inicio:', error);
-    
-    // Crear ventana de cualquier manera
-    createWindow();
+  createWindow();
+  console.log('✅ Ventana creada, cargando frontend...');
+  
+  if (!isDev) {
+    startBackend().catch(error => {
+      console.error('❌ Error iniciando backend:', error);
+    });
   }
+  
+  console.log('🎉 GESCO Desktop iniciando en modo rápido');
 });
 
 app.on('window-all-closed', () => {
-  // Terminar el backend si está corriendo
   if (backendProcess && !backendProcess.killed) {
     console.log('🔄 Terminando backend...');
     backendProcess.kill();
@@ -283,7 +315,6 @@ app.on('activate', () => {
   }
 });
 
-// Limpiar al salir
 app.on('before-quit', () => {
   if (backendProcess && !backendProcess.killed) {
     console.log('🔄 Limpieza: terminando backend...');
