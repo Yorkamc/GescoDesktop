@@ -10,6 +10,53 @@ let backendReady = false;
 
 console.log('=== GESCO DESKTOP STANDALONE ===');
 console.log('isDev:', isDev);
+console.log('isPackaged:', app.isPackaged);
+console.log('Platform:', process.platform);
+
+function getIconPath() {
+  const platform = process.platform;
+  let iconName;
+  
+  // Determinar el nombre del icono según la plataforma
+  if (platform === 'win32') {
+    iconName = 'icon.ico';
+  } else if (platform === 'darwin') {
+    iconName = 'icon.icns';
+  } else {
+    iconName = 'icon-512.png';
+  }
+  
+  // Rutas posibles para buscar el icono
+  const possiblePaths = [
+    // En desarrollo
+    path.join(__dirname, 'build', iconName),
+    path.join(__dirname, 'build', 'icon-512.png'), // Fallback a PNG
+    
+    // En producción (empaquetado)
+    path.join(process.resourcesPath, 'build', iconName),
+    path.join(process.resourcesPath, 'app.asar', 'build', iconName),
+    path.join(process.resourcesPath, 'app', 'build', iconName),
+    
+    // Otras ubicaciones
+    path.join(app.getAppPath(), 'build', iconName),
+    path.join(app.getAppPath(), 'build', 'icon-512.png')
+  ];
+  
+  // Buscar el icono en las rutas posibles
+  for (const iconPath of possiblePaths) {
+    if (existsSync(iconPath)) {
+      console.log('🎨 Icono encontrado:', iconPath);
+      return iconPath;
+    }
+  }
+  
+  console.warn('⚠️ No se encontró icono personalizado en ninguna ruta');
+  console.warn('Rutas verificadas:', possiblePaths);
+  
+  // En Windows, si no hay icono, Electron usa el predeterminado
+  // No retornar undefined para evitar errores
+  return null;
+}
 
 function startBackend() {
   if (isDev) {
@@ -78,40 +125,13 @@ function startBackend() {
   });
 }
 
-function getIconPath() {
-  // En desarrollo, usar el icono desde build
-  if (isDev) {
-    const devIconPath = path.join(__dirname, 'build', 'icon-512.png');
-    if (existsSync(devIconPath)) {
-      console.log('🎨 Usando icono de desarrollo:', devIconPath);
-      return devIconPath;
-    }
-  }
-  
-  // En producción, intentar diferentes rutas
-  const possibleIconPaths = [
-    path.join(__dirname, 'build', 'icon-512.png'),
-    path.join(process.resourcesPath, 'app', 'build', 'icon-512.png'),
-    path.join(app.getAppPath(), 'build', 'icon-512.png')
-  ];
-  
-  for (const iconPath of possibleIconPaths) {
-    if (existsSync(iconPath)) {
-      console.log('🎨 Usando icono:', iconPath);
-      return iconPath;
-    }
-  }
-  
-  console.warn('⚠️ No se encontró icono personalizado, usando icono por defecto');
-  return undefined;
-}
-
 function createWindow() {
   console.log('📱 Creando ventana principal...');
   
   const iconPath = getIconPath();
   
-  mainWindow = new BrowserWindow({
+  // Configuración de la ventana
+  const windowConfig = {
     width: 1400,
     height: 900,
     webPreferences: {
@@ -124,9 +144,20 @@ function createWindow() {
     show: false,
     backgroundColor: '#f8fafc',
     autoHideMenuBar: true,
-    icon: iconPath,
     title: 'GESCO Desktop'
-  });
+  };
+  
+  // Solo agregar icon si existe
+  if (iconPath) {
+    windowConfig.icon = iconPath;
+  }
+  
+  mainWindow = new BrowserWindow(windowConfig);
+
+  // En Windows, también configurar el icono de la aplicación
+  if (process.platform === 'win32' && iconPath) {
+    mainWindow.setIcon(iconPath);
+  }
 
   if (isDev) {
     mainWindow.webContents.openDevTools();

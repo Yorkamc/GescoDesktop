@@ -75,7 +75,7 @@
     "files": [
       "dist/**/*",
       "backend/**/*",
-      "build/icon-512.png",
+      "build/**/*",
       "electron-main.cjs",
       "package.json",
       "!**/*.env*",
@@ -102,6 +102,15 @@
           "!**/appsettings.Production.json",
           "!**/appsettings.Development.json"
         ]
+      },
+      {
+        "from": "build",
+        "to": "build",
+        "filter": [
+          "icon.ico",
+          "icon.icns",
+          "icon-512.png"
+        ]
       }
     ],
     "protocols": [
@@ -114,7 +123,8 @@
       {
         "ext": "gesco",
         "name": "GESCO Project File",
-        "description": "GESCO Desktop Project File"
+        "description": "GESCO Desktop Project File",
+        "icon": "build/icon.ico"
       }
     ],
     "win": {
@@ -142,7 +152,9 @@
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
-      "allowElevation": true
+      "allowElevation": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "mac": {
       "icon": "build/icon.icns",
