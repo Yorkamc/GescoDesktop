@@ -43,11 +43,16 @@ namespace Gesco.Desktop.Sync.LaravelApi
 
                 var response = await _httpClient.PostAsync($"{_baseUrl}/auth/login", content);
 
-
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<LoginResultDto>(json);
+                    var result = JsonConvert.DeserializeObject<LoginResultDto>(json);
+                    
+                    return result ?? new LoginResultDto
+                    {
+                        Success = false,
+                        Message = "Error deserializing response"
+                    };
                 }
 
                 return new LoginResultDto
@@ -78,11 +83,16 @@ namespace Gesco.Desktop.Sync.LaravelApi
 
                 var response = await _httpClient.PostAsync($"{_baseUrl}/license/activate", content);
 
-
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<ActivationResultDto>(json);
+                    var result = JsonConvert.DeserializeObject<ActivationResultDto>(json);
+                    
+                    return result ?? new ActivationResultDto
+                    {
+                        Success = false,
+                        Message = "Error deserializing response"
+                    };
                 }
 
                 return new ActivationResultDto

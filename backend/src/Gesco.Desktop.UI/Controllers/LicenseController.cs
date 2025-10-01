@@ -25,11 +25,6 @@ namespace Gesco.Desktop.UI.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Activar licencia del sistema
-        /// </summary>
-        /// <param name="request">Datos de activación</param>
-        /// <returns>Resultado de la activación</returns>
         [HttpPost("activate")]
         [ProducesResponseType(typeof(ActivationResultDto), 200)]
         [ProducesResponseType(400)]
@@ -40,20 +35,22 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 if (string.IsNullOrEmpty(request.CodigoActivacion))
                 {
-                    return BadRequest(new { message = "Código de activación requerido" });
+                    return BadRequest(new { message = "Codigo de activacion requerido" });
                 }
 
                 if (request.OrganizacionId <= 0)
                 {
-                    return BadRequest(new { message = "ID de organización válido requerido" });
+                    return BadRequest(new { message = "ID de organizacion valido requerido" });
                 }
 
-                _logger.LogInformation("Attempting license activation with code: {Code}", 
-                    request.CodigoActivacion?.Substring(0, Math.Min(5, request.CodigoActivacion.Length)) + "***");
+                var maskedCode = request.CodigoActivacion.Length > 5 
+                    ? request.CodigoActivacion.Substring(0, 5) + "***"
+                    : "***";
+                
+                _logger.LogInformation("Attempting license activation with code: {Code}", maskedCode);
 
                 var result = await _activationService.ActivateAsync(request.CodigoActivacion, request.OrganizacionId);
 
-                // Log de auditoría
                 var userId = User.FindFirst("sub")?.Value ?? "system";
                 await _auditService.LogLicenseActivationAsync(request.CodigoActivacion, result.Success, userId);
 
@@ -73,10 +70,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener estado actual de la licencia
-        /// </summary>
-        /// <returns>Estado detallado de la licencia</returns>
         [HttpGet("status")]
         [ProducesResponseType(typeof(LicenseStatusDto), 200)]
         [ProducesResponseType(500)]
@@ -98,10 +91,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Validar si la licencia actual está activa
-        /// </summary>
-        /// <returns>Estado de validez de la licencia</returns>
         [HttpGet("validate")]
         [ProducesResponseType(200)]
         [ProducesResponseType(500)]
@@ -114,7 +103,7 @@ namespace Gesco.Desktop.UI.Controllers
                 return Ok(new 
                 { 
                     isValid = isValid,
-                    message = isValid ? "Licencia válida" : "Licencia inválida o expirada",
+                    message = isValid ? "Licencia valida" : "Licencia invalida o expirada",
                     timestamp = DateTime.UtcNow
                 });
             }
@@ -125,10 +114,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener información detallada de la licencia (requiere autenticación)
-        /// </summary>
-        /// <returns>Información completa de la licencia</returns>
         [HttpGet("info")]
         [Authorize]
         [ProducesResponseType(typeof(LicenseInfoDto), 200)]
@@ -157,15 +142,10 @@ namespace Gesco.Desktop.UI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting license info");
-                return StatusCode(500, new { message = "Error al obtener información de licencia" });
+                return StatusCode(500, new { message = "Error al obtener informacion de licencia" });
             }
         }
 
-        /// <summary>
-        /// Renovar licencia (funcionalidad futura)
-        /// </summary>
-        /// <param name="request">Datos de renovación</param>
-        /// <returns>Resultado de la renovación</returns>
         [HttpPost("renew")]
         [Authorize]
         [ProducesResponseType(200)]
@@ -173,40 +153,39 @@ namespace Gesco.Desktop.UI.Controllers
         [ProducesResponseType(501)]
         public async Task<IActionResult> RenewLicense([FromBody] RenewLicenseRequest request)
         {
-            // TODO: Implementar renovación de licencia
             await Task.CompletedTask;
-            return StatusCode(501, new { message = "Funcionalidad de renovación no implementada" });
+            return StatusCode(501, new { message = "Funcionalidad de renovacion no implementada" });
         }
 
-        private string DetermineLicenseType(LicenseStatusDto status)
+        private static string DetermineLicenseType(LicenseStatusDto status)
         {
             if (!status.IsActive) return "Inactiva";
-            if (status.DiasRestantes < 30) return "Próximo a vencer";
-            if (status.MaxUsuarios <= 5) return "Básica";
-            if (status.MaxUsuarios <= 20) return "Estándar";
+            if (status.DiasRestantes < 30) return "Proximo a vencer";
+            if (status.MaxUsuarios <= 5) return "Basica";
+            if (status.MaxUsuarios <= 20) return "Estandar";
             return "Premium";
         }
 
-        private List<string> GetLicenseFeatures(LicenseStatusDto status)
+        private static List<string> GetLicenseFeatures(LicenseStatusDto status)
         {
             var features = new List<string>();
 
             if (status.IsActive)
             {
-                features.Add("Gestión de Actividades");
+                features.Add("Gestion de Actividades");
                 features.Add("Sistema de Ventas");
-                features.Add("Reportes Básicos");
+                features.Add("Reportes Basicos");
 
                 if (status.MaxUsuarios > 5)
                 {
-                    features.Add("Múltiples Usuarios");
+                    features.Add("Multiples Usuarios");
                     features.Add("Roles y Permisos");
                 }
 
                 if (status.MaxUsuarios > 20)
                 {
                     features.Add("Reportes Avanzados");
-                    features.Add("Sincronización en Línea");
+                    features.Add("Sincronizacion en Linea");
                     features.Add("Soporte Prioritario");
                 }
             }
@@ -215,7 +194,6 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // DTOs adicionales
     public class LicenseInfoDto : LicenseStatusDto
     {
         public string TipoLicencia { get; set; } = string.Empty;

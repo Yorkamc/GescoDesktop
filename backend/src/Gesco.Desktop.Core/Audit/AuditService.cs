@@ -21,21 +21,21 @@ namespace Gesco.Desktop.Core.Audit
         public int Id { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         public AuditEventType EventType { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string IpAddress { get; set; }
-        public string Action { get; set; }
-        public string Resource { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string Resource { get; set; } = string.Empty;
         public bool Success { get; set; }
-        public string ErrorMessage { get; set; }
-        public string AdditionalData { get; set; }
-        public string UserAgent { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
+        public string AdditionalData { get; set; } = string.Empty;
+        public string UserAgent { get; set; } = string.Empty;
     }
 
     public interface IAuditService
     {
         Task LogEventAsync(AuditEvent auditEvent);
-        Task LogLoginAttemptAsync(string username, bool success, string ipAddress, string errorMessage = null);
+        Task LogLoginAttemptAsync(string username, bool success, string ipAddress, string? errorMessage = null);
         Task LogLicenseActivationAsync(string activationCode, bool success, string userId);
         Task LogDataAccessAsync(string resource, string userId, string action);
         Task LogSecurityViolationAsync(string violation, string userId, string details);
@@ -51,9 +51,8 @@ namespace Gesco.Desktop.Core.Audit
             _logger = logger;
             _auditFilePath = Path.Combine(Directory.GetCurrentDirectory(), "logs", "audit", $"audit-{DateTime.Now:yyyy-MM}.log");
             
-            // Crear directorio si no existe
             var directory = Path.GetDirectoryName(_auditFilePath);
-            if (!Directory.Exists(directory))
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
@@ -66,7 +65,6 @@ namespace Gesco.Desktop.Core.Audit
                 var auditJson = JsonConvert.SerializeObject(auditEvent);
                 _logger.LogInformation("AUDIT: {AuditEvent}", auditJson);
                 
-                // Escribir también a archivo dedicado de auditoría
                 await File.AppendAllTextAsync(_auditFilePath, $"{auditJson}{Environment.NewLine}");
             }
             catch (Exception ex)
@@ -75,7 +73,7 @@ namespace Gesco.Desktop.Core.Audit
             }
         }
 
-        public async Task LogLoginAttemptAsync(string username, bool success, string ipAddress, string errorMessage = null)
+        public async Task LogLoginAttemptAsync(string username, bool success, string ipAddress, string? errorMessage = null)
         {
             await LogEventAsync(new AuditEvent
             {
@@ -84,19 +82,23 @@ namespace Gesco.Desktop.Core.Audit
                 IpAddress = ipAddress,
                 Action = "Login Attempt",
                 Success = success,
-                ErrorMessage = errorMessage,
+                ErrorMessage = errorMessage ?? string.Empty,
                 AdditionalData = JsonConvert.SerializeObject(new { LoginMethod = "Local" })
             });
         }
 
         public async Task LogLicenseActivationAsync(string activationCode, bool success, string userId)
         {
+            var maskedCode = string.IsNullOrEmpty(activationCode) 
+                ? "***" 
+                : activationCode.Substring(0, Math.Min(5, activationCode.Length)) + "***";
+
             await LogEventAsync(new AuditEvent
             {
                 EventType = AuditEventType.LicenseActivation,
                 UserId = userId,
                 Action = "License Activation",
-                Resource = activationCode?.Substring(0, Math.Min(5, activationCode.Length)) + "***",
+                Resource = maskedCode,
                 Success = success
             });
         }

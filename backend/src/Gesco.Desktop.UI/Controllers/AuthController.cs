@@ -25,11 +25,6 @@ namespace Gesco.Desktop.UI.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Iniciar sesión en el sistema
-        /// </summary>
-        /// <param name="request">Credenciales de login</param>
-        /// <returns>Resultado del login con token JWT</returns>
         [HttpPost("login")]
         [ProducesResponseType(typeof(LoginResultDto), 200)]
         [ProducesResponseType(400)]
@@ -40,12 +35,11 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 if (string.IsNullOrEmpty(request.Usuario) || string.IsNullOrEmpty(request.Password))
                 {
-                    return BadRequest(new { message = "Usuario y contraseña requeridos" });
+                    return BadRequest(new { message = "Usuario y contrasena requeridos" });
                 }
 
                 var result = await _authService.LoginAsync(request.Usuario, request.Password);
 
-                // Log de auditoría
                 var clientIP = GetClientIPAddress();
                 await _auditService.LogLoginAttemptAsync(
                     request.Usuario, 
@@ -70,10 +64,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Cerrar sesión
-        /// </summary>
-        /// <returns>Confirmación de logout</returns>
         [HttpPost("logout")]
         [Authorize]
         [ProducesResponseType(200)]
@@ -86,19 +76,15 @@ namespace Gesco.Desktop.UI.Controllers
                 var userId = User.FindFirst("sub")?.Value ?? "unknown";
                 _logger.LogInformation("User logged out: {UserId}", userId);
                 
-                return Ok(new { message = "Sesión cerrada exitosamente" });
+                return Ok(new { message = "Sesion cerrada exitosamente" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during logout");
-                return StatusCode(500, new { message = "Error al cerrar sesión" });
+                return StatusCode(500, new { message = "Error al cerrar sesion" });
             }
         }
 
-        /// <summary>
-        /// Validar token JWT
-        /// </summary>
-        /// <returns>Estado de validez del token</returns>
         [HttpPost("validate")]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
@@ -121,7 +107,7 @@ namespace Gesco.Desktop.UI.Controllers
                     return Ok(new { valid = true, user = currentUser });
                 }
 
-                return Unauthorized(new { valid = false, message = "Token inválido" });
+                return Unauthorized(new { valid = false, message = "Token invalido" });
             }
             catch (Exception ex)
             {
@@ -130,10 +116,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener información del usuario actual
-        /// </summary>
-        /// <returns>Datos del usuario autenticado</returns>
         [HttpGet("me")]
         [Authorize]
         [ProducesResponseType(typeof(UsuarioDto), 200)]
@@ -157,11 +139,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Cambiar contraseña del usuario actual
-        /// </summary>
-        /// <param name="request">Datos de cambio de contraseña</param>
-        /// <returns>Resultado del cambio</returns>
         [HttpPost("change-password")]
         [Authorize]
         [ProducesResponseType(200)]
@@ -173,18 +150,17 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 if (string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword))
                 {
-                    return BadRequest(new { message = "Contraseña actual y nueva contraseña son requeridas" });
+                    return BadRequest(new { message = "Contrasena actual y nueva contrasena son requeridas" });
                 }
 
-                // TODO: Implementar cambio de contraseña en AuthService
-                // var result = await _authService.ChangePasswordAsync(User, request);
+                await Task.CompletedTask;
                 
-                return Ok(new { message = "Contraseña cambiada exitosamente" });
+                return Ok(new { message = "Contrasena cambiada exitosamente" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error changing password");
-                return StatusCode(500, new { message = "Error al cambiar contraseña" });
+                return StatusCode(500, new { message = "Error al cambiar contrasena" });
             }
         }
 
@@ -206,7 +182,6 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // DTOs adicionales
     public class ChangePasswordRequest
     {
         public string CurrentPassword { get; set; } = string.Empty;

@@ -33,7 +33,6 @@ namespace Gesco.Desktop.Core.Services
             {
                 _logger.LogInformation("Login attempt for user: {Usuario}", usuario);
 
-                // Buscar usuario de forma optimizada
                 var user = await _context.Users
                     .Include(u => u.Organization)
                     .Include(u => u.Role)
@@ -60,7 +59,6 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
-                // Verificación de contraseña optimizada
                 bool passwordValid = false;
                 try
                 {
@@ -70,7 +68,7 @@ namespace Gesco.Desktop.Core.Services
                         return new LoginResultDto
                         {
                             Success = false,
-                            Message = "Error de configuración de usuario"
+                            Message = "Error de configuracion de usuario"
                         };
                     }
 
@@ -92,14 +90,12 @@ namespace Gesco.Desktop.Core.Services
                     return new LoginResultDto
                     {
                         Success = false,
-                        Message = "Contraseña incorreta"
+                        Message = "Contrasena incorrecta"
                     };
                 }
 
-                // Generar JWT Token
                 var token = GenerateJwtToken(user);
 
-                // Actualizar ultimo login (sin tracking para optimizar)
                 await UpdateLastLoginAsync(user.Id);
 
                 _logger.LogInformation("Successful login for user: {Usuario}", usuario);
@@ -134,12 +130,12 @@ namespace Gesco.Desktop.Core.Services
             }
         }
 
-        public async Task LogoutAsync()
+        public Task LogoutAsync()
         {
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        public async Task<bool> ValidateTokenAsync(string token)
+        public Task<bool> ValidateTokenAsync(string token)
         {
             try
             {
@@ -153,18 +149,17 @@ namespace Gesco.Desktop.Core.Services
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 
-                return true;
+                return Task.FromResult(true);
             }
             catch
             {
-                return false;
+                return Task.FromResult(false);
             }
         }
 
-        public async Task<UsuarioDto?> GetCurrentUserAsync()
+        public Task<UsuarioDto?> GetCurrentUserAsync()
         {
-            await Task.CompletedTask;
-            return null;
+            return Task.FromResult<UsuarioDto?>(null);
         }
 
         private string GenerateJwtToken(Gesco.Desktop.Data.Entities.User user)

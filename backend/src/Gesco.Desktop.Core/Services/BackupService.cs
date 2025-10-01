@@ -27,14 +27,13 @@ namespace Gesco.Desktop.Core.Services
             _dbPath = Path.Combine(Directory.GetCurrentDirectory(), "data");
             _backupFolder = Path.Combine(Directory.GetCurrentDirectory(), "backups");
             
-            // Crear carpeta de backups si no existe
             if (!Directory.Exists(_backupFolder))
             {
                 Directory.CreateDirectory(_backupFolder);
             }
         }
 
-        public async Task CreateBackupAsync()
+        public Task CreateBackupAsync()
         {
             try
             {
@@ -42,7 +41,6 @@ namespace Gesco.Desktop.Core.Services
                 var backupName = $"gesco_backup_{timestamp}.zip";
                 var backupPath = Path.Combine(_backupFolder, backupName);
 
-                // Backup simple copiando archivos de base de datos
                 if (Directory.Exists(_dbPath))
                 {
                     var dbFiles = Directory.GetFiles(_dbPath, "*.db");
@@ -63,17 +61,17 @@ namespace Gesco.Desktop.Core.Services
                 _logger.LogError(ex, "Error creating backup");
             }
 
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        public async Task<bool> RestoreBackupAsync(string backupPath)
+        public Task<bool> RestoreBackupAsync(string backupPath)
         {
             try
             {
                 if (!File.Exists(backupPath))
                 {
                     _logger.LogError("Backup file not found: {BackupPath}", backupPath);
-                    return false;
+                    return Task.FromResult(false);
                 }
 
                 var fileName = Path.GetFileName(backupPath);
@@ -82,19 +80,19 @@ namespace Gesco.Desktop.Core.Services
                     var targetPath = Path.Combine(_dbPath, "gesco_local.db");
                     File.Copy(backupPath, targetPath, true);
                     _logger.LogInformation("Backup restored successfully from: {BackupPath}", backupPath);
-                    return true;
+                    return Task.FromResult(true);
                 }
 
-                return false;
+                return Task.FromResult(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error restoring backup from: {BackupPath}", backupPath);
-                return false;
+                return Task.FromResult(false);
             }
         }
 
-        public async Task CleanOldBackupsAsync(int daysToKeep = 30)
+        public Task CleanOldBackupsAsync(int daysToKeep = 30)
         {
             try
             {
@@ -116,16 +114,15 @@ namespace Gesco.Desktop.Core.Services
                 _logger.LogError(ex, "Error cleaning old backups");
             }
 
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
     }
 
-    // Servicio separado para tareas en background
     public class BackupHostedService : BackgroundService
     {
         private readonly ILogger<BackupHostedService> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly TimeSpan _backupInterval = TimeSpan.FromHours(6); // Cada 6 horas
+        private readonly TimeSpan _backupInterval = TimeSpan.FromHours(6);
 
         public BackupHostedService(ILogger<BackupHostedService> logger, IServiceProvider serviceProvider)
         {

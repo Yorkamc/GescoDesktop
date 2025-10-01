@@ -24,18 +24,16 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                // Convert organizacionId to Guid for new entity structure
                 var orgGuid = await GetOrganizationGuidById(organizacionId);
                 if (orgGuid == null)
                 {
                     return new ActivationResultDto
                     {
                         Success = false,
-                        Message = "Organización no encontrada"
+                        Message = "Organizacion no encontrada"
                     };
                 }
 
-                // Check if activation key already exists and is used
                 var existingActivation = await _context.ActivationKeys
                     .FirstOrDefaultAsync(ak => ak.ActivationCode == codigoActivacion);
 
@@ -44,28 +42,25 @@ namespace Gesco.Desktop.Core.Services
                     return new ActivationResultDto
                     {
                         Success = false,
-                        Message = "Este código de activación ya está en uso"
+                        Message = "Este codigo de activacion ya esta en uso"
                     };
                 }
 
-                // Try remote activation with Laravel server (if available)
                 try
                 {
                     var remoteResult = await _laravelApiClient.ActivateAsync(codigoActivacion, organizacionId);
                     if (remoteResult.Success)
                     {
-                        // Save local activation
                         await SaveActivationAsync(codigoActivacion, orgGuid.Value, remoteResult.FechaExpiracion ?? DateTime.UtcNow.AddYears(1));
                         return remoteResult;
                     }
                 }
                 catch
                 {
-                    // If remote connection fails, continue with offline activation
+                    // Continue with offline activation
                 }
 
-                // Offline activation (for development)
-                var expirationDate = DateTime.UtcNow.AddMonths(3); // 3 months trial
+                var expirationDate = DateTime.UtcNow.AddMonths(3);
                 await SaveActivationAsync(codigoActivacion, orgGuid.Value, expirationDate);
 
                 return new ActivationResultDto
@@ -123,7 +118,7 @@ namespace Gesco.Desktop.Core.Services
                     FechaActivacion = activation.UsedDate,
                     FechaExpiracion = activation.ExpirationDate,
                     DiasRestantes = diasRestantes,
-                    MaxUsuarios = 10, // Default value
+                    MaxUsuarios = 10,
                     OrganizacionId = await GetOrganizationIdByGuid(activation.UsedByOrganizationId)
                 };
             }
@@ -152,13 +147,11 @@ namespace Gesco.Desktop.Core.Services
 
         private async Task SaveActivationAsync(string codigoActivacion, Guid organizacionId, DateTime fechaExpiracion)
         {
-            // Check if activation key already exists
             var existingActivation = await _context.ActivationKeys
                 .FirstOrDefaultAsync(ak => ak.ActivationCode == codigoActivacion);
 
             if (existingActivation != null)
             {
-                // Update existing activation
                 existingActivation.UsedDate = DateTime.UtcNow;
                 existingActivation.ExpirationDate = fechaExpiracion;
                 existingActivation.IsUsed = true;
@@ -170,16 +163,13 @@ namespace Gesco.Desktop.Core.Services
             }
             else
             {
-                // CORREGIDO: Obtener subscription como int
                 var defaultSubscription = await _context.Subscriptions.FirstOrDefaultAsync();
-                var subscriptionId = defaultSubscription?.Id ?? 1; // CORREGIDO: Usar int por defecto
+                var subscriptionId = defaultSubscription?.Id ?? 1;
 
-                // Create new activation - ActivationKey ahora tiene int ID
                 var activation = new Gesco.Desktop.Data.Entities.ActivationKey
                 {
-                    // Id se genera automáticamente como int
                     ActivationCode = codigoActivacion,
-                    SubscriptionId = subscriptionId, // CORREGIDO: int -> int
+                    SubscriptionId = subscriptionId,
                     GeneratedDate = DateTime.UtcNow,
                     ExpirationDate = fechaExpiracion,
                     UsedDate = DateTime.UtcNow,
@@ -189,7 +179,7 @@ namespace Gesco.Desktop.Core.Services
                     IsRevoked = false,
                     MaxUses = 1,
                     CurrentUses = 1,
-                    UsedByOrganizationId = organizacionId, // Guid para Organization
+                    UsedByOrganizationId = organizacionId,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -201,19 +191,16 @@ namespace Gesco.Desktop.Core.Services
 
         private async Task<Guid?> GetOrganizationGuidById(int organizacionId)
         {
-            // For now, just get the first organization
-            // In a real scenario, you'd need proper mapping between old int IDs and new GUIDs
             var org = await _context.Organizations.FirstOrDefaultAsync();
             return org?.Id;
         }
 
-        private async Task<int?> GetOrganizationIdByGuid(Guid? organizationGuid)
+        private Task<int?> GetOrganizationIdByGuid(Guid? organizationGuid)
         {
-            if (!organizationGuid.HasValue) return null;
+            if (!organizationGuid.HasValue) 
+                return Task.FromResult<int?>(null);
             
-            // For now, return 1 as default
-            // In a real scenario, you'd need proper mapping
-            return 1;
+            return Task.FromResult<int?>(1);
         }
     }
 }

@@ -10,42 +10,30 @@ using Gesco.Desktop.Data.Context;
 using Gesco.Desktop.Sync.LaravelApi;
 using System.Text;
 using System.Text.Json;
-using System.Reflection;
+using System.Text.Json.Serialization;
 using DotNetEnv;
 using Gesco.Desktop.Core.Security;
 
-// =====================================================
-// STARTUP OPTIMIZATION
-// =====================================================
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Fast environment loading
 try { Env.Load(); } catch { }
 
-// Configure minimal logging for startup
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Logging.SetMinimumLevel(LogLevel.Warning);
-
-// =====================================================
-// CORE SERVICES SETUP
-// =====================================================
+builder.Logging.SetMinimumLevel(
+    builder.Environment.IsDevelopment() ? LogLevel.Information : LogLevel.Warning
+);
 
 builder.WebHost.UseUrls("http://localhost:5100");
 
-// Optimized JSON configuration
-builder.Services.AddControllers(options =>
-{
-    options.SuppressAsyncSuffixInActionNames = false;
-})
-.AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-});
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
-// Minimal API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -82,26 +70,22 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// =====================================================
-// DATABASE CONFIGURATION
-// =====================================================
-
-// SQLite with optimized settings
 builder.Services.AddDbContext<LocalDbContext>(options =>
 {
     var connectionString = SecureSettings.GetSecureConnectionString();
     options.UseSqlite(connectionString, sqliteOptions =>
     {
         sqliteOptions.CommandTimeout(30);
+        sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
     });
     
     if (builder.Environment.IsDevelopment())
     {
         options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
     }
 }, ServiceLifetime.Scoped);
 
-// PostgreSQL for sync (optional)
 var postgresConnectionString = GetConnectionString("POSTGRESQL_CONNECTION_STRING", builder.Configuration);
 if (!string.IsNullOrEmpty(postgresConnectionString))
 {
@@ -119,31 +103,23 @@ else
     builder.Services.AddScoped<SyncDbContext>(_ => null!);
 }
 
-// =====================================================
-// BUSINESS SERVICES
-// =====================================================
+builder.Services.AddMemoryCache();
+builder.Services.AddResponseCaching();
 
-// Core services
 builder.Services.AddSingleton<DatabaseEncryption>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 
-// Application services
+builder.Services.AddScoped<ICachedLookupService, CachedLookupService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IActivationService, ActivationService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
-// Migration service
 builder.Services.AddSingleton<IMigrationService>(provider =>
     new MigrationService(provider, provider.GetRequiredService<ILogger<MigrationService>>()));
 
-// Database initialization
 builder.Services.AddHostedService<DatabaseInitializationService>();
-
-// =====================================================
-// EXTERNAL APIS
-// =====================================================
 
 var laravelApiUrl = GetConnectionString("LARAVEL_API_URL", builder.Configuration);
 if (!string.IsNullOrEmpty(laravelApiUrl))
@@ -158,10 +134,6 @@ else
 {
     builder.Services.AddScoped<ILaravelApiClient, NullLaravelApiClient>();
 }
-
-// =====================================================
-// AUTHENTICATION
-// =====================================================
 
 var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? 
              "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
@@ -182,10 +154,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// =====================================================
-// CORS
-// =====================================================
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -201,18 +169,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// =====================================================
-// BUILD APPLICATION
-// =====================================================
-
 var app = builder.Build();
 
-// Quick encryption test
 await InitializeEncryption(app);
-
-// =====================================================
-// MIDDLEWARE PIPELINE
-// =====================================================
 
 if (app.Environment.IsDevelopment())
 {
@@ -224,7 +183,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseCors("AllowFrontend");
+app.UseResponseCaching();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (!app.Environment.IsDevelopment())
@@ -236,10 +197,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// =====================================================
-// API ENDPOINTS
-// =====================================================
-
 app.MapGet("/", () => Results.Redirect("/swagger"))
    .ExcludeFromDescription();
 
@@ -250,17 +207,9 @@ app.MapGet("/ping", () => Results.Ok(new {
 }))
 .WithTags("System");
 
-// =====================================================
-// STARTUP MESSAGE
-// =====================================================
-
 PrintStartupInfo(app.Environment, postgresConnectionString, laravelApiUrl);
 
 app.Run();
-
-// =====================================================
-// HELPER METHODS
-// =====================================================
 
 static string GetConnectionString(string envKey, IConfiguration configuration)
 {
@@ -277,9 +226,8 @@ static async Task InitializeEncryption(WebApplication app)
         var context = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
         var encryption = scope.ServiceProvider.GetRequiredService<DatabaseEncryption>();
         
-        SecureSettings.ApplySecuritySettings(context);
+        await Task.Run(() => SecureSettings.ApplySecuritySettings(context));
         
-        // Quick encryption test
         var testText = "TEST" + DateTime.Now.Ticks;
         var encrypted = encryption.EncryptString(testText);
         var decrypted = encryption.DecryptString(encrypted);
@@ -288,6 +236,8 @@ static async Task InitializeEncryption(WebApplication app)
         {
             throw new InvalidOperationException("Encryption test failed");
         }
+        
+        await Task.CompletedTask;
     }
     catch (Exception ex)
     {
@@ -308,6 +258,8 @@ static void PrintStartupInfo(IWebHostEnvironment environment, string postgresCon
     Console.WriteLine($"SQLite: ACTIVE");
     Console.WriteLine($"PostgreSQL: {(!string.IsNullOrEmpty(postgresConn) ? "ACTIVE" : "DISABLED")}");
     Console.WriteLine($"Laravel API: {(!string.IsNullOrEmpty(laravelUrl) ? "ACTIVE" : "DISABLED")}");
+    Console.WriteLine($"Memory Cache: ACTIVE");
+    Console.WriteLine($"Response Cache: ACTIVE");
     Console.WriteLine("========================================");
     Console.WriteLine("DEFAULT CREDENTIALS:");
     Console.WriteLine("Username: admin");
@@ -320,10 +272,6 @@ static void PrintStartupInfo(IWebHostEnvironment environment, string postgresCon
         Console.WriteLine("========================================");
     }
 }
-
-// =====================================================
-// NULL SERVICES
-// =====================================================
 
 public class NullLaravelApiClient : ILaravelApiClient
 {
