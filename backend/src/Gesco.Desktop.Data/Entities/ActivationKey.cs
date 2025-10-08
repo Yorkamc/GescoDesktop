@@ -13,7 +13,7 @@ namespace Gesco.Desktop.Data.Entities
     {
         [Column("activation_code")]
         [Required]
-        [MaxLength(80)]
+        [MaxLength(255)]
         public string ActivationCode { get; set; } = string.Empty;
 
         [Column("subscription_id")]

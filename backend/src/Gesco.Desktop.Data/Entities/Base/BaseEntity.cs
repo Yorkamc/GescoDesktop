@@ -33,7 +33,7 @@ namespace Gesco.Desktop.Data.Entities.Base
         [Key]
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         public override object GetId() => Id;
     }
@@ -45,7 +45,7 @@ namespace Gesco.Desktop.Data.Entities.Base
     {
         [Key]
         [Column("id")]
-        [MaxLength(50)] // Suficiente para cédulas, UUIDs como string, etc.
+        [MaxLength(12)] // Suficiente para cédulas, UUIDs como string, etc.
         public virtual string Id { get; set; } = string.Empty;
 
         public override object GetId() => Id;
@@ -186,7 +186,7 @@ namespace Gesco.Desktop.Data.Entities.Base
         public DateTime? LastSync { get; set; }
 
         [Column("integrity_hash")]
-        [MaxLength(64)]
+        [MaxLength(255)]
         public string? IntegrityHash { get; set; }
 
         [Column("sync_status")]

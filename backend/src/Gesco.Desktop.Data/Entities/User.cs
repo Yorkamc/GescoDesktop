@@ -15,12 +15,12 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("username")]
         [Required]
-        [MaxLength(100)]
+        [MaxLength(255)]
         public string Username { get; set; } = string.Empty;
 
         [Column("email")]
         [Required]
-        [MaxLength(200)]
+        [MaxLength(255)]
         public string Email { get; set; } = string.Empty;
 
         [Column("email_verified_at")]
@@ -48,7 +48,7 @@ namespace Gesco.Desktop.Data.Entities
         public Guid OrganizationId { get; set; } // MANTIENE Guid para Organization
 
         [Column("role_id")]
-        public int RoleId { get; set; } // MANTIENE int para Role
+        public long RoleId { get; set; } // MANTIENE int para Role
 
         [Column("first_login_at")]
         public DateTime? FirstLoginAt { get; set; }

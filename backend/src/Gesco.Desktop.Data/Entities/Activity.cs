@@ -14,7 +14,7 @@ namespace Gesco.Desktop.Data.Entities
     {
         [Column("name")]
         [Required]
-        [MaxLength(50)]
+        [MaxLength(255)]
         public string Name { get; set; } = string.Empty;
 
         [Column("description")]
@@ -33,7 +33,7 @@ namespace Gesco.Desktop.Data.Entities
     {
         [Column("name")]
         [Required]
-        [MaxLength(200)]
+        [MaxLength(255)]
         public string Name { get; set; } = string.Empty;
 
         [Column("description")]
@@ -52,11 +52,11 @@ namespace Gesco.Desktop.Data.Entities
         public TimeOnly? EndTime { get; set; }
 
         [Column("location")]
-        [MaxLength(200)]
+        [MaxLength(255)]
         public string? Location { get; set; }
 
         [Column("activity_status_id")]
-        public int ActivityStatusId { get; set; } // CAMBIA a int
+        public long ActivityStatusId { get; set; } // CAMBIA a int
 
         [Column("manager_user_id")]
         [MaxLength(50)]
@@ -86,10 +86,10 @@ namespace Gesco.Desktop.Data.Entities
     public class ActivityCategory : SyncableEntityInt
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; } // CAMBIA a int
+        public long ActivityId { get; set; } // CAMBIA a int
 
         [Column("service_category_id")]
-        public int ServiceCategoryId { get; set; } // CAMBIA a int
+        public long ServiceCategoryId { get; set; } // CAMBIA a int
 
         // Navegación
         [ForeignKey("ActivityId")]
@@ -106,7 +106,7 @@ namespace Gesco.Desktop.Data.Entities
     public class ActivityClosure : SyncableEntityInt
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; } // CAMBIA a int
+        public long ActivityId { get; set; } // CAMBIA a int
 
         [Column("closure_date")]
         public DateTime ClosureDate { get; set; }
