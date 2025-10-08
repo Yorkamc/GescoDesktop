@@ -9,7 +9,7 @@ using Gesco.Desktop.Data.Entities.Base;
 namespace Gesco.Desktop.Data.Entities
 {
    [Table("activation_keys")]
-    public class ActivationKey : AuditableEntityInt
+    public class ActivationKey : AuditableEntityLong
     {
         [Column("activation_code")]
         [Required]
@@ -17,7 +17,7 @@ namespace Gesco.Desktop.Data.Entities
         public string ActivationCode { get; set; } = string.Empty;
 
         [Column("subscription_id")]
-        public int SubscriptionId { get; set; }
+        public long SubscriptionId { get; set; }
 
         [Column("is_generated")]
         public bool IsGenerated { get; set; } = true;

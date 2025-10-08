@@ -10,7 +10,7 @@ namespace Gesco.Desktop.Data.Entities
 {
  
     [Table("notification_types")]
-    public class NotificationType : AuditableEntityInt
+    public class NotificationType : AuditableEntityLong
     {
         [Column("code")]
         [Required]

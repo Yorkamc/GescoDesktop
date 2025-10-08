@@ -9,7 +9,7 @@ using Gesco.Desktop.Data.Entities.Base;
 namespace Gesco.Desktop.Data.Entities
 {
 [Table("sync_queue")]
-    public class SyncQueueItem : BaseEntityInt
+    public class SyncQueueItem : BaseEntityLong
     {
         [Column("organization_id")]
         public Guid OrganizationId { get; set; }

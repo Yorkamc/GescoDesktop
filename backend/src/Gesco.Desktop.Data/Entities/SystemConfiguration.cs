@@ -6,7 +6,7 @@ namespace Gesco.Desktop.Data.Entities
 {
     // CONFIGURACIÓN DEL SISTEMA - CAMBIA A int
     [Table("system_configuration")] // CORREGIDO: Singular para coincidir con migraciones Laravel
-    public class SystemConfiguration : AuditableEntityInt
+    public class SystemConfiguration : AuditableEntityLong
     {
         [Column("key")]
         [Required]

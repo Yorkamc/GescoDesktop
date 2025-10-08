@@ -332,7 +332,7 @@ namespace Gesco.Desktop.UI.Controllers
     // CORREGIDO: DTO local para SystemConfiguration con int ID
     public class SystemConfigurationLocalDto
     {
-        public int Id { get; set; } // CORREGIDO: int en lugar de Guid
+        public long Id { get; set; } // CORREGIDO: int en lugar de Guid
         public string Key { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
         public string DataType { get; set; } = string.Empty;

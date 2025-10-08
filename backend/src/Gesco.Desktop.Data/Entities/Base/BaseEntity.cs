@@ -25,10 +25,12 @@ namespace Gesco.Desktop.Data.Entities.Base
         public override object GetId() => Id;
     }
 
+
     /// <summary>
-    /// Para entidades con ID int (mayoría de entidades de negocio)
+    /// ✅ NUEVO: Para entidades con ID long (mayoría de entidades de negocio)
+    /// Compatible con PostgreSQL bigint y SQLite INTEGER
     /// </summary>
-    public abstract class BaseEntityInt : BaseEntity
+    public abstract class BaseEntityLong : BaseEntity
     {
         [Key]
         [Column("id")]
@@ -37,7 +39,6 @@ namespace Gesco.Desktop.Data.Entities.Base
 
         public override object GetId() => Id;
     }
-
     /// <summary>
     /// Para entidades con ID string (User con cédula, DesktopClient, etc.)
     /// </summary>
@@ -78,15 +79,18 @@ namespace Gesco.Desktop.Data.Entities.Base
     /// <summary>
     /// Auditable con int ID (mayoría de entidades)
     /// </summary>
-    public abstract class AuditableEntityInt : BaseEntityInt
+ /// <summary>
+    /// ✅ NUEVO: Auditable con long ID
+    /// </summary>
+    public abstract class AuditableEntityLong : BaseEntityLong
     {
         [Column("created_by")]
         [MaxLength(50)]
-        public string? CreatedBy { get; set; } // ✅ Cédula del creador
+        public string? CreatedBy { get; set; }
 
         [Column("updated_by")]
         [MaxLength(50)]
-        public string? UpdatedBy { get; set; } // ✅ Cédula del actualizador
+        public string? UpdatedBy { get; set; }
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -149,7 +153,10 @@ namespace Gesco.Desktop.Data.Entities.Base
     /// <summary>
     /// Syncable con int ID (Activities, Products, Sales, etc.)
     /// </summary>
-    public abstract class SyncableEntityInt : AuditableEntityInt
+      /// <summary>
+    /// ✅ NUEVO: Syncable con long ID
+    /// </summary>
+    public abstract class SyncableEntityLong : AuditableEntityLong
     {
         [Column("sync_version")]
         public long SyncVersion { get; set; } = 1;
@@ -163,11 +170,11 @@ namespace Gesco.Desktop.Data.Entities.Base
 
         [Column("sync_status")]
         [MaxLength(20)]
-        public string SyncStatus { get; set; } = "pending"; // pending, synced, conflict, error
+        public string SyncStatus { get; set; } = "pending";
 
         [Column("conflict_resolution")]
         [MaxLength(20)]
-        public string? ConflictResolution { get; set; } // server_wins, client_wins, manual
+        public string? ConflictResolution { get; set; }
 
         [Column("last_sync_error")]
         public string? LastSyncError { get; set; }

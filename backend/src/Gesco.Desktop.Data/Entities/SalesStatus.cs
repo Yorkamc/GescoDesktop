@@ -9,9 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gesco.Desktop.Data.Entities
 {
-    // ESTADOS DE VENTA - CAMBIA A int
-    [Table("sales_statuses")]
-    public class SalesStatus : AuditableEntityInt
+     [Table("sales_statuses")]
+    public class SalesStatus : AuditableEntityLong
     {
         [Column("name")]
         [Required]
@@ -24,13 +23,11 @@ namespace Gesco.Desktop.Data.Entities
         [Column("active")]
         public bool Active { get; set; } = true;
 
-        // Navegación
         public virtual ICollection<SalesTransaction> SalesTransactions { get; set; } = new List<SalesTransaction>();
     }
 
-    // MÉTODOS DE PAGO - CAMBIA A int
     [Table("payment_methods")]
-    public class PaymentMethod : AuditableEntityInt
+    public class PaymentMethod : AuditableEntityLong
     {
         [Column("name")]
         [Required]
@@ -43,16 +40,14 @@ namespace Gesco.Desktop.Data.Entities
         [Column("active")]
         public bool Active { get; set; } = true;
 
-        // Navegación
         public virtual ICollection<TransactionPayment> TransactionPayments { get; set; } = new List<TransactionPayment>();
     }
 
-    // CAJAS REGISTRADORAS - CAMBIA A int
     [Table("cash_registers")]
-    public class CashRegister : SyncableEntityInt
+    public class CashRegister : SyncableEntityLong
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; } // CAMBIA a int
+        public long ActivityId { get; set; }
 
         [Column("register_number")]
         public int RegisterNumber { get; set; }
@@ -76,17 +71,15 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("operator_user_id")]
         [MaxLength(50)]
-        public string? OperatorUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? OperatorUserId { get; set; }
 
         [Column("supervisor_user_id")]
         [MaxLength(50)]
-        public string? SupervisorUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? SupervisorUserId { get; set; }
 
-        // Navegación
         [ForeignKey("ActivityId")]
         public virtual Activity Activity { get; set; } = null!;
 
-        // ✅ CORREGIDO: Navegación a User usando string (cédula)
         [ForeignKey("OperatorUserId")]
         public virtual User? OperatorUser { get; set; }
 
@@ -97,12 +90,11 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<CashRegisterClosure> CashRegisterClosures { get; set; } = new List<CashRegisterClosure>();
     }
 
-    // TRANSACCIONES DE VENTA - CAMBIA A int
     [Table("sales_transactions")]
-    public class SalesTransaction : SyncableEntityInt
+    public class SalesTransaction : SyncableEntityLong
     {
         [Column("cash_register_id")]
-        public int CashRegisterId { get; set; } // CAMBIA a int
+        public long CashRegisterId { get; set; }
 
         [Column("transaction_number")]
         [Required]
@@ -114,7 +106,7 @@ namespace Gesco.Desktop.Data.Entities
         public string? InvoiceNumber { get; set; }
 
         [Column("sales_status_id")]
-        public int SalesStatusId { get; set; } // CAMBIA a int
+        public long SalesStatusId { get; set; }
 
         [Column("transaction_date")]
         public DateTime TransactionDate { get; set; }
@@ -123,7 +115,6 @@ namespace Gesco.Desktop.Data.Entities
         [Precision(10, 2)]
         public decimal TotalAmount { get; set; }
 
-        // Navegación
         [ForeignKey("CashRegisterId")]
         public virtual CashRegister CashRegister { get; set; } = null!;
 
@@ -135,18 +126,17 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
     }
 
-    // DETALLES DE TRANSACCIÓN - CAMBIA A int
     [Table("transaction_details")]
-    public class TransactionDetail : SyncableEntityInt
+    public class TransactionDetail : SyncableEntityLong
     {
         [Column("sales_transaction_id")]
-        public int SalesTransactionId { get; set; } // CAMBIA a int
+        public long SalesTransactionId { get; set; }
 
         [Column("product_id")]
-        public int? ProductId { get; set; } // CAMBIA a int
+        public long? ProductId { get; set; }
 
         [Column("combo_id")]
-        public int? ComboId { get; set; } // CAMBIA a int
+        public long? ComboId { get; set; }
 
         [Column("quantity")]
         public int Quantity { get; set; }
@@ -162,7 +152,6 @@ namespace Gesco.Desktop.Data.Entities
         [Column("is_combo")]
         public bool IsCombo { get; set; } = false;
 
-        // Navegación
         [ForeignKey("SalesTransactionId")]
         public virtual SalesTransaction SalesTransaction { get; set; } = null!;
 
@@ -173,15 +162,14 @@ namespace Gesco.Desktop.Data.Entities
         public virtual SalesCombo? Combo { get; set; }
     }
 
-    // PAGOS DE TRANSACCIÓN - CAMBIA A int
     [Table("transaction_payments")]
-    public class TransactionPayment : SyncableEntityInt
+    public class TransactionPayment : SyncableEntityLong
     {
         [Column("sales_transaction_id")]
-        public int SalesTransactionId { get; set; } // CAMBIA a int
+        public long SalesTransactionId { get; set; }
 
         [Column("payment_method_id")]
-        public int PaymentMethodId { get; set; } // CAMBIA a int
+        public long PaymentMethodId { get; set; }
 
         [Column("amount")]
         [Precision(10, 2)]
@@ -196,26 +184,23 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("processed_by")]
         [MaxLength(50)]
-        public string ProcessedBy { get; set; } = string.Empty; // ✅ CORREGIDO: string para cédula
+        public string ProcessedBy { get; set; } = string.Empty;
 
-        // Navegación
         [ForeignKey("SalesTransactionId")]
         public virtual SalesTransaction SalesTransaction { get; set; } = null!;
 
         [ForeignKey("PaymentMethodId")]
         public virtual PaymentMethod PaymentMethod { get; set; } = null!;
 
-        // ✅ CORREGIDO: Navegación a User usando string (cédula)
         [ForeignKey("ProcessedBy")]
         public virtual User ProcessedByUser { get; set; } = null!;
     }
 
-    // CIERRES DE CAJA - CAMBIA A int
     [Table("cash_register_closures")]
-    public class CashRegisterClosure : SyncableEntityInt
+    public class CashRegisterClosure : SyncableEntityLong
     {
         [Column("cash_register_id")]
-        public int CashRegisterId { get; set; } // CAMBIA a int
+        public long CashRegisterId { get; set; }
 
         [Column("opening_date")]
         public DateTime OpeningDate { get; set; }
@@ -255,20 +240,18 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("closed_by")]
         [MaxLength(50)]
-        public string? ClosedBy { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? ClosedBy { get; set; }
 
         [Column("supervised_by")]
         [MaxLength(50)]
-        public string? SupervisedBy { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? SupervisedBy { get; set; }
 
         [Column("observations")]
         public string? Observations { get; set; }
 
-        // Navegación
         [ForeignKey("CashRegisterId")]
         public virtual CashRegister CashRegister { get; set; } = null!;
 
-        // ✅ CORREGIDO: Navegación a User usando string (cédula)
         [ForeignKey("ClosedBy")]
         public virtual User? ClosedByUser { get; set; }
 
@@ -277,10 +260,10 @@ namespace Gesco.Desktop.Data.Entities
     }
 
     [Table("sales_combos")]
-    public class SalesCombo : SyncableEntityInt
+    public class SalesCombo : SyncableEntityLong
     {
         [Column("activity_id")]
-        public int ActivityId { get; set; } // CAMBIA a int
+        public long ActivityId { get; set; }
 
         [Column("name")]
         [Required]
@@ -297,7 +280,6 @@ namespace Gesco.Desktop.Data.Entities
         [Column("active")]
         public bool Active { get; set; } = true;
 
-        // Navegación
         [ForeignKey("ActivityId")]
         public virtual Activity Activity { get; set; } = null!;
 
@@ -305,26 +287,23 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
     }
 
-    // ITEMS DE COMBO - CAMBIA A int
     [Table("combo_items")]
-    public class ComboItem : SyncableEntityInt
+    public class ComboItem : SyncableEntityLong
     {
         [Column("combo_id")]
-        public int ComboId { get; set; } // CAMBIA a int
+        public long ComboId { get; set; }
 
         [Column("product_id")]
-        public int ProductId { get; set; } // CAMBIA a int
+        public long ProductId { get; set; }
 
         [Column("quantity")]
         public int Quantity { get; set; } = 1;
 
-        // Navegación
         [ForeignKey("ComboId")]
         public virtual SalesCombo Combo { get; set; } = null!;
 
         [ForeignKey("ProductId")]
         public virtual CategoryProduct Product { get; set; } = null!;
     }
-    
 
 }

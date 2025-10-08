@@ -9,13 +9,13 @@ using Gesco.Desktop.Data.Entities.Base;
 namespace Gesco.Desktop.Data.Entities
 {
 [Table("activation_history")]
-    public class ActivationHistory : BaseEntityInt
+    public class ActivationHistory : BaseEntityLong
     {
         [Column("organization_id")]
         public Guid OrganizationId { get; set; }
 
         [Column("activation_key_id")]
-        public int ActivationKeyId { get; set; }
+        public long ActivationKeyId { get; set; }
 
         [Column("activation_date")]
         public DateTime ActivationDate { get; set; }

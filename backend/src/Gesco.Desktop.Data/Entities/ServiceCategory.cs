@@ -9,7 +9,7 @@ using Gesco.Desktop.Data.Entities.Base;
 namespace Gesco.Desktop.Data.Entities
 {
 [Table("service_categories")]
-    public class ServiceCategory : SyncableEntityInt
+    public class ServiceCategory : SyncableEntityLong
     {
         [Column("organization_id")]
         public Guid OrganizationId { get; set; } // MANTIENE Guid

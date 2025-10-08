@@ -1126,7 +1126,7 @@ private static void SeedData(ModelBuilder modelBuilder)
         /// <summary>
         /// Marca cambios como confirmados
         /// </summary>
-        public async Task ConfirmSyncChangesAsync(IEnumerable<int> syncQueueIds)
+        public async Task ConfirmSyncChangesAsync(IEnumerable<long> syncQueueIds)
         {
             var items = await SyncQueue
                 .Where(sq => syncQueueIds.Contains(sq.Id))

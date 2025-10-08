@@ -9,7 +9,7 @@ using Gesco.Desktop.Data.Entities.Base;
 namespace Gesco.Desktop.Data.Entities
 {
    [Table("api_activity_logs")]
-    public class ApiActivityLog : BaseEntityInt
+    public class ApiActivityLog : BaseEntityLong
     {
         [Column("user_id")]
         [MaxLength(50)]

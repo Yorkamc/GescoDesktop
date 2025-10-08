@@ -38,7 +38,7 @@ namespace Gesco.Desktop.Core.Services
                     .OrderByDescending(a => a.CreatedAt)
                     .Select(a => new ActivityDto
                     {
-                        Id = MapIntToGuid(a.Id),
+                        Id = MapLongToGuid(a.Id),
                         Name = a.Name,
                         Description = a.Description,
                         StartDate = a.StartDate,
@@ -46,7 +46,7 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = a.ActivityStatusId,
+                        ActivityStatusId = (int)a.ActivityStatusId,
                         StatusName = a.ActivityStatus != null ? a.ActivityStatus.Name : null,
                         ManagerUserId = a.ManagerUserId,
                         ManagerUserName = a.ManagerUser != null 
@@ -72,14 +72,14 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var intId = MapGuidToInt(id);
+                var longId = MapGuidToLong(id);
                 
                 var activity = await _context.Activities
                     .AsNoTracking()
                     .Include(a => a.ActivityStatus)
                     .Include(a => a.Organization)
                     .Include(a => a.ManagerUser)
-                    .Where(a => a.Id == intId)
+                    .Where(a => a.Id == longId)
                     .Select(a => new ActivityDto
                     {
                         Id = id,
@@ -90,7 +90,7 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = a.ActivityStatusId,
+                        ActivityStatusId = (int)a.ActivityStatusId,
                         StatusName = a.ActivityStatus != null ? a.ActivityStatus.Name : null,
                         ManagerUserId = a.ManagerUserId,
                         ManagerUserName = a.ManagerUser != null 
@@ -148,7 +148,7 @@ namespace Gesco.Desktop.Core.Services
                     EndDate = request.EndDate,
                     EndTime = request.EndTime,
                     Location = request.Location,
-                    ActivityStatusId = defaultStatus?.Id ?? 1,
+                    ActivityStatusId = defaultStatus?.Id ?? 1L,
                     ManagerUserId = request.ManagerUserId,
                     OrganizationId = request.OrganizationId,
                     CreatedAt = DateTime.UtcNow,
@@ -161,7 +161,7 @@ namespace Gesco.Desktop.Core.Services
                 _logger.LogInformation("Created new activity: {ActivityName} with ID {ActivityId}, Manager: {ManagerId}", 
                     activity.Name, activity.Id, request.ManagerUserId);
 
-                var responseGuid = MapIntToGuid(activity.Id);
+                var responseGuid = MapLongToGuid(activity.Id);
                 
                 string? managerUserName = null;
                 if (!string.IsNullOrEmpty(request.ManagerUserId))
@@ -184,7 +184,7 @@ namespace Gesco.Desktop.Core.Services
                     EndDate = activity.EndDate,
                     EndTime = activity.EndTime,
                     Location = activity.Location,
-                    ActivityStatusId = activity.ActivityStatusId,
+                    ActivityStatusId = (int)activity.ActivityStatusId,
                     StatusName = defaultStatus?.Name,
                     ManagerUserId = activity.ManagerUserId,
                     ManagerUserName = managerUserName,
@@ -203,9 +203,9 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var intId = MapGuidToInt(id);
+                var longId = MapGuidToLong(id);
                 
-                var activity = await _context.Activities.FindAsync(intId);
+                var activity = await _context.Activities.FindAsync(longId);
                 if (activity == null)
                 {
                     return null;
@@ -234,7 +234,7 @@ namespace Gesco.Desktop.Core.Services
                 
                 if (request.ActivityStatusId > 0)
                 {
-                    var status = await _context.ActivityStatuses.FindAsync(request.ActivityStatusId);
+                    var status = await _context.ActivityStatuses.FindAsync((long)request.ActivityStatusId);
                     if (status != null)
                     {
                         activity.ActivityStatusId = status.Id;
@@ -263,9 +263,9 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var intId = MapGuidToInt(id);
+                var longId = MapGuidToLong(id);
                 
-                var activity = await _context.Activities.FindAsync(intId);
+                var activity = await _context.Activities.FindAsync(longId);
                 if (activity == null)
                 {
                     return false;
@@ -303,7 +303,7 @@ namespace Gesco.Desktop.Core.Services
                     .OrderByDescending(a => a.StartDate)
                     .Select(a => new ActivityDto
                     {
-                        Id = MapIntToGuid(a.Id),
+                        Id = MapLongToGuid(a.Id),
                         Name = a.Name,
                         Description = a.Description,
                         StartDate = a.StartDate,
@@ -311,7 +311,7 @@ namespace Gesco.Desktop.Core.Services
                         EndDate = a.EndDate,
                         EndTime = a.EndTime,
                         Location = a.Location,
-                        ActivityStatusId = a.ActivityStatusId,
+                        ActivityStatusId = (int)a.ActivityStatusId,
                         StatusName = a.ActivityStatus != null ? a.ActivityStatus.Name : null,
                         ManagerUserId = a.ManagerUserId,
                         ManagerUserName = a.ManagerUser != null 
@@ -397,24 +397,29 @@ namespace Gesco.Desktop.Core.Services
             }
         }
 
-        private static Guid MapIntToGuid(int intId)
+        // ============================================
+        // MÉTODOS HELPER PARA MAPEO LONG <-> GUID
+        // ============================================
+
+        private static Guid MapLongToGuid(long longId)
         {
             var bytes = new byte[16];
-            var intBytes = BitConverter.GetBytes(intId);
-            Array.Copy(intBytes, 0, bytes, 0, Math.Min(4, intBytes.Length));
+            var longBytes = BitConverter.GetBytes(longId);
+            Array.Copy(longBytes, 0, bytes, 0, Math.Min(8, longBytes.Length));
             
-            for (int i = 4; i < 16; i++)
+            // Llenar resto con patrón determinístico
+            for (int i = 8; i < 16; i++)
             {
-                bytes[i] = (byte)(intId % 256);
+                bytes[i] = (byte)((longId >> ((i - 8) * 8)) % 256);
             }
             
             return new Guid(bytes);
         }
 
-        private static int MapGuidToInt(Guid guid)
+        private static long MapGuidToLong(Guid guid)
         {
             var bytes = guid.ToByteArray();
-            return BitConverter.ToInt32(bytes, 0);
+            return BitConverter.ToInt64(bytes, 0);
         }
     }
 }

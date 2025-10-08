@@ -10,7 +10,7 @@ namespace Gesco.Desktop.Data.Entities
 {
    // ROLES
    [Table("roles")]
-    public class Role : AuditableEntityInt
+    public class Role : AuditableEntityLong
     {
         [Column("name")]
         [Required]

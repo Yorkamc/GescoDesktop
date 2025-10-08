@@ -11,11 +11,11 @@ namespace Gesco.Desktop.Data.Entities
 {
   // MEMBRESÍAS - CAMBIA A int
     [Table("memberships")]
-    public class Membership : AuditableEntityInt
+    public class Membership : AuditableEntityLong
     {
         [Column("name")]
         [Required]
-        [MaxLength(100)]
+        [MaxLength(255)]
         public string Name { get; set; } = string.Empty;
 
         [Column("description")]

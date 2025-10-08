@@ -11,10 +11,10 @@ namespace Gesco.Desktop.Data.Entities
 {
     // PRODUCTOS DE CATEGORÍA - CAMBIA A int
     [Table("category_products")]
-    public class CategoryProduct : SyncableEntityInt
+    public class CategoryProduct : SyncableEntityLong
     {
         [Column("activity_category_id")]
-        public int ActivityCategoryId { get; set; } // CAMBIA a int
+        public long ActivityCategoryId { get; set; } // CAMBIA a int
 
         [Column("code")]
         [MaxLength(50)]
@@ -54,14 +54,14 @@ namespace Gesco.Desktop.Data.Entities
     }
     // MOVIMIENTOS DE INVENTARIO
     // MOVIMIENTOS DE INVENTARIO - CAMBIA A int
-[Table("inventory_movements")]
-    public class InventoryMovement : SyncableEntityInt
+    [Table("inventory_movements")]
+    public class InventoryMovement : SyncableEntityLong
     {
         [Column("product_id")]
-        public int ProductId { get; set; } // CAMBIA a int
+        public long ProductId { get; set; } // CAMBIA a int
 
         [Column("movement_type_id")]
-        public int MovementTypeId { get; set; } // CAMBIA a int
+        public long MovementTypeId { get; set; } // CAMBIA a int
 
         [Column("quantity")]
         public int Quantity { get; set; }
@@ -81,7 +81,7 @@ namespace Gesco.Desktop.Data.Entities
         public decimal? TotalValue { get; set; }
 
         [Column("sales_transaction_id")]
-        public int? SalesTransactionId { get; set; } // CAMBIA a int
+        public long? SalesTransactionId { get; set; } // CAMBIA a int
 
         [Column("justification")]
         public string? Justification { get; set; }
@@ -114,4 +114,5 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("AuthorizedBy")]
         public virtual User? AuthorizedByUser { get; set; }
     }
+    
 }

@@ -10,7 +10,7 @@ namespace Gesco.Desktop.Data.Entities
 {
   // ESTADOS DE SUSCRIPCIÓN - CAMBIA A int
     [Table("subscription_statuses")]
-    public class SubscriptionStatus : AuditableEntityInt
+    public class SubscriptionStatus : AuditableEntityLong
     {
         [Column("name")]
         [Required]
@@ -32,16 +32,16 @@ namespace Gesco.Desktop.Data.Entities
 
     // SUSCRIPCIONES - CAMBIA A int
     [Table("subscriptions")]
-    public class Subscription : SyncableEntityInt
+    public class Subscription : SyncableEntityLong
     {
         [Column("organization_id")]
         public Guid OrganizationId { get; set; } // MANTIENE Guid
 
         [Column("membership_id")]
-        public int MembershipId { get; set; } // CAMBIA a int
+        public long MembershipId { get; set; } // CAMBIA a int
 
         [Column("subscription_status_id")]
-        public int SubscriptionStatusId { get; set; } // CAMBIA a int
+        public long SubscriptionStatusId { get; set; } // CAMBIA a int
 
         [Column("start_date")]
         public DateTime StartDate { get; set; }

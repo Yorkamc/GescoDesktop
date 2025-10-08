@@ -9,7 +9,7 @@ using Gesco.Desktop.Data.Entities.Base;
 namespace Gesco.Desktop.Data.Entities
 {
 [Table("notifications")]
-    public class Notification : AuditableEntityInt
+    public class Notification : AuditableEntityLong
     {
         [Column("organization_id")]
         public Guid OrganizationId { get; set; }

@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gesco.Desktop.Data.Entities
 {
-    [Table("activity_statuses")]
-    public class ActivityStatus : AuditableEntityInt
+   [Table("activity_statuses")]
+    public class ActivityStatus : AuditableEntityLong
     {
         [Column("name")]
         [Required]
@@ -27,9 +27,8 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<Activity> Activities { get; set; } = new List<Activity>();
     }
 
-    // ACTIVIDADES - CAMBIA A int
     [Table("activities")]
-    public class Activity : SyncableEntityInt
+    public class Activity : SyncableEntityLong
     {
         [Column("name")]
         [Required]
@@ -56,14 +55,14 @@ namespace Gesco.Desktop.Data.Entities
         public string? Location { get; set; }
 
         [Column("activity_status_id")]
-        public long ActivityStatusId { get; set; } // CAMBIA a int
+        public long ActivityStatusId { get; set; }
 
         [Column("manager_user_id")]
         [MaxLength(50)]
-        public string? ManagerUserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? ManagerUserId { get; set; }
 
         [Column("organization_id")]
-        public Guid? OrganizationId { get; set; } // MANTIENE Guid
+        public Guid? OrganizationId { get; set; }
 
         // Navegación
         [ForeignKey("ActivityStatusId")]
@@ -72,7 +71,6 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("OrganizationId")]
         public virtual Organization? Organization { get; set; }
 
-        // ✅ CORREGIDO: Navegación a User usando string (cédula)
         [ForeignKey("ManagerUserId")]
         public virtual User? ManagerUser { get; set; }
 
@@ -81,15 +79,14 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<SalesCombo> SalesCombos { get; set; } = new List<SalesCombo>();
     }
 
-    // ACTIVIDAD-CATEGORÍAS (Tabla pivote) - CAMBIA A int
     [Table("activity_categories")]
-    public class ActivityCategory : SyncableEntityInt
+    public class ActivityCategory : SyncableEntityLong
     {
         [Column("activity_id")]
-        public long ActivityId { get; set; } // CAMBIA a int
+        public long ActivityId { get; set; }
 
         [Column("service_category_id")]
-        public long ServiceCategoryId { get; set; } // CAMBIA a int
+        public long ServiceCategoryId { get; set; }
 
         // Navegación
         [ForeignKey("ActivityId")]
@@ -101,12 +98,11 @@ namespace Gesco.Desktop.Data.Entities
         public virtual ICollection<CategoryProduct> CategoryProducts { get; set; } = new List<CategoryProduct>();
     }
     
-    // CIERRES DE ACTIVIDAD - CAMBIA A int
     [Table("activity_closures")]
-    public class ActivityClosure : SyncableEntityInt
+    public class ActivityClosure : SyncableEntityLong
     {
         [Column("activity_id")]
-        public long ActivityId { get; set; } // CAMBIA a int
+        public long ActivityId { get; set; }
 
         [Column("closure_date")]
         public DateTime ClosureDate { get; set; }
@@ -150,11 +146,11 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("closed_by")]
         [MaxLength(50)]
-        public string? ClosedBy { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? ClosedBy { get; set; }
 
         [Column("supervised_by")]
         [MaxLength(50)]
-        public string? SupervisedBy { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? SupervisedBy { get; set; }
 
         [Column("observations")]
         public string? Observations { get; set; }
@@ -163,7 +159,6 @@ namespace Gesco.Desktop.Data.Entities
         [ForeignKey("ActivityId")]
         public virtual Activity Activity { get; set; } = null!;
 
-        // ✅ CORREGIDO: Navegación a User usando string (cédula)
         [ForeignKey("ClosedBy")]
         public virtual User? ClosedByUser { get; set; }
 
@@ -171,9 +166,8 @@ namespace Gesco.Desktop.Data.Entities
         public virtual User? SupervisedByUser { get; set; }
     }
 
-    // TIPOS DE MOVIMIENTO DE INVENTARIO - CAMBIA A int
     [Table("inventory_movement_types")]
-    public class InventoryMovementType : AuditableEntityInt
+    public class InventoryMovementType : AuditableEntityLong
     {
         [Column("name")]
         [Required]

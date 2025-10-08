@@ -303,7 +303,7 @@ namespace Gesco.Desktop.UI.Controllers
 
     public class ActivitySummaryDto
     {
-        public int Id { get; set; } // int para coincidir con la entidad Activity
+        public long Id { get; set; } // int para coincidir con la entidad Activity
         public string Nombre { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public DateTime FechaInicio { get; set; }

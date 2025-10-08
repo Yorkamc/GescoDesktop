@@ -23,8 +23,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Obtener todas las actividades
         /// </summary>
-        /// <param name="organizationId">ID de organización (opcional)</param>
-        /// <returns>Lista de actividades</returns>
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<List<ActivityDto>>), 200)]
         [ProducesResponseType(500)]
@@ -58,8 +56,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Obtener actividad por ID
         /// </summary>
-        /// <param name="id">ID de la actividad</param>
-        /// <returns>Datos de la actividad</returns>
         [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(ApiResponse<ActivityDto>), 200)]
         [ProducesResponseType(404)]
@@ -100,8 +96,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Crear nueva actividad
         /// </summary>
-        /// <param name="request">Datos de la actividad</param>
-        /// <returns>Actividad creada</returns>
         [HttpPost]
         [Authorize]
         [ProducesResponseType(typeof(ApiResponse<ActivityDto>), 201)]
@@ -114,7 +108,6 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 _logger.LogInformation("Creating activity: {Name}", request.Name);
 
-                // Validaciones básicas
                 if (string.IsNullOrWhiteSpace(request.Name))
                 {
                     return BadRequest(new ApiResponse
@@ -125,7 +118,6 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                // Validar fecha
                 if (request.StartDate == default)
                 {
                     return BadRequest(new ApiResponse
@@ -136,24 +128,19 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                // ✅ CORREGIDO: Manejo de ManagerUserId como string (cédula)
+                // ✅ CORRECTO: ManagerUserId es string (cédula)
                 if (string.IsNullOrEmpty(request.ManagerUserId))
                 {
-                    // Obtener el ID del usuario actual del token si está disponible
                     var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                     if (!string.IsNullOrEmpty(currentUserId))
                     {
-                        // ✅ CORREGIDO: El token ahora contiene la cédula directamente
                         request.ManagerUserId = currentUserId;
                     }
                 }
 
-                // Obtener la primera organización como default si no se especifica
                 if (!request.OrganizationId.HasValue || request.OrganizationId == Guid.Empty)
                 {
-                    // Por ahora usar la primera organización disponible
-                    // En un escenario real, esto vendría del contexto del usuario
-                    request.OrganizationId = null; // El servicio manejará esto
+                    request.OrganizationId = null;
                 }
 
                 _logger.LogInformation("Validated request: {@Request}", new { 
@@ -193,9 +180,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Actualizar actividad existente
         /// </summary>
-        /// <param name="id">ID de la actividad</param>
-        /// <param name="request">Datos actualizados</param>
-        /// <returns>Actividad actualizada</returns>
         [HttpPut("{id:guid}")]
         [Authorize]
         [ProducesResponseType(typeof(ApiResponse<ActivityDto>), 200)]
@@ -209,7 +193,6 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 _logger.LogInformation("Updating activity {ActivityId}: {Name}", id, request.Name);
 
-                // Validaciones básicas (similar al create)
                 if (string.IsNullOrWhiteSpace(request.Name))
                 {
                     return BadRequest(new ApiResponse
@@ -265,8 +248,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Eliminar actividad
         /// </summary>
-        /// <param name="id">ID de la actividad</param>
-        /// <returns>Confirmación de eliminación</returns>
         [HttpDelete("{id:guid}")]
         [Authorize]
         [ProducesResponseType(typeof(ApiResponse), 200)]
@@ -311,7 +292,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Obtener actividades activas
         /// </summary>
-        /// <returns>Lista de actividades activas</returns>
         [HttpGet("active")]
         [ProducesResponseType(typeof(ApiResponse<List<ActivityDto>>), 200)]
         [ProducesResponseType(500)]
@@ -343,7 +323,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Obtener estadísticas de actividades
         /// </summary>
-        /// <returns>Estadísticas generales</returns>
         [HttpGet("stats")]
         [ProducesResponseType(typeof(ApiResponse<DashboardStatsDto>), 200)]
         [ProducesResponseType(500)]
