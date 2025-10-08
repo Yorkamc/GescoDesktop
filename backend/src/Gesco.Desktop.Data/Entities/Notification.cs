@@ -8,7 +8,8 @@ using Gesco.Desktop.Data.Entities.Base;
 
 namespace Gesco.Desktop.Data.Entities
 {
-[Table("notifications")]
+
+     [Table("notifications")]
     public class Notification : AuditableEntityLong
     {
         [Column("organization_id")]
@@ -16,10 +17,10 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("user_id")]
         [MaxLength(50)]
-        public string? UserId { get; set; } // ✅ CORREGIDO: string para cédula
+        public string? UserId { get; set; }
 
         [Column("notification_type_id")]
-        public int NotificationTypeId { get; set; }
+        public long NotificationTypeId { get; set; } // ✅ CORREGIDO: long en lugar de int
 
         [Column("title")]
         [Required]
@@ -31,7 +32,7 @@ namespace Gesco.Desktop.Data.Entities
         public string Message { get; set; } = string.Empty;
 
         [Column("additional_data")]
-        public string? AdditionalData { get; set; } // JSON
+        public string? AdditionalData { get; set; }
 
         [Column("is_read")]
         public bool IsRead { get; set; } = false;
@@ -50,9 +51,8 @@ namespace Gesco.Desktop.Data.Entities
 
         [Column("delivery_channels")]
         [MaxLength(100)]
-        public string? DeliveryChannels { get; set; } // email,sms,push
+        public string? DeliveryChannels { get; set; }
 
-        // Navegación
         [ForeignKey("OrganizationId")]
         public virtual Organization Organization { get; set; } = null!;
 
