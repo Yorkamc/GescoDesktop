@@ -3,7 +3,7 @@ import { healthService } from '../services/api';
 
 type BackendStatus = 'checking' | 'connected' | 'disconnected';
 
-interface UseBackendStatusReturn {
+export interface UseBackendStatusReturn {
   status: BackendStatus;
   latency?: number;
   checkStatus: () => Promise<void>;

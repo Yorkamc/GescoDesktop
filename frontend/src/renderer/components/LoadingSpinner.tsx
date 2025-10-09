@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface LoadingSpinnerProps {
+export interface LoadingSpinnerProps {
   message?: string;
   size?: 'small' | 'medium' | 'large';
   fullScreen?: boolean;
@@ -35,7 +35,11 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   return content;
 };
 
-export const InlineSpinner: React.FC<{ className?: string }> = ({ className = 'h-5 w-5' }) => (
+export interface InlineSpinnerProps {
+  className?: string;
+}
+
+export const InlineSpinner: React.FC<InlineSpinnerProps> = ({ className = 'h-5 w-5' }) => (
   <svg
     className={`animate-spin ${className}`}
     xmlns="http://www.w3.org/2000/svg"

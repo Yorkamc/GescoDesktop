@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 
-interface User {
+export interface User {
   id: string;
   nombreUsuario: string;
   nombreCompleto: string;
@@ -12,7 +12,7 @@ interface User {
   rolId: string;
 }
 
-interface UseAuthReturn {
+export interface UseAuthReturn {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;

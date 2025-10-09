@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface StatCardProps {
+export interface StatCardProps {
   title: string;
   value: string | number;
   icon: React.ReactNode;

@@ -11,7 +11,8 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { stats, isLoading, error, lastUpdate, refreshStats, clearError } = useDashboardStats();
-  const { status: backendStatus, checkStatus } = useBackendStatus(false);
+  // CAMBIO: Activar auto-check para verificar conexión automáticamente
+  const { status: backendStatus, checkStatus } = useBackendStatus(true);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CR', {
@@ -225,7 +226,7 @@ export const Dashboard: React.FC = () => {
                       <div className="flex items-center">
                         <div className={`w-2 h-2 ${backendStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'} rounded-full mr-2`}></div>
                         <span className={`text-sm ${backendStatus === 'connected' ? 'text-green-600' : 'text-red-600'}`}>
-                          {backendStatus === 'connected' ? 'Activo' : 'Desconectado'}
+                          {backendStatus === 'connected' ? 'Conectado' : 'Desconectado'}
                         </span>
                       </div>
                     </div>
@@ -247,11 +248,13 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {backendStatus !== 'connected' && (
+            {/* Solo mostrar alerta si realmente NO está conectado después de intentar */}
+            {backendStatus === 'disconnected' && (
               <div className="mt-6">
                 <Alert
                   type="warning"
                   message="Backend API no disponible. Verifica que esté ejecutándose en http://localhost:5100"
+                  onRetry={checkStatus}
                 />
               </div>
             )}

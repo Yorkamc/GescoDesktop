@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { activitiesService } from '../services/api';
 
-interface Activity {
+export interface Activity {
   id: string;
   name: string;
   description?: string;
@@ -19,7 +19,7 @@ interface Activity {
   createdAt: string;
 }
 
-interface CreateActivityRequest {
+export interface CreateActivityRequest {
   name: string;
   description?: string;
   startDate: string;
@@ -32,7 +32,7 @@ interface CreateActivityRequest {
   organizationId?: string;
 }
 
-interface UseActivitiesReturn {
+export interface UseActivitiesReturn {
   activities: Activity[];
   isLoading: boolean;
   error: string;

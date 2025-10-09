@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { statsService } from '../services/api';
 
-interface DashboardStats {
+export interface DashboardStats {
   totalActivities: number;
   activeActivities: number;
   todaySales: number;
@@ -17,7 +17,7 @@ interface DashboardStats {
   reportPeriod: string;
 }
 
-interface UseDashboardStatsReturn {
+export interface UseDashboardStatsReturn {
   stats: DashboardStats;
   isLoading: boolean;
   error: string;

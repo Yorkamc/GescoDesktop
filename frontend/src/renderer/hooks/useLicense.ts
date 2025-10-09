@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { licenseService } from '../services/api';
 
-interface LicenseStatus {
+export interface LicenseStatus {
   isActive: boolean;
   message: string;
   fechaActivacion?: string;
@@ -11,7 +11,7 @@ interface LicenseStatus {
   organizacionId?: number;
 }
 
-interface UseLicenseReturn {
+export interface UseLicenseReturn {
   licenseStatus: LicenseStatus | null;
   isLoading: boolean;
   error: string;

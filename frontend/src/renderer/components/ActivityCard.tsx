@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface Activity {
+export interface Activity {
   id: string;
   name: string;
   description?: string;
@@ -9,11 +9,12 @@ interface Activity {
   endDate?: string;
   endTime?: string;
   location?: string;
+  activityStatusId: number;
   statusName?: string;
   createdAt: string;
 }
 
-interface ActivityCardProps {
+export interface ActivityCardProps {
   activity: Activity;
   onEdit: (activity: Activity) => void;
   onDelete: (id: string) => void;

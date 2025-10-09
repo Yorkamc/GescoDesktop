@@ -2,7 +2,7 @@ import React from 'react';
 
 type AlertType = 'error' | 'warning' | 'success' | 'info';
 
-interface AlertProps {
+export interface AlertProps {
   type: AlertType;
   message: string;
   onRetry?: () => void;
