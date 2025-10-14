@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Gesco.Desktop.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateWithSeedData_20251008_104001 : Migration
+    public partial class InitialCreateWithSeedData_20251013_204418 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -50,6 +50,23 @@ namespace Gesco.Desktop.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_inventory_movement_types", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "login_attempts",
+                columns: table => new
+                {
+                    id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    attempted_email = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    result = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    ip_address = table.Column<string>(type: "TEXT", maxLength: 45, nullable: true),
+                    attempt_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    user_agent = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_login_attempts", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -273,7 +290,7 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "users",
                 columns: table => new
                 {
-                    cedula = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    id = table.Column<string>(type: "TEXT", maxLength: 12, nullable: false),
                     username = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     email = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     email_verified_at = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -299,7 +316,7 @@ namespace Gesco.Desktop.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_users", x => x.cedula);
+                    table.PrimaryKey("PK_users", x => x.id);
                     table.ForeignKey(
                         name: "FK_users_organizations_organization_id",
                         column: x => x.organization_id,
@@ -407,7 +424,7 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_activities_users_manager_user_id",
                         column: x => x.manager_user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -442,7 +459,7 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_api_activity_logs_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -450,7 +467,7 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "desktop_clients",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", maxLength: 12, nullable: false),
+                    id = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
                     organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
                     client_name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     app_version = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
@@ -481,7 +498,7 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_desktop_clients_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -527,7 +544,7 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_notifications_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -535,7 +552,7 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "oauth_access_tokens",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", maxLength: 12, nullable: false),
+                    id = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
                     user_id = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
                     client_id = table.Column<Guid>(type: "TEXT", nullable: false),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
@@ -552,8 +569,41 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_oauth_access_tokens_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_sessions",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
+                    user_id = table.Column<string>(type: "TEXT", maxLength: 12, nullable: false),
+                    access_token = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    refresh_token = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    token_uuid = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false),
+                    ip_address = table.Column<string>(type: "TEXT", maxLength: 45, nullable: true),
+                    user_agent = table.Column<string>(type: "TEXT", nullable: true),
+                    start_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    last_access_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    expiration_date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    end_date = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    end_reason = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    created_by = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    updated_by = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    created_at = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_sessions", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_user_sessions_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -600,19 +650,19 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_activation_keys_users_generated_by",
                         column: x => x.generated_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_activation_keys_users_revoked_by",
                         column: x => x.revoked_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_activation_keys_users_used_by_user_id",
                         column: x => x.used_by_user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -698,13 +748,13 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_activity_closures_users_closed_by",
                         column: x => x.closed_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_activity_closures_users_supervised_by",
                         column: x => x.supervised_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -747,13 +797,13 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_cash_registers_users_operator_user_id",
                         column: x => x.operator_user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_cash_registers_users_supervisor_user_id",
                         column: x => x.supervisor_user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -799,7 +849,7 @@ namespace Gesco.Desktop.Data.Migrations
                     organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
                     client_id = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false),
                     affected_table = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    record_id = table.Column<long>(type: "INTEGER", nullable: false),
+                    record_id = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     operation = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
                     change_data = table.Column<string>(type: "TEXT", nullable: false),
                     sync_version = table.Column<long>(type: "INTEGER", nullable: false),
@@ -840,7 +890,7 @@ namespace Gesco.Desktop.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     organization_id = table.Column<Guid>(type: "TEXT", nullable: false),
                     table_name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    record_id = table.Column<long>(type: "INTEGER", nullable: false),
+                    record_id = table.Column<string>(type: "TEXT", nullable: false),
                     version = table.Column<long>(type: "INTEGER", nullable: false),
                     operation = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
                     change_date = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -867,7 +917,7 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_sync_versions_users_changed_by_user",
                         column: x => x.changed_by_user,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -875,7 +925,7 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "oauth_refresh_tokens",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", maxLength: 12, nullable: false),
+                    id = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
                     access_token_id = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
                     revoked = table.Column<bool>(type: "INTEGER", nullable: false),
                     expires_at = table.Column<DateTime>(type: "TEXT", nullable: true)
@@ -931,13 +981,13 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_activation_history_users_activated_by_user_id",
                         column: x => x.activated_by_user_id,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_activation_history_users_deactivated_by",
                         column: x => x.deactivated_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -1022,13 +1072,13 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_cash_register_closures_users_closed_by",
                         column: x => x.closed_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_cash_register_closures_users_supervised_by",
                         column: x => x.supervised_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -1163,13 +1213,13 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_inventory_movements_users_authorized_by",
                         column: x => x.authorized_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_inventory_movements_users_performed_by",
                         column: x => x.performed_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
@@ -1262,7 +1312,7 @@ namespace Gesco.Desktop.Data.Migrations
                         name: "FK_transaction_payments_users_processed_by",
                         column: x => x.processed_by,
                         principalTable: "users",
-                        principalColumn: "cedula",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -1271,10 +1321,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6019), null, "Activity not started", "Not Started", null, null },
-                    { 2L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6024), null, "Activity in development", "In Progress", null, null },
-                    { 3L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6028), null, "Activity completed", "Completed", null, null },
-                    { 4L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6031), null, "Activity cancelled", "Cancelled", null, null }
+                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2854), null, "Activity not started", "Not Started", null, null },
+                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2858), null, "Activity in development", "In Progress", null, null },
+                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2860), null, "Activity completed", "Completed", null, null },
+                    { 4L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2862), null, "Activity cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1282,9 +1332,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "requires_justification", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6263), null, "Merchandise entry to inventory", "Stock In", false, null, null },
-                    { 2L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6269), null, "Stock out by product sale", "Sale", false, null, null },
-                    { 3L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6273), null, "Inventory adjustment for differences", "Adjustment", true, null, null }
+                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3012), null, "Merchandise entry to inventory", "Stock In", false, null, null },
+                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3015), null, "Stock out by product sale", "Sale", false, null, null },
+                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3017), null, "Inventory adjustment for differences", "Adjustment", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1292,9 +1342,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "annual_price", "created_at", "created_by", "description", "monthly_price", "name", "updated_at", "updated_by", "user_limit" },
                 values: new object[,]
                 {
-                    { 1L, true, 299.99m, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6663), null, "Basic membership with essential features", 29.99m, "Basic", null, null, 5 },
-                    { 2L, true, 599.99m, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6671), null, "Professional membership with advanced features", 59.99m, "Professional", null, null, 25 },
-                    { 3L, true, 1299.99m, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6676), null, "Enterprise membership with unlimited features", 129.99m, "Enterprise", null, null, 100 }
+                    { 1L, true, 299.99m, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3165), null, "Basic membership with essential features", 29.99m, "Basic", null, null, 5 },
+                    { 2L, true, 599.99m, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3169), null, "Professional membership with advanced features", 59.99m, "Professional", null, null, 25 },
+                    { 3L, true, 1299.99m, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3172), null, "Enterprise membership with unlimited features", 129.99m, "Enterprise", null, null, 100 }
                 });
 
             migrationBuilder.InsertData(
@@ -1302,25 +1352,25 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "code", "created_at", "created_by", "description", "level", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, "low_stock", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6867), null, "Product inventory is running low", "warning", "Low Stock Alert", null, null },
-                    { 2L, true, "activity_reminder", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6873), null, "Upcoming activity notification", "info", "Activity Reminder", null, null },
-                    { 3L, true, "system_alert", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6878), null, "Critical system notification", "critical", "System Alert", null, null },
-                    { 4L, true, "sync_error", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6883), null, "Data synchronization failed", "error", "Sync Error", null, null }
+                    { 1L, true, "low_stock", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3276), null, "Product inventory is running low", "warning", "Low Stock Alert", null, null },
+                    { 2L, true, "activity_reminder", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3279), null, "Upcoming activity notification", "info", "Activity Reminder", null, null },
+                    { 3L, true, "system_alert", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3282), null, "Critical system notification", "critical", "System Alert", null, null },
+                    { 4L, true, "sync_error", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3284), null, "Data synchronization failed", "error", "Sync Error", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "organizations",
                 columns: new[] { "id", "active", "address", "conflict_resolution", "contact_email", "contact_phone", "created_at", "created_by", "integrity_hash", "last_sync", "last_sync_error", "name", "purchaser_name", "sync_status", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { new Guid("285eb9c0-12ed-4d18-8414-65337a00bd5b"), true, "San José, Costa Rica", null, "demo@gesco.com", "2222-2222", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(5389), null, null, null, null, "Demo Organization", "Demo Administrator", "pending", 1L, null, null });
+                values: new object[] { new Guid("14c2818e-a421-4047-a660-c6e19d867648"), true, "San José, Costa Rica", null, "demo@gesco.com", "2222-2222", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2435), null, null, null, null, "Demo Organization", "Demo Administrator", "pending", 1L, null, null });
 
             migrationBuilder.InsertData(
                 table: "payment_methods",
                 columns: new[] { "id", "active", "created_at", "created_by", "name", "requires_reference", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6180), null, "Cash", false, null, null },
-                    { 2L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6185), null, "Card", true, null, null },
-                    { 3L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6189), null, "SINPE Mobile", true, null, null }
+                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2955), null, "Cash", false, null, null },
+                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2958), null, "Card", true, null, null },
+                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2969), null, "SINPE Mobile", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1328,9 +1378,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(5832), null, "Full system access", "Administrator", null, null },
-                    { 2L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(5838), null, "Sales and cash register access", "Salesperson", null, null },
-                    { 3L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(5843), null, "Activity supervision", "Supervisor", null, null }
+                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2695), null, "Full system access", "Administrator", null, null },
+                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2699), null, "Sales and cash register access", "Salesperson", null, null },
+                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2701), null, "Activity supervision", "Supervisor", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1338,9 +1388,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6093), null, "Sale pending processing", "Pending", null, null },
-                    { 2L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6097), null, "Sale completed successfully", "Completed", null, null },
-                    { 3L, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6101), null, "Sale cancelled", "Cancelled", null, null }
+                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2908), null, "Sale pending processing", "Pending", null, null },
+                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2910), null, "Sale completed successfully", "Completed", null, null },
+                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2912), null, "Sale cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1348,9 +1398,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "allows_system_usage", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, true, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6353), null, "Active subscription", "Active", null, null },
-                    { 2L, true, false, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6359), null, "Suspended subscription", "Suspended", null, null },
-                    { 3L, true, false, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6364), null, "Cancelled subscription", "Cancelled", null, null }
+                    { 1L, true, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3065), null, "Active subscription", "Active", null, null },
+                    { 2L, true, false, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3067), null, "Suspended subscription", "Suspended", null, null },
+                    { 3L, true, false, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3070), null, "Cancelled subscription", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1358,25 +1408,25 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "access_level", "allowed_values", "category", "created_at", "created_by", "data_type", "description", "display_order", "environment", "is_editable", "is_sensitive", "key", "max_value", "min_value", "organization_id", "restart_required", "updated_at", "updated_by", "validation_pattern", "value" },
                 values: new object[,]
                 {
-                    { 1L, "admin", null, "system", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6432), null, "string", "System version", 0, "all", false, false, "system.version", null, null, null, false, null, null, null, "1.0.0" },
-                    { 2L, "admin", null, "backup", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6437), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, null, false, null, null, null, "6" },
-                    { 3L, "admin", null, "license", new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6442), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, null, false, null, null, null, "7" }
+                    { 1L, "admin", null, "system", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3119), null, "string", "System version", 0, "all", false, false, "system.version", null, null, null, false, null, null, null, "1.0.0" },
+                    { 2L, "admin", null, "backup", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3122), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, null, false, null, null, null, "6" },
+                    { 3L, "admin", null, "license", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3125), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, null, false, null, null, null, "7" }
                 });
 
             migrationBuilder.InsertData(
                 table: "subscriptions",
                 columns: new[] { "id", "cancellation_date", "conflict_resolution", "created_at", "created_by", "expiration_date", "grace_period_end", "integrity_hash", "last_sync", "last_sync_error", "membership_id", "organization_id", "start_date", "subscription_status_id", "sync_status", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { 1L, null, null, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6784), null, new DateTime(2026, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6763), new DateTime(2026, 11, 7, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6776), null, null, null, 1L, new Guid("285eb9c0-12ed-4d18-8414-65337a00bd5b"), new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(6761), 1L, "pending", 1L, null, null });
+                values: new object[] { 1L, null, null, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3231), null, new DateTime(2026, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3217), new DateTime(2026, 11, 13, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3225), null, null, null, 1L, new Guid("14c2818e-a421-4047-a660-c6e19d867648"), new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3215), 1L, "pending", 1L, null, null });
 
             migrationBuilder.InsertData(
                 table: "users",
-                columns: new[] { "cedula", "active", "conflict_resolution", "created_at", "created_by", "email", "email_verified_at", "first_login", "first_login_at", "full_name", "integrity_hash", "last_login_at", "last_sync", "last_sync_error", "organization_id", "password", "phone", "role_id", "sync_status", "sync_version", "updated_at", "updated_by", "username" },
-                values: new object[] { "118640123", true, null, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(5950), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, null, new Guid("285eb9c0-12ed-4d18-8414-65337a00bd5b"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8888-8888", 1L, "pending", 1L, null, null, "admin" });
+                columns: new[] { "id", "active", "conflict_resolution", "created_at", "created_by", "email", "email_verified_at", "first_login", "first_login_at", "full_name", "integrity_hash", "last_login_at", "last_sync", "last_sync_error", "organization_id", "password", "phone", "role_id", "sync_status", "sync_version", "updated_at", "updated_by", "username" },
+                values: new object[] { "118640123", true, null, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2754), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, null, new Guid("14c2818e-a421-4047-a660-c6e19d867648"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8888-8888", 1L, "pending", 1L, null, null, "admin" });
 
             migrationBuilder.InsertData(
                 table: "activities",
                 columns: new[] { "id", "activity_status_id", "conflict_resolution", "created_at", "created_by", "description", "end_date", "end_time", "integrity_hash", "last_sync", "last_sync_error", "location", "manager_user_id", "name", "organization_id", "start_date", "start_time", "sync_status", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { 1L, 1L, null, new DateTime(2025, 10, 8, 16, 40, 26, 943, DateTimeKind.Utc).AddTicks(7033), "118640123", "Sample activity for demonstration", new DateOnly(2025, 10, 9), new TimeOnly(18, 40, 26, 943).Add(TimeSpan.FromTicks(7011)), null, null, null, "Demo Location", "118640123", "Demo Activity", new Guid("285eb9c0-12ed-4d18-8414-65337a00bd5b"), new DateOnly(2025, 10, 8), new TimeOnly(10, 40, 26, 943).Add(TimeSpan.FromTicks(6991)), "pending", 1L, null, null });
+                values: new object[] { 1L, 1L, null, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3403), "118640123", "Sample activity for demonstration", new DateOnly(2025, 10, 14), new TimeOnly(4, 44, 36, 129).Add(TimeSpan.FromTicks(3399)), null, null, null, "Demo Location", "118640123", "Demo Activity", new Guid("14c2818e-a421-4047-a660-c6e19d867648"), new DateOnly(2025, 10, 13), new TimeOnly(20, 44, 36, 129).Add(TimeSpan.FromTicks(3388)), "pending", 1L, null, null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_activation_history_activated_by_user_id",
@@ -1560,6 +1610,21 @@ namespace Gesco.Desktop.Data.Migrations
                 column: "sales_transaction_id");
 
             migrationBuilder.CreateIndex(
+                name: "idx_login_attempts_date",
+                table: "login_attempts",
+                column: "attempt_date");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_login_attempts_email_date",
+                table: "login_attempts",
+                columns: new[] { "attempted_email", "attempt_date" });
+
+            migrationBuilder.CreateIndex(
+                name: "idx_login_attempts_ip_date",
+                table: "login_attempts",
+                columns: new[] { "ip_address", "attempt_date" });
+
+            migrationBuilder.CreateIndex(
                 name: "idx_notifications_org_status",
                 table: "notifications",
                 columns: new[] { "organization_id", "is_read", "important" });
@@ -1685,9 +1750,26 @@ namespace Gesco.Desktop.Data.Migrations
                 column: "sales_transaction_id");
 
             migrationBuilder.CreateIndex(
+                name: "idx_user_sessions_access_token",
+                table: "user_sessions",
+                column: "access_token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "idx_user_sessions_refresh_token",
+                table: "user_sessions",
+                column: "refresh_token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "idx_user_sessions_user_active",
+                table: "user_sessions",
+                columns: new[] { "user_id", "active", "last_access_date" });
+
+            migrationBuilder.CreateIndex(
                 name: "idx_users_cedula_unique",
                 table: "users",
-                column: "cedula",
+                column: "id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1697,20 +1779,15 @@ namespace Gesco.Desktop.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "idx_users_sync_tracking",
+                name: "idx_users_org_username_unique",
                 table: "users",
-                columns: new[] { "sync_version", "last_sync" });
-
-            migrationBuilder.CreateIndex(
-                name: "idx_users_username_unique",
-                table: "users",
-                column: "username",
+                columns: new[] { "organization_id", "username" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_organization_id",
+                name: "idx_users_sync_tracking",
                 table: "users",
-                column: "organization_id");
+                columns: new[] { "sync_version", "last_sync" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_role_id",
@@ -1740,6 +1817,9 @@ namespace Gesco.Desktop.Data.Migrations
                 name: "inventory_movements");
 
             migrationBuilder.DropTable(
+                name: "login_attempts");
+
+            migrationBuilder.DropTable(
                 name: "notifications");
 
             migrationBuilder.DropTable(
@@ -1759,6 +1839,9 @@ namespace Gesco.Desktop.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "transaction_payments");
+
+            migrationBuilder.DropTable(
+                name: "user_sessions");
 
             migrationBuilder.DropTable(
                 name: "activation_keys");

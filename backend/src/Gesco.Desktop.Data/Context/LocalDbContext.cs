@@ -42,7 +42,8 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<OAuthRefreshToken> OAuthRefreshTokens { get; set; }
         public DbSet<ApiActivityLog> ApiActivityLogs { get; set; }
         public DbSet<ActivationHistory> ActivationHistories { get; set; }
-
+        public DbSet<UserSession> UserSessions { get; set; }
+        public DbSet<LoginAttempt> LoginAttempts { get; set; }
         public DbSet<Organization> Organizaciones => Organizations;
         public DbSet<User> Usuarios => Users;
         public DbSet<Activity> Actividades => Activities;
@@ -51,7 +52,8 @@ namespace Gesco.Desktop.Data.Context
         public DbSet<SystemConfiguration> ConfiguracionesSistema => SystemConfigurations;
         public DbSet<DesktopClient> ClientesEscritorio => DesktopClients;
         public DbSet<SyncQueueItem> ColaSincronizacion => SyncQueue;
-
+        public DbSet<UserSession> SesionesUsuario => UserSessions;
+        public DbSet<LoginAttempt> IntentosLogin => LoginAttempts;
         public LocalDbContext() { }
         
         public LocalDbContext(DbContextOptions<LocalDbContext> options) : base(options) { }
@@ -436,6 +438,12 @@ namespace Gesco.Desktop.Data.Context
                 .WithMany(cp => cp.ComboItems)
                 .HasForeignKey(ci => ci.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+              // UserSession
+            modelBuilder.Entity<UserSession>()
+                .HasOne(us => us.User)
+                .WithMany()
+                .HasForeignKey(us => us.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         private static void ConfigureIndexes(ModelBuilder modelBuilder)
@@ -482,6 +490,35 @@ namespace Gesco.Desktop.Data.Context
             modelBuilder.Entity<Organization>()
                 .HasIndex(o => new { o.SyncVersion, o.LastSync })
                 .HasDatabaseName("idx_organizations_sync_tracking");
+                
+    // UserSession Indexes
+    modelBuilder.Entity<UserSession>()
+        .HasIndex(us => new { us.UserId, us.Active, us.LastAccessDate })
+        .HasDatabaseName("idx_user_sessions_user_active");
+
+    modelBuilder.Entity<UserSession>()
+        .HasIndex(us => us.AccessToken)
+        .IsUnique()
+        .HasDatabaseName("idx_user_sessions_access_token");
+
+    modelBuilder.Entity<UserSession>()
+        .HasIndex(us => us.RefreshToken)
+        .IsUnique()
+        .HasDatabaseName("idx_user_sessions_refresh_token");
+
+    // LoginAttempt Indexes
+    modelBuilder.Entity<LoginAttempt>()
+        .HasIndex(la => new { la.AttemptedEmail, la.AttemptDate })
+        .HasDatabaseName("idx_login_attempts_email_date");
+
+    modelBuilder.Entity<LoginAttempt>()
+        .HasIndex(la => new { la.IpAddress, la.AttemptDate })
+        .HasDatabaseName("idx_login_attempts_ip_date");
+
+    modelBuilder.Entity<LoginAttempt>()
+        .HasIndex(la => la.AttemptDate)
+        .HasDatabaseName("idx_login_attempts_date");
+        
         }
 
         private static void SeedData(ModelBuilder modelBuilder)
