@@ -446,10 +446,10 @@ namespace Gesco.Desktop.Data.Context
                 .HasDatabaseName("idx_users_cedula_unique");
 
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
+                .HasIndex(u => new { u.OrganizationId, u.Username })
                 .IsUnique()
-                .HasDatabaseName("idx_users_username_unique");
-
+                .HasDatabaseName("idx_users_org_username_unique");
+            
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique()

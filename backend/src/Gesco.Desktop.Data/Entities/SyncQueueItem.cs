@@ -25,7 +25,8 @@ namespace Gesco.Desktop.Data.Entities
         public string AffectedTable { get; set; } = string.Empty;
 
         [Column("record_id")]
-        public long RecordId { get; set; }
+        [MaxLength(50)]
+        public string RecordId { get; set; } = string.Empty;
 
         [Column("operation")]
         [Required]

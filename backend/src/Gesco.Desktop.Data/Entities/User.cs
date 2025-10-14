@@ -8,9 +8,9 @@ namespace Gesco.Desktop.Data.Entities
     [Table("users")]
     public class User : SyncableEntityString  
     {
-        [Column("cedula")] 
+        [Column("id")] 
         [Required]
-        [MaxLength(20)]
+        [MaxLength(12)]
         public override string Id { get; set; } = string.Empty; 
 
         [Column("username")]

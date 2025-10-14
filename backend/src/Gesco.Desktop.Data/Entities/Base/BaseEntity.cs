@@ -46,7 +46,7 @@ namespace Gesco.Desktop.Data.Entities.Base
     {
         [Key]
         [Column("id")]
-        [MaxLength(12)] // Suficiente para cédulas, UUIDs como string, etc.
+        [MaxLength(80)] // Suficiente para cédulas, UUIDs como string, etc.
         public virtual string Id { get; set; } = string.Empty;
 
         public override object GetId() => Id;

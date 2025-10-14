@@ -20,8 +20,7 @@ namespace Gesco.Desktop.Data.Entities
         public string TableName { get; set; } = string.Empty;
 
         [Column("record_id")]
-        public long RecordId { get; set; }
-
+        public string RecordId { get; set; } = string.Empty;
         [Column("version")]
         public long Version { get; set; } = 1;
 
