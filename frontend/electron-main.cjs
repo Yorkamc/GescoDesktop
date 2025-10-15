@@ -12,34 +12,63 @@ console.log('=== GESCO DESKTOP STANDALONE ===');
 console.log('isDev:', isDev);
 console.log('isPackaged:', app.isPackaged);
 console.log('Platform:', process.platform);
+console.log('App Version:', app.getVersion());
+console.log('UserData Path (original):', app.getPath('userData'));
+
+// IMPORTANTE: Forzar el nombre de la app sin versión
+// Esto asegura que userData siempre esté en la misma carpeta
+const fixedAppName = 'GESCODesktop'; // Sin espacios, sin versión
+
+// Solo cambiar el path si contiene el nombre de la app con versión o espacio
+const currentPath = app.getPath('userData');
+if (currentPath.includes('GESCO Desktop') || currentPath.includes('gesco-desktop')) {
+  const newPath = path.join(
+    app.getPath('appData'),
+    fixedAppName
+  );
+  app.setPath('userData', newPath);
+  console.log('✅ UserData Path actualizado a:', newPath);
+} else {
+  console.log('✅ UserData Path ya está correcto:', currentPath);
+}
 
 function getIconPath() {
   const platform = process.platform;
   let iconName;
+  let iconSubfolder;
   
-  // Determinar el nombre del icono según la plataforma
+  // Determinar nombre y subcarpeta según plataforma
   if (platform === 'win32') {
     iconName = 'icon.ico';
+    iconSubfolder = 'win';
   } else if (platform === 'darwin') {
     iconName = 'icon.icns';
+    iconSubfolder = 'mac';
   } else {
     iconName = 'icon-512.png';
+    iconSubfolder = 'png';
   }
   
-  // Rutas posibles para buscar el icono
   const possiblePaths = [
-    // En desarrollo
+    // Estructura con subcarpetas (como la tienes)
+    path.join(__dirname, 'build', 'icons', iconSubfolder, iconName),
+    path.join(__dirname, 'build', 'icons', 'png', 'icon-512.png'), // Fallback a PNG
+    
+    // Estructura plana (por si acaso)
     path.join(__dirname, 'build', iconName),
-    path.join(__dirname, 'build', 'icon-512.png'), // Fallback a PNG
+    path.join(__dirname, 'build', 'icon-512.png'),
     
     // En producción (empaquetado)
+    path.join(process.resourcesPath, 'build', 'icons', iconSubfolder, iconName),
     path.join(process.resourcesPath, 'build', iconName),
+    path.join(process.resourcesPath, 'app.asar', 'build', 'icons', iconSubfolder, iconName),
     path.join(process.resourcesPath, 'app.asar', 'build', iconName),
+    path.join(process.resourcesPath, 'app', 'build', 'icons', iconSubfolder, iconName),
     path.join(process.resourcesPath, 'app', 'build', iconName),
     
     // Otras ubicaciones
-    path.join(app.getAppPath(), 'build', iconName),
-    path.join(app.getAppPath(), 'build', 'icon-512.png')
+    path.join(app.getAppPath(), 'build', 'icons', iconSubfolder, iconName),
+    path.join(app.getAppPath(), 'build', iconName)
   ];
   
   // Buscar el icono en las rutas posibles
@@ -51,10 +80,8 @@ function getIconPath() {
   }
   
   console.warn('⚠️ No se encontró icono personalizado en ninguna ruta');
-  console.warn('Rutas verificadas:', possiblePaths);
+  console.warn('Rutas verificadas:', possiblePaths.slice(0, 5)); // Mostrar algunas rutas
   
-  // En Windows, si no hay icono, Electron usa el predeterminado
-  // No retornar undefined para evitar errores
   return null;
 }
 
@@ -130,7 +157,6 @@ function createWindow() {
   
   const iconPath = getIconPath();
   
-  // Configuración de la ventana
   const windowConfig = {
     width: 1400,
     height: 900,
@@ -139,7 +165,8 @@ function createWindow() {
       contextIsolation: true,
       devTools: isDev,
       webSecurity: !isDev,
-      backgroundThrottling: false
+      backgroundThrottling: false,
+      preload: path.join(__dirname, 'preload.cjs')
     },
     show: false,
     backgroundColor: '#f8fafc',
@@ -150,13 +177,17 @@ function createWindow() {
   // Solo agregar icon si existe
   if (iconPath) {
     windowConfig.icon = iconPath;
+    console.log('✅ Icono configurado para la ventana');
+  } else {
+    console.warn('⚠️ Ventana se creará con icono por defecto');
   }
   
   mainWindow = new BrowserWindow(windowConfig);
 
-  // En Windows, también configurar el icono de la aplicación
+  // En Windows, también configurar el icono de la barra de tareas
   if (process.platform === 'win32' && iconPath) {
     mainWindow.setIcon(iconPath);
+    console.log('✅ Icono configurado para la barra de tareas');
   }
 
   if (isDev) {

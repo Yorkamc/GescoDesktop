@@ -1,6 +1,6 @@
 {
   "name": "gesco-desktop-frontend",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "GESCO Desktop - Frontend Electron + React",
   "main": "electron-main.cjs",
   "author": "GESCO Team",
@@ -27,9 +27,6 @@
     "axios": "^1.6.5",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",
-    "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.7",
-    "keytar": "^7.9.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.49.3",
@@ -46,9 +43,8 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.21",
     "concurrently": "^8.2.2",
-    "electron": "^28.2.0",
+    "electron": "28.2.0",
     "electron-builder": "^24.9.1",
-    "electron-notarize": "^1.2.2",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -63,10 +59,11 @@
     "appId": "com.gesco.desktop",
     "productName": "GESCO Desktop",
     "copyright": "2025 GESCO",
+    "electronVersion": "28.2.0",
     "asar": true,
     "asarUnpack": [
       "backend/**/*",
-      "node_modules/keytar/**/*"
+      "preload.cjs"
     ],
     "directories": {
       "buildResources": "build",
@@ -77,6 +74,7 @@
       "backend/**/*",
       "build/**/*",
       "electron-main.cjs",
+      "preload.cjs",
       "package.json",
       "!**/*.env*",
       "!**/*.pem",
@@ -102,15 +100,6 @@
           "!**/appsettings.Production.json",
           "!**/appsettings.Development.json"
         ]
-      },
-      {
-        "from": "build",
-        "to": "build",
-        "filter": [
-          "icon.ico",
-          "icon.icns",
-          "icon-512.png"
-        ]
       }
     ],
     "protocols": [
@@ -124,11 +113,11 @@
         "ext": "gesco",
         "name": "GESCO Project File",
         "description": "GESCO Desktop Project File",
-        "icon": "build/icon.ico"
+        "icon": "build/icons/win/icon.ico"
       }
     ],
     "win": {
-      "icon": "build/icon.ico",
+      "icon": "build/icons/win/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -142,22 +131,26 @@
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false,
       "signDlls": false,
-      "verifyUpdateCodeSignature": false
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
       "allowElevation": true,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "installerIcon": "build/icons/win/icon.ico",
+      "uninstallerIcon": "build/icons/win/icon.ico",
+      "installerHeader": "build/icons/win/icon.ico",
+      "installerHeaderIcon": "build/icons/win/icon.ico",
+      "include": "build/installer.nsh"
     },
     "mac": {
-      "icon": "build/icon.icns",
+      "icon": "build/icons/mac/icon.icns",
       "target": [
         {
           "target": "dmg",
@@ -169,7 +162,7 @@
       "gatekeeperAssess": false
     },
     "linux": {
-      "icon": "build/icon-512.png",
+      "icon": "build/icons/png",
       "target": [
         {
           "target": "AppImage",
