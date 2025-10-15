@@ -13,19 +13,15 @@ console.log('isDev:', isDev);
 console.log('isPackaged:', app.isPackaged);
 console.log('Platform:', process.platform);
 console.log('App Version:', app.getVersion());
+console.log('__dirname:', __dirname);
+console.log('process.resourcesPath:', process.resourcesPath);
 console.log('UserData Path (original):', app.getPath('userData'));
 
 // IMPORTANTE: Forzar el nombre de la app sin versión
-// Esto asegura que userData siempre esté en la misma carpeta
-const fixedAppName = 'GESCODesktop'; // Sin espacios, sin versión
-
-// Solo cambiar el path si contiene el nombre de la app con versión o espacio
+const fixedAppName = 'GESCODesktop';
 const currentPath = app.getPath('userData');
 if (currentPath.includes('GESCO Desktop') || currentPath.includes('gesco-desktop')) {
-  const newPath = path.join(
-    app.getPath('appData'),
-    fixedAppName
-  );
+  const newPath = path.join(app.getPath('appData'), fixedAppName);
   app.setPath('userData', newPath);
   console.log('✅ UserData Path actualizado a:', newPath);
 } else {
@@ -37,7 +33,6 @@ function getIconPath() {
   let iconName;
   let iconSubfolder;
   
-  // Determinar nombre y subcarpeta según plataforma
   if (platform === 'win32') {
     iconName = 'icon.ico';
     iconSubfolder = 'win';
@@ -50,38 +45,36 @@ function getIconPath() {
   }
   
   const possiblePaths = [
-    // Estructura con subcarpetas (como la tienes)
+    // Estructura con subcarpetas
     path.join(__dirname, 'build', 'icons', iconSubfolder, iconName),
-    path.join(__dirname, 'build', 'icons', 'png', 'icon-512.png'), // Fallback a PNG
+    path.join(__dirname, 'build', 'icons', 'png', 'icon-512.png'),
     
-    // Estructura plana (por si acaso)
+    // Estructura plana
     path.join(__dirname, 'build', iconName),
-    path.join(__dirname, 'build', 'icon-512.png'),
+    path.join(__dirname, 'build', 'icon.ico'), // Fallback directo
     
-    // En producción (empaquetado)
+    // En producción empaquetado
     path.join(process.resourcesPath, 'build', 'icons', iconSubfolder, iconName),
     path.join(process.resourcesPath, 'build', iconName),
+    path.join(process.resourcesPath, 'app.asar.unpacked', 'build', 'icons', iconSubfolder, iconName),
     path.join(process.resourcesPath, 'app.asar', 'build', 'icons', iconSubfolder, iconName),
-    path.join(process.resourcesPath, 'app.asar', 'build', iconName),
-    path.join(process.resourcesPath, 'app', 'build', 'icons', iconSubfolder, iconName),
-    path.join(process.resourcesPath, 'app', 'build', iconName),
     
-    // Otras ubicaciones
+    // Dentro del asar
     path.join(app.getAppPath(), 'build', 'icons', iconSubfolder, iconName),
     path.join(app.getAppPath(), 'build', iconName)
   ];
   
-  // Buscar el icono en las rutas posibles
+  console.log('🔍 Buscando icono en', possiblePaths.length, 'ubicaciones...');
+  
   for (const iconPath of possiblePaths) {
+    console.log('  Probando:', iconPath);
     if (existsSync(iconPath)) {
-      console.log('🎨 Icono encontrado:', iconPath);
+      console.log('  🎨 ✅ ICONO ENCONTRADO:', iconPath);
       return iconPath;
     }
   }
   
-  console.warn('⚠️ No se encontró icono personalizado en ninguna ruta');
-  console.warn('Rutas verificadas:', possiblePaths.slice(0, 5)); // Mostrar algunas rutas
-  
+  console.error('❌ No se encontró icono en ninguna ruta');
   return null;
 }
 
@@ -96,24 +89,31 @@ function startBackend() {
     
     const backendPaths = [
       path.join(process.resourcesPath, 'backend', 'Gesco.Desktop.UI.exe'),
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'backend', 'Gesco.Desktop.UI.exe'),
       path.join(__dirname, 'backend', 'Gesco.Desktop.UI.exe'),
       path.join(process.cwd(), 'backend', 'Gesco.Desktop.UI.exe')
     ];
     
+    console.log('🔍 Buscando backend en', backendPaths.length, 'ubicaciones...');
+    
     let backendPath = null;
     for (const testPath of backendPaths) {
+      console.log('  Probando:', testPath);
       if (existsSync(testPath)) {
         backendPath = testPath;
-        console.log('✅ Backend encontrado:', backendPath);
+        console.log('  ✅ BACKEND ENCONTRADO:', backendPath);
         break;
       }
     }
     
     if (!backendPath) {
-      console.error('❌ Backend no encontrado');
+      console.error('❌❌❌ BACKEND NO ENCONTRADO EN NINGUNA RUTA ❌❌❌');
+      console.error('La aplicación funcionará sin backend.');
       resolve();
       return;
     }
+
+    console.log('🚀 Iniciando backend desde:', backendPath);
 
     backendProcess = spawn(backendPath, [], {
       detached: false,
@@ -125,7 +125,7 @@ function startBackend() {
       console.log('[BACKEND]', output);
       
       if (output.includes('Now listening on: http://localhost:5100')) {
-        console.log('✅ Backend listo');
+        console.log('✅✅✅ BACKEND LISTO Y ESCUCHANDO ✅✅✅');
         backendReady = true;
         
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -163,7 +163,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      devTools: isDev,
+      devTools: true, // SIEMPRE HABILITADO para debugging
       webSecurity: !isDev,
       backgroundThrottling: false,
       preload: path.join(__dirname, 'preload.cjs')
@@ -174,7 +174,6 @@ function createWindow() {
     title: 'GESCO Desktop'
   };
   
-  // Solo agregar icon si existe
   if (iconPath) {
     windowConfig.icon = iconPath;
     console.log('✅ Icono configurado para la ventana');
@@ -184,13 +183,16 @@ function createWindow() {
   
   mainWindow = new BrowserWindow(windowConfig);
 
-  // En Windows, también configurar el icono de la barra de tareas
   if (process.platform === 'win32' && iconPath) {
     mainWindow.setIcon(iconPath);
     console.log('✅ Icono configurado para la barra de tareas');
   }
 
-  if (isDev) {
+  // SIEMPRE abrir DevTools en empaquetado (temporal para debugging)
+  if (!isDev) {
+    console.log('🔧 Abriendo DevTools para debugging...');
+    mainWindow.webContents.openDevTools();
+  } else {
     mainWindow.webContents.openDevTools();
   }
 
@@ -205,14 +207,18 @@ function createWindow() {
     const possiblePaths = [
       path.join(__dirname, 'dist', 'index.html'),
       path.join(process.resourcesPath, 'app', 'dist', 'index.html'),
+      path.join(process.resourcesPath, 'app.asar', 'dist', 'index.html'),
       path.join(app.getAppPath(), 'dist', 'index.html')
     ];
     
+    console.log('🔍 Buscando index.html en', possiblePaths.length, 'ubicaciones...');
+    
     let indexPath = null;
     for (const testPath of possiblePaths) {
+      console.log('  Probando:', testPath);
       if (existsSync(testPath)) {
         indexPath = testPath;
-        console.log('✅ Frontend encontrado:', indexPath);
+        console.log('  ✅ FRONTEND ENCONTRADO:', indexPath);
         break;
       }
     }
@@ -271,7 +277,7 @@ function checkBackendConnection() {
             return true;
           }
         } catch (error) {
-          console.log(\`🔄 Intento \${retries + 1}/\${maxRetries} - Backend no responde aún...\`);
+          console.log(\`🔄 Intento \${retries + 1}/\${maxRetries} - Backend no responde aún...\`, error.message);
         }
         return false;
       };
@@ -352,12 +358,10 @@ app.whenReady().then(async () => {
   console.log('✅ Ventana creada, cargando frontend...');
   
   if (!isDev) {
-    startBackend().catch(error => {
-      console.error('❌ Error iniciando backend:', error);
-    });
+    await startBackend();
   }
   
-  console.log('🎉 GESCO Desktop iniciando en modo rápido');
+  console.log('🎉 GESCO Desktop iniciando');
 });
 
 app.on('window-all-closed', () => {

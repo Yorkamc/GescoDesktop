@@ -1,6 +1,6 @@
 {
   "name": "gesco-desktop-frontend",
-  "version": "1.0.3",
+  "version": "1.0.0",
   "description": "GESCO Desktop - Frontend Electron + React",
   "main": "electron-main.cjs",
   "author": "GESCO Team",
@@ -19,7 +19,8 @@
     "electron": "electron .",
     "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
     "test:build": "npm run build && npm run electron",
-    "clean": "rm -rf dist dist-electron node_modules/.vite backend",
+    "clean": "rimraf dist dist-electron backend node_modules/.vite",
+    "clean:win": "if exist dist rmdir /s /q dist && if exist dist-electron rmdir /s /q dist-electron && if exist backend rmdir /s /q backend",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
@@ -50,6 +51,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "postcss": "^8.5.6",
     "prettier": "^3.2.4",
+    "rimraf": "^5.0.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",
@@ -57,13 +59,15 @@
   },
   "build": {
     "appId": "com.gesco.desktop",
-    "productName": "GESCO Desktop",
+    "productName": "GESCODesktop",
+    "executableName": "GESCODesktop",
     "copyright": "2025 GESCO",
     "electronVersion": "28.2.0",
     "asar": true,
     "asarUnpack": [
       "backend/**/*",
-      "preload.cjs"
+      "preload.cjs",
+      "build/**/*"
     ],
     "directories": {
       "buildResources": "build",
@@ -92,13 +96,14 @@
         "from": "backend",
         "to": "backend",
         "filter": [
-          "**/*",
-          "!**/*.env*",
-          "!**/*.pem",
-          "!**/*.key",
-          "!**/*.pfx",
-          "!**/appsettings.Production.json",
-          "!**/appsettings.Development.json"
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/icons",
+        "to": "build/icons",
+        "filter": [
+          "**/*"
         ]
       }
     ],
@@ -131,23 +136,25 @@
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false,
       "signDlls": false,
-      "verifyUpdateCodeSignature": false,
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "verifyUpdateCodeSignature": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "runAfterFinish": true,
+      "shortcutName": "GESCO Desktop",
+      "runAfterFinish": false,
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
       "allowElevation": true,
       "installerIcon": "build/icons/win/icon.ico",
       "uninstallerIcon": "build/icons/win/icon.ico",
-      "installerHeader": "build/icons/win/icon.ico",
-      "installerHeaderIcon": "build/icons/win/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
       "include": "build/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
     },
     "mac": {
       "icon": "build/icons/mac/icon.icns",
