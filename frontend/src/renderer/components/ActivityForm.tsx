@@ -1,15 +1,56 @@
-import React, { useEffect } from 'react';
-import { useForm } from '../hooks/useForm';
-import { validateActivity } from '../utils/validators';
-import { InlineSpinner } from './LoadingSpinner';
-import { Alert } from './Alert';
-import type { Activity, CreateActivityRequest } from '../types';
+import React, { useState, useEffect } from 'react';
+
+interface Activity {
+  id: string;
+  name: string;
+  description?: string;
+  startDate: string;
+  startTime?: string;
+  endDate?: string;
+  endTime?: string;
+  location?: string;
+  activityStatusId: number;
+}
+
+interface CreateActivityRequest {
+  name: string;
+  description?: string;
+  startDate: string;
+  startTime?: string;
+  endDate?: string;
+  endTime?: string;
+  location?: string;
+  activityStatusId?: number;
+}
 
 interface ActivityFormProps {
   activity: Activity | null;
   onSubmit: (data: CreateActivityRequest) => Promise<void>;
   onCancel: () => void;
 }
+
+const InlineSpinner = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg
+    className={`animate-spin ${className}`}
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    />
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    />
+  </svg>
+);
 
 const extractDate = (dateString: string): string => {
   if (!dateString) return '';
@@ -19,36 +60,99 @@ const extractDate = (dateString: string): string => {
   return dateString;
 };
 
-export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({ 
+export default function ActivityFormFixed({ 
   activity, 
   onSubmit, 
   onCancel 
-}) => {
-  const initialValues: CreateActivityRequest = {
-    name: activity?.name || '',
-    description: activity?.description || '',
-    startDate: activity ? extractDate(activity.startDate) : '',
-    startTime: activity?.startTime || '',
-    endDate: activity?.endDate ? extractDate(activity.endDate) : '',
-    endTime: activity?.endTime || '',
-    location: activity?.location || '',
-    activityStatusId: activity?.activityStatusId || 1,
-  };
-
-  const form = useForm({
-    initialValues,
-    validate: validateActivity,
-    onSubmit: async (values) => {
-      await onSubmit(values);
-    },
+}: ActivityFormProps) {
+  // Estado interno para el formulario
+  const [formData, setFormData] = useState<CreateActivityRequest>({
+    name: '',
+    description: '',
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+    location: '',
+    activityStatusId: 1,
   });
 
-  // Actualizar valores cuando cambie la actividad a editar
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  // Actualizar formulario cuando cambia la actividad
   useEffect(() => {
     if (activity) {
-      form.setValues(initialValues);
+      setFormData({
+        name: activity.name || '',
+        description: activity.description || '',
+        startDate: extractDate(activity.startDate),
+        startTime: activity.startTime || '',
+        endDate: activity.endDate ? extractDate(activity.endDate) : '',
+        endTime: activity.endTime || '',
+        location: activity.location || '',
+        activityStatusId: activity.activityStatusId || 1,
+      });
+    } else {
+      // Reset para nuevo formulario
+      setFormData({
+        name: '',
+        description: '',
+        startDate: '',
+        startTime: '',
+        endDate: '',
+        endTime: '',
+        location: '',
+        activityStatusId: 1,
+      });
     }
-  }, [activity?.id]);
+    // Reset errores
+    setFormError('');
+    setIsSubmitting(false);
+  }, [activity]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'activityStatusId' ? parseInt(value) : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    // Validaciones
+    if (!formData.name.trim()) {
+      setFormError('El nombre de la actividad es requerido');
+      return;
+    }
+
+    if (!formData.startDate) {
+      setFormError('La fecha de inicio es requerida');
+      return;
+    }
+
+    // Validar fechas si ambas existen
+    if (formData.endDate && formData.startDate > formData.endDate) {
+      setFormError('La fecha de fin debe ser posterior a la fecha de inicio');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit(formData);
+      // El componente padre cerrará el modal si es exitoso
+    } catch (error: any) {
+      setFormError(error.message || 'Error al guardar la actividad');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4">
@@ -61,7 +165,8 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
           <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors"
-            disabled={form.isSubmitting}
+            disabled={isSubmitting}
+            type="button"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -70,7 +175,16 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
         </div>
 
         {/* Form Content */}
-        <form onSubmit={form.handleSubmit} className="flex-1 overflow-y-auto p-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+          {formError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
+              <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{formError}</span>
+            </div>
+          )}
+
           <div className="space-y-4">
             {/* Nombre */}
             <div className="md:col-span-2">
@@ -80,20 +194,13 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
               <input
                 type="text"
                 name="name"
-                value={form.values.name}
-                onChange={form.handleChange}
-                onBlur={form.handleBlur}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  form.touched.name && form.errors.name
-                    ? 'border-red-300 focus:border-red-500'
-                    : 'border-gray-300'
-                }`}
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
                 placeholder="Ej: Festival de Verano 2024"
-                disabled={form.isSubmitting}
+                disabled={isSubmitting}
               />
-              {form.touched.name && form.errors.name && (
-                <p className="mt-1 text-sm text-red-600">{form.errors.name}</p>
-              )}
             </div>
 
             {/* Descripción */}
@@ -103,13 +210,12 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
               </label>
               <textarea
                 name="description"
-                value={form.values.description}
-                onChange={form.handleChange}
-                onBlur={form.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={3}
                 placeholder="Descripción detallada de la actividad..."
-                disabled={form.isSubmitting}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -122,19 +228,12 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
                 <input
                   type="date"
                   name="startDate"
-                  value={form.values.startDate}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    form.touched.startDate && form.errors.startDate
-                      ? 'border-red-300'
-                      : 'border-gray-300'
-                  }`}
-                  disabled={form.isSubmitting}
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  disabled={isSubmitting}
                 />
-                {form.touched.startDate && form.errors.startDate && (
-                  <p className="mt-1 text-sm text-red-600">{form.errors.startDate}</p>
-                )}
               </div>
 
               {/* Hora de Inicio */}
@@ -145,10 +244,10 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
                 <input
                   type="time"
                   name="startTime"
-                  value={form.values.startTime}
-                  onChange={form.handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={form.isSubmitting}
+                  value={formData.startTime}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -160,19 +259,11 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
                 <input
                   type="date"
                   name="endDate"
-                  value={form.values.endDate}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    form.touched.endDate && form.errors.endDate
-                      ? 'border-red-300'
-                      : 'border-gray-300'
-                  }`}
-                  disabled={form.isSubmitting}
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isSubmitting}
                 />
-                {form.touched.endDate && form.errors.endDate && (
-                  <p className="mt-1 text-sm text-red-600">{form.errors.endDate}</p>
-                )}
               </div>
 
               {/* Hora de Fin */}
@@ -183,19 +274,11 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
                 <input
                   type="time"
                   name="endTime"
-                  value={form.values.endTime}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    form.touched.endTime && form.errors.endTime
-                      ? 'border-red-300'
-                      : 'border-gray-300'
-                  }`}
-                  disabled={form.isSubmitting}
+                  value={formData.endTime}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isSubmitting}
                 />
-                {form.touched.endTime && form.errors.endTime && (
-                  <p className="mt-1 text-sm text-red-600">{form.errors.endTime}</p>
-                )}
               </div>
             </div>
 
@@ -207,11 +290,11 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
               <input
                 type="text"
                 name="location"
-                value={form.values.location}
-                onChange={form.handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.location}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: Parque Central, San José"
-                disabled={form.isSubmitting}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -222,10 +305,10 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
               </label>
               <select
                 name="activityStatusId"
-                value={form.values.activityStatusId}
-                onChange={form.handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={form.isSubmitting}
+                value={formData.activityStatusId}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSubmitting}
               >
                 <option value={1}>No Iniciada</option>
                 <option value={2}>En Progreso</option>
@@ -241,18 +324,18 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            disabled={form.isSubmitting}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors font-medium disabled:opacity-50"
+            disabled={isSubmitting}
+            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
           </button>
           <button
-            type="button"
-            onClick={form.handleSubmit}
-            disabled={form.isSubmitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium"
+            type="submit"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium transition-colors"
           >
-            {form.isSubmitting ? (
+            {isSubmitting ? (
               <>
                 <InlineSpinner className="h-4 w-4 text-white mr-2" />
                 {activity ? 'Actualizando...' : 'Creando...'}
@@ -265,4 +348,4 @@ export const ActivityFormWithHook: React.FC<ActivityFormProps> = ({
       </div>
     </div>
   );
-};
+}
