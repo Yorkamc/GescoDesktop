@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Gesco.Desktop.Core.Services;
 using Gesco.Desktop.Shared.DTOs;
 using Gesco.Desktop.Core.Interfaces;
+using Gesco.Desktop.Data.Context;
+using System.Security.Claims;
 
 namespace Gesco.Desktop.UI.Controllers
 {
@@ -13,11 +16,16 @@ namespace Gesco.Desktop.UI.Controllers
     {
         private readonly IActivityService _activityService;
         private readonly ILogger<ActivitiesController> _logger;
+        private readonly LocalDbContext _context;
 
-        public ActivitiesController(IActivityService activityService, ILogger<ActivitiesController> logger)
+        public ActivitiesController(
+            IActivityService activityService, 
+            ILogger<ActivitiesController> logger,
+            LocalDbContext context)
         {
             _activityService = activityService;
             _logger = logger;
+            _context = context;
         }
 
         /// <summary>
@@ -64,6 +72,8 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting activity: {ActivityId}", id);
+                
                 var activity = await _activityService.GetActivityByIdAsync(id);
                 
                 if (activity == null)
@@ -106,10 +116,27 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
-                _logger.LogInformation("Creating activity: {Name}", request.Name);
+                _logger.LogInformation("=== CREATE ACTIVITY REQUEST ===");
+                _logger.LogInformation("User authenticated: {IsAuth}", User.Identity?.IsAuthenticated);
+                _logger.LogInformation("Request: {@Request}", new { 
+                    request.Name, 
+                    request.StartDate,
+                    request.ActivityStatusId,
+                    request.ManagerUserId,
+                    request.OrganizationId
+                });
 
+                // Log user claims
+                _logger.LogInformation("User claims:");
+                foreach (var claim in User.Claims)
+                {
+                    _logger.LogInformation("  - {Type}: {Value}", claim.Type, claim.Value);
+                }
+
+                // VALIDAR REQUEST
                 if (string.IsNullOrWhiteSpace(request.Name))
                 {
+                    _logger.LogWarning("Validation failed: Name is required");
                     return BadRequest(new ApiResponse
                     {
                         Success = false,
@@ -120,6 +147,7 @@ namespace Gesco.Desktop.UI.Controllers
 
                 if (request.StartDate == default)
                 {
+                    _logger.LogWarning("Validation failed: StartDate is required");
                     return BadRequest(new ApiResponse
                     {
                         Success = false,
@@ -128,22 +156,43 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                // ✅ CORRECTO: ManagerUserId es string (cédula)
+                // ASIGNAR MANAGER USER AUTOMÁTICAMENTE SI NO SE PROPORCIONA
                 if (string.IsNullOrEmpty(request.ManagerUserId))
                 {
-                    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    _logger.LogInformation("No ManagerUserId provided, using current user: {UserId}", currentUserId);
+                    
                     if (!string.IsNullOrEmpty(currentUserId))
                     {
-                        request.ManagerUserId = currentUserId;
+                        // Verificar que el usuario existe y está activo
+                        var userExists = await _context.Users
+                            .AsNoTracking()
+                            .AnyAsync(u => u.Id == currentUserId && u.Active);
+                        
+                        if (userExists)
+                        {
+                            request.ManagerUserId = currentUserId;
+                            _logger.LogInformation("Current user validated and assigned as manager: {UserId}", currentUserId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Current user not found or inactive: {UserId}", currentUserId);
+                        }
                     }
                 }
 
+                // MANEJAR ORGANIZATION ID
                 if (!request.OrganizationId.HasValue || request.OrganizationId == Guid.Empty)
                 {
+                    _logger.LogInformation("No OrganizationId provided, setting to null");
                     request.OrganizationId = null;
                 }
+                else
+                {
+                    _logger.LogInformation("OrganizationId provided: {OrgId}", request.OrganizationId);
+                }
 
-                _logger.LogInformation("Validated request: {@Request}", new { 
+                _logger.LogInformation("Validated request: {@ValidatedRequest}", new { 
                     request.Name, 
                     request.StartDate, 
                     request.ActivityStatusId,
@@ -151,9 +200,11 @@ namespace Gesco.Desktop.UI.Controllers
                     request.OrganizationId 
                 });
 
+                // CREAR ACTIVIDAD
                 var activity = await _activityService.CreateActivityAsync(request);
                 
-                _logger.LogInformation("Activity created successfully: {ActivityId}", activity.Id);
+                _logger.LogInformation("=== ACTIVITY CREATED SUCCESSFULLY ===");
+                _logger.LogInformation("Activity: {ActivityId} - {Name}", activity.Id, activity.Name);
 
                 return CreatedAtAction(
                     nameof(GetActivity),
@@ -165,9 +216,20 @@ namespace Gesco.Desktop.UI.Controllers
                         Message = "Actividad creada exitosamente"
                     });
             }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Validation error creating activity");
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { "Validation error" }
+                });
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating activity: {@Request}", request);
+                _logger.LogError(ex, "=== ERROR CREATING ACTIVITY ===");
+                _logger.LogError("Request: {@Request}", request);
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,
@@ -191,7 +253,16 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
-                _logger.LogInformation("Updating activity {ActivityId}: {Name}", id, request.Name);
+                _logger.LogInformation("=== UPDATE ACTIVITY REQUEST ===");
+                _logger.LogInformation("ActivityId: {ActivityId}", id);
+                _logger.LogInformation("User authenticated: {IsAuth}", User.Identity?.IsAuthenticated);
+                _logger.LogInformation("Request: {@Request}", new { 
+                    request.Name, 
+                    request.StartDate,
+                    request.ActivityStatusId,
+                    request.ManagerUserId,
+                    request.OrganizationId
+                });
 
                 if (string.IsNullOrWhiteSpace(request.Name))
                 {
@@ -224,7 +295,8 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                _logger.LogInformation("Activity updated successfully: {ActivityId}", id);
+                _logger.LogInformation("=== ACTIVITY UPDATED SUCCESSFULLY ===");
+                _logger.LogInformation("Activity: {ActivityId} - {Name}", id, activity.Name);
 
                 return Ok(new ApiResponse<ActivityDto>
                 {
@@ -233,9 +305,20 @@ namespace Gesco.Desktop.UI.Controllers
                     Message = "Actividad actualizada exitosamente"
                 });
             }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Validation error updating activity {ActivityId}", id);
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { "Validation error" }
+                });
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating activity {ActivityId}", id);
+                _logger.LogError(ex, "=== ERROR UPDATING ACTIVITY ===");
+                _logger.LogError("ActivityId: {ActivityId}", id);
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,
@@ -253,11 +336,16 @@ namespace Gesco.Desktop.UI.Controllers
         [ProducesResponseType(typeof(ApiResponse), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteActivity(Guid id)
         {
             try
             {
+                _logger.LogInformation("=== DELETE ACTIVITY REQUEST ===");
+                _logger.LogInformation("ActivityId: {ActivityId}", id);
+                _logger.LogInformation("User authenticated: {IsAuth}", User.Identity?.IsAuthenticated);
+
                 var deleted = await _activityService.DeleteActivityAsync(id);
                 
                 if (!deleted)
@@ -269,7 +357,8 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                _logger.LogInformation("Activity deleted successfully: {ActivityId}", id);
+                _logger.LogInformation("=== ACTIVITY DELETED SUCCESSFULLY ===");
+                _logger.LogInformation("ActivityId: {ActivityId}", id);
 
                 return Ok(new ApiResponse
                 {
@@ -277,9 +366,20 @@ namespace Gesco.Desktop.UI.Controllers
                     Message = "Actividad eliminada exitosamente"
                 });
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Cannot delete activity {ActivityId}: has related records", id);
+                return Conflict(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { "Conflict" }
+                });
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting activity {ActivityId}", id);
+                _logger.LogError(ex, "=== ERROR DELETING ACTIVITY ===");
+                _logger.LogError("ActivityId: {ActivityId}", id);
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,
@@ -299,6 +399,8 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting active activities");
+                
                 var activities = await _activityService.GetActiveActivitiesAsync();
                 
                 return Ok(new ApiResponse<List<ActivityDto>>
@@ -330,6 +432,8 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting activity stats");
+                
                 var stats = await _activityService.GetActivityStatsAsync();
                 
                 return Ok(new ApiResponse<DashboardStatsDto>

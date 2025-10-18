@@ -26,6 +26,8 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
+                _logger.LogInformation("Getting activities for organization: {OrgId}", organizationId);
+                
                 var query = _context.Activities
                     .AsNoTracking()
                     .Include(a => a.ActivityStatus)
@@ -77,6 +79,7 @@ namespace Gesco.Desktop.Core.Services
             try
             {
                 var longId = MapGuidToLong(id);
+                _logger.LogInformation("Getting activity by ID. Guid: {Guid}, Long: {Long}", id, longId);
                 
                 var activity = await _context.Activities
                     .AsNoTracking()
@@ -86,7 +89,7 @@ namespace Gesco.Desktop.Core.Services
                     .Where(a => a.Id == longId)
                     .Select(a => new ActivityDto
                     {
-                        Id = id,
+                        Id = MapLongToGuid(a.Id), // Regenerar desde BD para consistencia
                         Name = a.Name,
                         Description = a.Description,
                         StartDate = a.StartDate,
@@ -106,6 +109,11 @@ namespace Gesco.Desktop.Core.Services
                     })
                     .FirstOrDefaultAsync();
 
+                if (activity == null)
+                {
+                    _logger.LogWarning("Activity not found: {ActivityId}", id);
+                }
+
                 return activity;
             }
             catch (Exception ex)
@@ -120,41 +128,58 @@ namespace Gesco.Desktop.Core.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Creating activity: {ActivityName}", request.Name);
+                _logger.LogInformation("=== CREATE ACTIVITY START ===");
+                _logger.LogInformation("Request: {@Request}", new
+                {
+                    request.Name,
+                    request.StartDate,
+                    request.ActivityStatusId,
+                    request.ManagerUserId,
+                    request.OrganizationId
+                });
 
-                // 1. OBTENER STATUS - usar el ID proporcionado o el por defecto
+                // 1. VALIDAR STATUS
                 long statusId = 1L; // Por defecto "Not Started"
                 
                 if (request.ActivityStatusId > 0)
                 {
                     var statusExists = await _context.ActivityStatuses
+                        .AsNoTracking()
                         .AnyAsync(s => s.Id == (long)request.ActivityStatusId && s.Active);
                     
                     if (statusExists)
                     {
                         statusId = (long)request.ActivityStatusId;
+                        _logger.LogInformation("Using ActivityStatus: {StatusId}", statusId);
                     }
                     else
                     {
-                        _logger.LogWarning("Activity status {StatusId} not found, using default", request.ActivityStatusId);
+                        _logger.LogWarning("Activity status {StatusId} not found or inactive, using default (1)", 
+                            request.ActivityStatusId);
                     }
                 }
 
-                // 2. VALIDAR MANAGER SI SE PROPORCIONA
+                // 2. VALIDAR MANAGER USER (OPCIONAL)
                 if (!string.IsNullOrWhiteSpace(request.ManagerUserId))
                 {
                     var managerExists = await _context.Users
                         .AsNoTracking()
-                        .AnyAsync(u => u.Id == request.ManagerUserId && u.Active);
+                        .AnyAsync(u => u.Id == request.ManagerUserId.Trim() && u.Active);
 
                     if (!managerExists)
                     {
-                        _logger.LogWarning("Manager user not found or inactive: {ManagerId}", request.ManagerUserId);
+                        _logger.LogError("Manager user not found or inactive: {ManagerId}", request.ManagerUserId);
                         throw new ArgumentException($"Usuario manager con cédula {request.ManagerUserId} no encontrado o inactivo");
                     }
+                    
+                    _logger.LogInformation("Manager user validated: {ManagerId}", request.ManagerUserId);
+                }
+                else
+                {
+                    _logger.LogInformation("No manager user specified");
                 }
 
-                // 3. VALIDAR ORGANIZACIÓN SI SE PROPORCIONA
+                // 3. VALIDAR ORGANIZATION (OPCIONAL)
                 if (request.OrganizationId.HasValue && request.OrganizationId.Value != Guid.Empty)
                 {
                     var orgExists = await _context.Organizations
@@ -163,30 +188,36 @@ namespace Gesco.Desktop.Core.Services
 
                     if (!orgExists)
                     {
-                        _logger.LogWarning("Organization not found: {OrgId}", request.OrganizationId.Value);
+                        _logger.LogError("Organization not found: {OrgId}", request.OrganizationId.Value);
                         throw new ArgumentException($"Organización {request.OrganizationId.Value} no encontrada");
                     }
+                    
+                    _logger.LogInformation("Organization validated: {OrgId}", request.OrganizationId.Value);
+                }
+                else
+                {
+                    _logger.LogInformation("No organization specified");
                 }
 
                 // 4. CREAR ENTIDAD
                 var activity = new Activity
                 {
-                    Name = request.Name,
-                    Description = request.Description,
+                    Name = request.Name.Trim(),
+                    Description = request.Description?.Trim(),
                     StartDate = request.StartDate,
                     StartTime = request.StartTime,
                     EndDate = request.EndDate,
                     EndTime = request.EndTime,
-                    Location = request.Location,
+                    Location = request.Location?.Trim(),
                     ActivityStatusId = statusId,
                     ManagerUserId = string.IsNullOrWhiteSpace(request.ManagerUserId) 
                         ? null 
                         : request.ManagerUserId.Trim(),
-                    OrganizationId = request.OrganizationId == Guid.Empty 
+                    OrganizationId = (!request.OrganizationId.HasValue || request.OrganizationId.Value == Guid.Empty)
                         ? null 
-                        : request.OrganizationId,
+                        : request.OrganizationId.Value,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = request.ManagerUserId,
+                    CreatedBy = request.ManagerUserId?.Trim(),
                     SyncVersion = 1,
                     SyncStatus = "pending"
                 };
@@ -194,11 +225,11 @@ namespace Gesco.Desktop.Core.Services
                 _context.Activities.Add(activity);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Activity entity saved with ID: {ActivityId}", activity.Id);
+
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Activity created successfully with ID: {ActivityId}", activity.Id);
-
-                // 5. RECARGAR CON INCLUDES PARA DTO COMPLETO
+                // 5. RECARGAR CON INCLUDES
                 var createdActivity = await _context.Activities
                     .Include(a => a.ActivityStatus)
                     .Include(a => a.Organization)
@@ -207,6 +238,7 @@ namespace Gesco.Desktop.Core.Services
 
                 if (createdActivity == null)
                 {
+                    _logger.LogError("Failed to reload created activity");
                     throw new InvalidOperationException("Error retrieving created activity");
                 }
 
@@ -230,12 +262,16 @@ namespace Gesco.Desktop.Core.Services
                     CreatedAt = createdActivity.CreatedAt
                 };
 
+                _logger.LogInformation("=== CREATE ACTIVITY SUCCESS ===");
+                _logger.LogInformation("Created activity: {Id} - {Name}", dto.Id, dto.Name);
+
                 return dto;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error creating activity: {ActivityName}", request.Name);
+                _logger.LogError(ex, "=== CREATE ACTIVITY FAILED ===");
+                _logger.LogError("Request: {Name}", request.Name);
                 throw;
             }
         }
@@ -256,13 +292,13 @@ namespace Gesco.Desktop.Core.Services
                     return null;
                 }
 
-                // VALIDAR MANAGER SI SE PROPORCIONA Y CAMBIÓ
+                // VALIDAR MANAGER SI CAMBIÓ
                 if (!string.IsNullOrWhiteSpace(request.ManagerUserId) && 
-                    request.ManagerUserId != activity.ManagerUserId)
+                    request.ManagerUserId.Trim() != activity.ManagerUserId)
                 {
                     var managerExists = await _context.Users
                         .AsNoTracking()
-                        .AnyAsync(u => u.Id == request.ManagerUserId && u.Active);
+                        .AnyAsync(u => u.Id == request.ManagerUserId.Trim() && u.Active);
                     
                     if (!managerExists)
                     {
@@ -286,15 +322,15 @@ namespace Gesco.Desktop.Core.Services
                 }
 
                 // ACTUALIZAR CAMPOS
-                activity.Name = request.Name;
-                activity.Description = request.Description;
+                activity.Name = request.Name.Trim();
+                activity.Description = request.Description?.Trim();
                 activity.StartDate = request.StartDate;
                 activity.StartTime = request.StartTime;
                 activity.EndDate = request.EndDate;
                 activity.EndTime = request.EndTime;
-                activity.Location = request.Location;
+                activity.Location = request.Location?.Trim();
                 
-                // ACTUALIZAR STATUS SI SE PROPORCIONA
+                // ACTUALIZAR STATUS
                 if (request.ActivityStatusId > 0)
                 {
                     var statusExists = await _context.ActivityStatuses
@@ -310,12 +346,12 @@ namespace Gesco.Desktop.Core.Services
                     ? null
                     : request.ManagerUserId.Trim();
                     
-                activity.OrganizationId = request.OrganizationId == Guid.Empty 
+                activity.OrganizationId = (!request.OrganizationId.HasValue || request.OrganizationId.Value == Guid.Empty)
                     ? null 
-                    : request.OrganizationId;
+                    : request.OrganizationId.Value;
                     
                 activity.UpdatedAt = DateTime.UtcNow;
-                activity.UpdatedBy = request.ManagerUserId;
+                activity.UpdatedBy = request.ManagerUserId?.Trim();
                 activity.SyncVersion++;
                 activity.SyncStatus = "pending";
 
@@ -341,7 +377,7 @@ namespace Gesco.Desktop.Core.Services
             {
                 var longId = MapGuidToLong(id);
                 
-                // Verificar si hay registros relacionados
+                // Verificar registros relacionados
                 var hasRelatedRecords = await _context.CashRegisters
                     .AnyAsync(cr => cr.ActivityId == longId);
                 
@@ -494,23 +530,19 @@ namespace Gesco.Desktop.Core.Services
         /// </summary>
         private static Guid MapLongToGuid(long longId)
         {
-            // Crear un Guid determinístico basado en el long
             var guidBytes = new byte[16];
             var longBytes = BitConverter.GetBytes(longId);
             
-            // Copiar el long en los primeros 8 bytes
             Array.Copy(longBytes, 0, guidBytes, 0, 8);
             
-            // Usar un patrón fijo para los últimos 8 bytes para identificar que es un ID de actividad
-            // Esto ayuda a debugging y hace el mapeo reversible
-            guidBytes[8] = 0xAC; // AC de ACtivity
-            guidBytes[9] = 0x71; // 71 de ac71vity
+            guidBytes[8] = 0xAC;
+            guidBytes[9] = 0x71;
             guidBytes[10] = 0x00;
             guidBytes[11] = 0x00;
             guidBytes[12] = 0x00;
             guidBytes[13] = 0x00;
             guidBytes[14] = 0x00;
-            guidBytes[15] = 0x01; // Versión 1
+            guidBytes[15] = 0x01;
             
             return new Guid(guidBytes);
         }
@@ -521,7 +553,6 @@ namespace Gesco.Desktop.Core.Services
         private static long MapGuidToLong(Guid guid)
         {
             var bytes = guid.ToByteArray();
-            // Extraer el long de los primeros 8 bytes
             return BitConverter.ToInt64(bytes, 0);
         }
     }

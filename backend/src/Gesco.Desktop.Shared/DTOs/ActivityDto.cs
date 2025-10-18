@@ -1,5 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Gesco.Desktop.Shared.Converters;
 
 namespace Gesco.Desktop.Shared.DTOs
 {
@@ -28,29 +30,34 @@ namespace Gesco.Desktop.Shared.DTOs
 
     public class CreateActivityRequest
     {
-        [Required]
-        [MaxLength(200)]
+        [Required(ErrorMessage = "El nombre es requerido")]
+        [MaxLength(200, ErrorMessage = "El nombre no puede exceder 200 caracteres")]
         public string Name { get; set; } = string.Empty;
         
-        [MaxLength(1000)]
+        [MaxLength(1000, ErrorMessage = "La descripción no puede exceder 1000 caracteres")]
         public string? Description { get; set; }
         
-        [Required]
+        [Required(ErrorMessage = "La fecha de inicio es requerida")]
         public DateOnly StartDate { get; set; }
         
+        // ✅ Agregar JsonConverter para aceptar strings vacíos
+        [JsonConverter(typeof(NullableTimeOnlyJsonConverter))]
         public TimeOnly? StartTime { get; set; }
         
         public DateOnly? EndDate { get; set; }
         
+        // ✅ Agregar JsonConverter para aceptar strings vacíos
+        [JsonConverter(typeof(NullableTimeOnlyJsonConverter))]
         public TimeOnly? EndTime { get; set; }
         
-        [MaxLength(200)]
+        [MaxLength(200, ErrorMessage = "La ubicación no puede exceder 200 caracteres")]
         public string? Location { get; set; }
         
-        public int ActivityStatusId { get; set; } = 1; // ✅ int para frontend
+        [Range(0, int.MaxValue, ErrorMessage = "El ID de estado debe ser mayor o igual a 0")]
+        public int ActivityStatusId { get; set; } = 1; // Default: Not Started
         
-        [MaxLength(50)]
-        public string? ManagerUserId { get; set; } // ✅ string para cédula
+        [MaxLength(50, ErrorMessage = "El ID de usuario manager no puede exceder 50 caracteres")]
+        public string? ManagerUserId { get; set; }
         
         public Guid? OrganizationId { get; set; }
     }

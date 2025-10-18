@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Gesco.Desktop.Core.Interfaces;
 using Gesco.Desktop.Core.Audit;
 using Gesco.Desktop.Shared.DTOs;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Gesco.Desktop.UI.Controllers
 {
@@ -33,8 +34,12 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("=== AUTH CONTROLLER: LOGIN REQUEST ===");
+                _logger.LogInformation("Request Usuario: {Usuario}", request.Usuario);
+                
                 if (string.IsNullOrEmpty(request.Usuario) || string.IsNullOrEmpty(request.Password))
                 {
+                    _logger.LogWarning("Login request with missing credentials");
                     return BadRequest(new { message = "Usuario y contrasena requeridos" });
                 }
 
@@ -50,16 +55,40 @@ namespace Gesco.Desktop.UI.Controllers
 
                 if (result.Success)
                 {
-                    _logger.LogInformation("Successful login for user: {Username}", request.Usuario);
+                    _logger.LogInformation("=== LOGIN SUCCESSFUL ===");
+                    _logger.LogInformation("User: {Username}", request.Usuario);
+                    _logger.LogInformation("Token: {Token}", result.Token?.Substring(0, Math.Min(50, result.Token.Length)) + "...");
+                    
+                    // Decodificar y mostrar claims del token para debugging
+                    if (!string.IsNullOrEmpty(result.Token))
+                    {
+                        try
+                        {
+                            var handler = new JwtSecurityTokenHandler();
+                            var jwtToken = handler.ReadJwtToken(result.Token);
+                            _logger.LogInformation("Token Claims:");
+                            foreach (var claim in jwtToken.Claims)
+                            {
+                                _logger.LogInformation("  - {Type}: {Value}", claim.Type, claim.Value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Could not decode token for logging");
+                        }
+                    }
+                    
                     return Ok(result);
                 }
 
-                _logger.LogWarning("Failed login attempt for user: {Username}", request.Usuario);
+                _logger.LogWarning("=== LOGIN FAILED ===");
+                _logger.LogWarning("User: {Username}, Reason: {Message}", request.Usuario, result.Message);
                 return Unauthorized(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during login for user: {Username}", request.Usuario);
+                _logger.LogError(ex, "=== ERROR IN LOGIN CONTROLLER ===");
+                _logger.LogError("User: {Username}", request.Usuario);
                 return StatusCode(500, new { message = "Error interno del servidor" });
             }
         }
@@ -93,8 +122,12 @@ namespace Gesco.Desktop.UI.Controllers
             try
             {
                 var authHeader = Request.Headers["Authorization"].ToString();
+                _logger.LogInformation("Validating token from header: {Header}", 
+                    string.IsNullOrEmpty(authHeader) ? "EMPTY" : authHeader.Substring(0, Math.Min(30, authHeader.Length)) + "...");
+                
                 if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
                 {
+                    _logger.LogWarning("Token validation failed: No token provided or invalid format");
                     return Unauthorized(new { valid = false, message = "Token no proporcionado" });
                 }
 
@@ -103,10 +136,12 @@ namespace Gesco.Desktop.UI.Controllers
 
                 if (isValid)
                 {
+                    _logger.LogInformation("Token validation successful");
                     var currentUser = await _authService.GetCurrentUserAsync();
                     return Ok(new { valid = true, user = currentUser });
                 }
 
+                _logger.LogWarning("Token validation failed: Invalid token");
                 return Unauthorized(new { valid = false, message = "Token invalido" });
             }
             catch (Exception ex)
@@ -124,9 +159,17 @@ namespace Gesco.Desktop.UI.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting current user info");
+                _logger.LogInformation("User claims:");
+                foreach (var claim in User.Claims)
+                {
+                    _logger.LogInformation("  - {Type}: {Value}", claim.Type, claim.Value);
+                }
+                
                 var user = await _authService.GetCurrentUserAsync();
                 if (user == null)
                 {
+                    _logger.LogWarning("Current user not found");
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
@@ -139,29 +182,29 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        [HttpPost("change-password")]
+        [HttpGet("test-auth")]
         [Authorize]
         [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        public IActionResult TestAuth()
         {
-            try
+            _logger.LogInformation("=== TEST AUTH ENDPOINT ===");
+            _logger.LogInformation("User authenticated: {IsAuth}", User.Identity?.IsAuthenticated);
+            _logger.LogInformation("User claims:");
+            
+            var claims = new Dictionary<string, string>();
+            foreach (var claim in User.Claims)
             {
-                if (string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword))
-                {
-                    return BadRequest(new { message = "Contrasena actual y nueva contrasena son requeridas" });
-                }
+                _logger.LogInformation("  - {Type}: {Value}", claim.Type, claim.Value);
+                claims[claim.Type] = claim.Value;
+            }
 
-                await Task.CompletedTask;
-                
-                return Ok(new { message = "Contrasena cambiada exitosamente" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error changing password");
-                return StatusCode(500, new { message = "Error al cambiar contrasena" });
-            }
+            return Ok(new 
+            { 
+                message = "Authentication successful",
+                isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                claims = claims
+            });
         }
 
         private string GetClientIPAddress()

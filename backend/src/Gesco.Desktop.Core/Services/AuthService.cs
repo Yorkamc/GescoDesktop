@@ -23,16 +23,20 @@ namespace Gesco.Desktop.Core.Services
             _context = context;
             _logger = logger;
             _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? 
-                        "GescoDesktop2024SecretKey12345678901234567890";
+                        "TuClaveSecretaMuyLargaYSegura2024GescoDesktop12345";
             _tokenHandler = new JwtSecurityTokenHandler();
+            
+            _logger.LogInformation("AuthService initialized with JWT secret length: {Length}", _jwtSecret.Length);
         }
 
         public async Task<LoginResultDto> LoginAsync(string usuario, string password)
         {
             try
             {
+                _logger.LogInformation("=== LOGIN ATTEMPT START ===");
                 _logger.LogInformation("Login attempt for user: {Usuario}", usuario);
 
+                // 1. BUSCAR USUARIO
                 var user = await _context.Users
                     .Include(u => u.Organization)
                     .Include(u => u.Role)
@@ -49,6 +53,10 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
+                _logger.LogInformation("User found - ID: {Id}, Username: {Username}, Active: {Active}", 
+                    user.Id, user.Username, user.Active);
+
+                // 2. VERIFICAR QUE ESTÉ ACTIVO
                 if (!user.Active)
                 {
                     _logger.LogWarning("User inactive: {Usuario}", usuario);
@@ -59,20 +67,26 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
+                // 3. VERIFICAR PASSWORD
+                _logger.LogInformation("Verifying password for user: {Usuario}", usuario);
+                _logger.LogInformation("Password hash in DB: {Hash}", user.Password.Substring(0, Math.Min(20, user.Password.Length)) + "...");
+                
                 bool passwordValid = false;
                 try
                 {
                     if (!PasswordHelper.IsValidBCryptHash(user.Password))
                     {
-                        _logger.LogWarning("Invalid password hash format for user: {Usuario}", usuario);
+                        _logger.LogError("INVALID PASSWORD HASH FORMAT for user: {Usuario}", usuario);
+                        _logger.LogError("Hash: {Hash}", user.Password);
                         return new LoginResultDto
                         {
                             Success = false,
-                            Message = "Error de configuracion de usuario"
+                            Message = "Error de configuracion de usuario - contacte al administrador"
                         };
                     }
 
                     passwordValid = PasswordHelper.VerifyPassword(password, user.Password);
+                    _logger.LogInformation("Password verification result: {Result}", passwordValid);
                 }
                 catch (Exception ex)
                 {
@@ -94,11 +108,18 @@ namespace Gesco.Desktop.Core.Services
                     };
                 }
 
+                // 4. GENERAR TOKEN JWT
+                _logger.LogInformation("Generating JWT token for user: {Usuario}", usuario);
                 var token = GenerateJwtToken(user);
+                _logger.LogInformation("JWT Token generated successfully. Length: {Length}", token.Length);
+                _logger.LogInformation("Token preview: {Token}", token.Substring(0, Math.Min(50, token.Length)) + "...");
 
+                // 5. ACTUALIZAR LAST LOGIN
                 await UpdateLastLoginAsync(user.Id);
 
-                _logger.LogInformation("Successful login for user: {Usuario}", usuario);
+                _logger.LogInformation("=== LOGIN SUCCESS ===");
+                _logger.LogInformation("User: {Username}, Role: {Role}, Organization: {Org}", 
+                    user.Username, user.Role?.Name, user.Organization?.Name);
 
                 return new LoginResultDto
                 {
@@ -121,7 +142,8 @@ namespace Gesco.Desktop.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during login for user: {Usuario}", usuario);
+                _logger.LogError(ex, "=== UNEXPECTED ERROR DURING LOGIN ===");
+                _logger.LogError("User: {Usuario}", usuario);
                 return new LoginResultDto
                 {
                     Success = false,
@@ -139,6 +161,8 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
+                _logger.LogInformation("Validating token...");
+                
                 var key = Encoding.ASCII.GetBytes(_jwtSecret);
                 _tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
@@ -146,45 +170,74 @@ namespace Gesco.Desktop.Core.Services
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
                     ValidateAudience = false,
+                    ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 
+                _logger.LogInformation("Token validation successful");
                 return Task.FromResult(true);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Token validation failed");
                 return Task.FromResult(false);
             }
         }
 
-        public Task<UsuarioDto?> GetCurrentUserAsync()
+        public async Task<UsuarioDto?> GetCurrentUserAsync()
         {
-            return Task.FromResult<UsuarioDto?>(null);
+            // Este método necesitaría el HttpContext para obtener el usuario actual
+            // Por ahora retornamos null
+            await Task.CompletedTask;
+            return null;
         }
 
         private string GenerateJwtToken(Gesco.Desktop.Data.Entities.User user)
         {
-            var key = Encoding.ASCII.GetBytes(_jwtSecret);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
+            try
             {
-                Subject = new ClaimsIdentity(new[]
+                var key = Encoding.ASCII.GetBytes(_jwtSecret);
+                
+                _logger.LogInformation("Creating JWT token with claims:");
+                _logger.LogInformation("- NameIdentifier: {Id}", user.Id);
+                _logger.LogInformation("- Name: {Username}", user.Username);
+                _logger.LogInformation("- Email: {Email}", user.Email);
+                _logger.LogInformation("- organization_id: {OrgId}", user.OrganizationId);
+                _logger.LogInformation("- role_id: {RoleId}", user.RoleId);
+
+                var claims = new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id),
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim("organization_id", user.OrganizationId.ToString()),
                     new Claim("role_id", user.RoleId.ToString()),
-                    new Claim("cedula", user.Id)
-                }),
-                Expires = DateTime.UtcNow.AddHours(24),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key), 
-                    SecurityAlgorithms.HmacSha256Signature)
-            };
+                    new Claim("cedula", user.Id),
+                    new Claim("sub", user.Id), // Subject claim - standard JWT claim
+                    new Claim("username", user.Username)
+                };
 
-            var token = _tokenHandler.CreateToken(tokenDescriptor);
-            return _tokenHandler.WriteToken(token);
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.UtcNow.AddHours(24),
+                    SigningCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(key), 
+                        SecurityAlgorithms.HmacSha256Signature)
+                };
+
+                var token = _tokenHandler.CreateToken(tokenDescriptor);
+                var tokenString = _tokenHandler.WriteToken(token);
+                
+                _logger.LogInformation("Token created successfully. Expires: {Expiration}", tokenDescriptor.Expires);
+                
+                return tokenString;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating JWT token");
+                throw;
+            }
         }
 
         private async Task UpdateLastLoginAsync(string userId)
@@ -194,6 +247,8 @@ namespace Gesco.Desktop.Core.Services
                 await _context.Database.ExecuteSqlRawAsync(
                     "UPDATE users SET last_login_at = {0}, updated_at = {1} WHERE id = {2}",
                     DateTime.UtcNow, DateTime.UtcNow, userId);
+                
+                _logger.LogInformation("Last login updated for user: {UserId}", userId);
             }
             catch (Exception ex)
             {
