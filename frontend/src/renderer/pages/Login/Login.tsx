@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext'; // CAMBIO: Importar del contexto correcto
 import { useBackendStatus } from '../../hooks/useBackendStatus';
 import { Alert } from '../../components/Alert';
 import { InlineSpinner } from '../../components/LoadingSpinner';
@@ -11,14 +11,19 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [retries, setRetries] = useState(0);
   
+  // CAMBIO: Ahora usa el contexto correcto
   const { login, isLoading, error, clearError } = useAuth();
   const { status, checkStatus, isConnected, isChecking } = useBackendStatus();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🔐 Iniciando proceso de login...');
+    
     if (!isConnected) {
+      console.warn('⚠️ Backend no conectado, reintentando...');
       if (retries >= 3) {
+        console.error('❌ Máximo de reintentos alcanzado');
         return;
       }
       setRetries(prev => prev + 1);
@@ -26,9 +31,14 @@ export const Login: React.FC = () => {
       return;
     }
     
+    console.log('✅ Backend conectado, procediendo con login');
     const success = await login(username, password);
+    
     if (success) {
+      console.log('✅ Login exitoso, navegando a dashboard...');
       navigate('/dashboard');
+    } else {
+      console.error('❌ Login fallido');
     }
   };
 
