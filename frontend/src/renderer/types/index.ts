@@ -209,6 +209,73 @@ export interface SearchFilters {
   dateRange?: DateRange;
   organizationId?: string;
 }
+export interface Product {
+  id: string;
+  activityCategoryId: number;
+  categoryName?: string;
+  code: string;
+  name: string;
+  description: string;
+  unitPrice: number;
+  initialQuantity: number;
+  currentQuantity: number;
+  alertQuantity: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateProductRequest {
+  activityCategoryId: number;
+  code: string;
+  name: string;
+  description: string;
+  unitPrice: number;
+  initialQuantity: number;
+  alertQuantity: number;
+}
+
+export interface UpdateStockRequest {
+  newQuantity: number;
+  reason: string;
+}
+
+export interface InventoryMovement {
+  id: string;
+  productId: string;
+  productName: string;
+  movementTypeId: number;
+  movementTypeName: string;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  unitCost: number;
+  totalValue: number;
+  justification: string;
+  movementDate: string;
+  performedBy: string;
+  performedByName: string;
+  authorizedBy?: string;
+  authorizedByName?: string;
+}
+
+export interface ProductFilters {
+  categoryId?: number;
+  searchQuery?: string;
+  lowStock?: boolean;
+  active?: boolean;
+}
+
+export const MovementType = {
+  INITIAL_STOCK: 1,
+  PURCHASE: 2,
+  SALE: 3,
+  ADJUSTMENT: 4,
+  RETURN: 5,
+  DAMAGE: 6,
+  TRANSFER: 7,
+} as const;
+
+export type MovementTypeId = typeof MovementType[keyof typeof MovementType];
 
 // ============================================
 // EVENT TYPES

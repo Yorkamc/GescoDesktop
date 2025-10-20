@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard/Dashboard';
 import { LicenseActivation } from './pages/LicenseActivation/LicenseActivation';
 import { Activities } from './pages/Activities/Activities';
 import { ProtectedRoute } from './components/Common/ProtectedRoute';
+import { Products } from './pages/Products/Products';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -54,6 +55,15 @@ function App() {
           
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
+
+          <Route 
+            path="/products" 
+            element={
+              <ProtectedRoute>
+                <Products />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </AuthProvider>
     );

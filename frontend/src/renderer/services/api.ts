@@ -140,7 +140,54 @@ interface CreateActivityRequest {
   managerUserId?: string;
   organizationId?: string;
 }
+interface Product {
+  id: string;
+  activityCategoryId: number;
+  categoryName?: string;
+  code: string;
+  name: string;
+  description: string;
+  unitPrice: number;
+  initialQuantity: number;
+  currentQuantity: number;
+  alertQuantity: number;
+  active: boolean;
+  createdAt: string;
+}
 
+interface CreateProductRequest {
+  activityCategoryId: number;
+  code: string;
+  name: string;
+  description: string;
+  unitPrice: number;
+  initialQuantity: number;
+  alertQuantity: number;
+}
+
+interface UpdateStockRequest {
+  newQuantity: number;
+  reason: string;
+}
+
+interface InventoryMovement {
+  id: string;
+  productId: string;
+  productName: string;
+  movementTypeId: number;
+  movementTypeName: string;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  unitCost: number;
+  totalValue: number;
+  justification: string;
+  movementDate: string;
+  performedBy: string;
+  performedByName: string;
+  authorizedBy?: string;
+  authorizedByName?: string;
+}
 interface ApiResponse<T> {
   success: boolean;
   message?: string;
@@ -535,5 +582,236 @@ setTimeout(async () => {
     console.warn('⚠️ Sin conectividad inicial con backend:', health.message);
   }
 }, 1000);
+export const productsService = {
+  /**
+   * Obtener lista de productos
+   */
+  async getProducts(categoryId?: number): Promise<Product[]> {
+    try {
+      const params = categoryId ? { categoryId } : {};
+      const response = await api.get('/products', { params });
+      
+      if (response.data.success) {
+        return response.data.data || [];
+      } else {
+        throw new Error(response.data.message || 'Error obteniendo productos');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo productos:', error);
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al cargar los productos');
+    }
+  },
+
+  /**
+   * Obtener un producto por ID
+   */
+  async getProduct(id: string): Promise<Product> {
+    try {
+      const response = await api.get(`/products/${id}`);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Producto no encontrado');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo producto:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al cargar el producto');
+    }
+  },
+
+  /**
+   * Crear nuevo producto
+   */
+  async createProduct(product: CreateProductRequest): Promise<Product> {
+    try {
+      const productData = {
+        activityCategoryId: product.activityCategoryId,
+        code: product.code.trim().toUpperCase(),
+        name: product.name.trim(),
+        description: product.description?.trim() || '',
+        unitPrice: Number(product.unitPrice),
+        initialQuantity: Number(product.initialQuantity),
+        alertQuantity: Number(product.alertQuantity),
+      };
+
+      console.log('📝 Enviando datos de producto:', productData);
+
+      const response = await api.post('/products', productData);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Error creando producto');
+      }
+    } catch (error: any) {
+      console.error('❌ Error creando producto:', error);
+      
+      if (error.response?.status === 400) {
+        const errors = error.response.data.errors || [error.response.data.message];
+        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al crear el producto');
+    }
+  },
+
+  /**
+   * Actualizar producto existente
+   */
+  async updateProduct(id: string, product: CreateProductRequest): Promise<Product> {
+    try {
+      const productData = {
+        activityCategoryId: product.activityCategoryId,
+        code: product.code.trim().toUpperCase(),
+        name: product.name.trim(),
+        description: product.description?.trim() || '',
+        unitPrice: Number(product.unitPrice),
+        initialQuantity: Number(product.initialQuantity),
+        alertQuantity: Number(product.alertQuantity),
+      };
+
+      console.log('📝 Actualizando producto:', productData);
+
+      const response = await api.put(`/products/${id}`, productData);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Error actualizando producto');
+      }
+    } catch (error: any) {
+      console.error('❌ Error actualizando producto:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      
+      if (error.response?.status === 400) {
+        const errors = error.response.data.errors || [error.response.data.message];
+        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al actualizar el producto');
+    }
+  },
+
+  /**
+   * Eliminar producto
+   */
+  async deleteProduct(id: string): Promise<void> {
+    try {
+      const response = await api.delete(`/products/${id}`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Error eliminando producto');
+      }
+    } catch (error: any) {
+      console.error('❌ Error eliminando producto:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al eliminar el producto');
+    }
+  },
+
+  /**
+   * Obtener productos con stock bajo
+   */
+  async getLowStockProducts(): Promise<Product[]> {
+    try {
+      const response = await api.get('/products/low-stock');
+      
+      if (response.data.success) {
+        return response.data.data || [];
+      } else {
+        throw new Error(response.data.message || 'Error obteniendo productos con stock bajo');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo productos con stock bajo:', error);
+      throw new Error('Error al cargar productos con stock bajo');
+    }
+  },
+
+  /**
+   * Ajustar stock de un producto
+   */
+  async adjustStock(id: string, adjustment: UpdateStockRequest): Promise<void> {
+    try {
+      const response = await api.put(`/products/${id}/stock`, {
+        newQuantity: Number(adjustment.newQuantity),
+        reason: adjustment.reason.trim(),
+      });
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Error ajustando stock');
+      }
+    } catch (error: any) {
+      console.error('❌ Error ajustando stock:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      
+      if (error.response?.status === 400) {
+        const errors = error.response.data.errors || [error.response.data.message];
+        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada');
+      }
+      
+      throw new Error('Error al ajustar el stock');
+    }
+  },
+
+  /**
+   * Obtener movimientos de inventario
+   */
+  async getInventoryMovements(productId?: string): Promise<InventoryMovement[]> {
+    try {
+      const params = productId ? { productId } : {};
+      const response = await api.get('/products/inventory-movements', { params });
+      
+      if (response.data.success) {
+        return response.data.data || [];
+      } else {
+        throw new Error(response.data.message || 'Error obteniendo movimientos');
+      }
+    } catch (error: any) {
+      console.error('❌ Error obteniendo movimientos:', error);
+      throw new Error('Error al cargar movimientos de inventario');
+    }
+  },
+};
 
 export default api;
