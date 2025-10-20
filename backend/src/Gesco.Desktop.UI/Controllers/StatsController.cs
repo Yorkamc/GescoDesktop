@@ -23,7 +23,6 @@ namespace Gesco.Desktop.UI.Controllers
         /// <summary>
         /// Obtener estadísticas generales del sistema
         /// </summary>
-        /// <returns>Estadísticas del dashboard</returns>
         [HttpGet]
         [ProducesResponseType(typeof(DashboardStatsDto), 200)]
         [ProducesResponseType(500)]
@@ -36,7 +35,6 @@ namespace Gesco.Desktop.UI.Controllers
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-                // ✅ MÉTODO SEGURO: Verificar existencia antes de usar
                 var inProgressActivityStatus = await _context.ActivityStatuses
                     .FirstOrDefaultAsync(s => s.Name == "In Progress");
 
@@ -46,7 +44,6 @@ namespace Gesco.Desktop.UI.Controllers
                 _logger.LogInformation("Found activity status: {StatusFound}", inProgressActivityStatus != null);
                 _logger.LogInformation("Found sales status: {StatusFound}", completedSalesStatus != null);
 
-                // ✅ CÁLCULO SEGURO DE ESTADÍSTICAS - CADA UNO EN TRY-CATCH INDIVIDUAL
                 var totalActivities = 0;
                 var activeActivities = 0;
                 var todaySales = 0m;
@@ -198,7 +195,6 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 _logger.LogError(ex, "Error getting dashboard stats");
                 
-                // ✅ DEVOLVER ESTADÍSTICAS POR DEFECTO EN CASO DE ERROR
                 var defaultStats = new DashboardStatsDto
                 {
                     TotalActivities = 0,
@@ -216,7 +212,7 @@ namespace Gesco.Desktop.UI.Controllers
                     ReportPeriod = "Error al cargar datos"
                 };
 
-                return Ok(defaultStats); // ✅ NO devolver error 500, sino datos por defecto
+                return Ok(defaultStats);
             }
         }
 
@@ -239,12 +235,14 @@ namespace Gesco.Desktop.UI.Controllers
                     .GroupBy(t => t.TransactionDate.Date)
                     .Select(g => new SalesSummaryDto
                     {
-                        Fecha = g.Key,
-                        TotalVentas = g.Sum(t => t.TotalAmount),
-                        Transacciones = g.Count(),
-                        PromedioTransaccion = g.Average(t => t.TotalAmount)
+                        Date = g.Key,
+                        TotalSales = g.Sum(t => t.TotalAmount),
+                        TotalTransactions = g.Count(),
+                        CompletedTransactions = g.Count(),
+                        AverageTransaction = g.Average(t => t.TotalAmount),
+                        TotalItemsSold = 0 // Se puede calcular con un join adicional si es necesario
                     })
-                    .OrderBy(s => s.Fecha)
+                    .OrderBy(s => s.Date)
                     .ToListAsync();
 
                 return Ok(salesData);
@@ -273,7 +271,7 @@ namespace Gesco.Desktop.UI.Controllers
                     .Take(limite)
                     .Select(a => new ActivitySummaryDto
                     {
-                        Id = a.Id, // int -> int (no conversión necesaria)
+                        Id = a.Id,
                         Nombre = a.Name,
                         Estado = a.ActivityStatus.Name,
                         FechaInicio = a.StartDate.ToDateTime(a.StartTime ?? TimeOnly.MinValue),
@@ -292,18 +290,13 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // ✅ DTOs LOCALES PARA EVITAR CONFLICTOS
-    public class SalesSummaryDto
-    {
-        public DateTime Fecha { get; set; }
-        public decimal TotalVentas { get; set; }
-        public int Transacciones { get; set; }
-        public decimal PromedioTransaccion { get; set; }
-    }
-
+    // ============================================
+    // ✅ DTOs LOCALES - CON NOMBRES ÚNICOS
+    // ============================================
+    
     public class ActivitySummaryDto
     {
-        public long Id { get; set; } // int para coincidir con la entidad Activity
+        public long Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public DateTime FechaInicio { get; set; }

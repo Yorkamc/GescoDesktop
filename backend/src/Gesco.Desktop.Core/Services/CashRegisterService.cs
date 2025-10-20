@@ -473,12 +473,5 @@ namespace Gesco.Desktop.Core.Services
         }
     }
 
-    // DTO adicional para cierre de caja (local al servicio)
-    public class CloseCashRegisterRequest
-    {
-        public decimal CashDeclared { get; set; }
-        public string ClosedBy { get; set; } = string.Empty;
-        public string? SupervisedBy { get; set; }
-        public string? Observations { get; set; }
-    }
+    // ✅ ELIMINADO: CloseCashRegisterRequest ahora está en Gesco.Desktop.Shared.DTOs
 }

@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Gesco.Desktop.Shared.DTOs
 {
-  public class CreateSaleRequest
+    // ============================================
+    // SALES REQUEST DTOs
+    // ============================================
+    
+    public class CreateSaleRequest
     {
         [Required]
         public Guid CashRegisterId { get; set; }
@@ -59,7 +61,7 @@ namespace Gesco.Desktop.Shared.DTOs
     }
 
     // ============================================
-    // CASH REGISTER DTOs (si no están ya definidos)
+    // CASH REGISTER DTOs
     // ============================================
 
     public class CreateCashRegisterRequest
@@ -82,6 +84,24 @@ namespace Gesco.Desktop.Shared.DTOs
         
         [MaxLength(50)]
         public string? SupervisorUserId { get; set; }
+    }
+
+    // ✅ AGREGADO: Movido desde CashRegisterService
+    public class CloseCashRegisterRequest
+    {
+        [Required]
+        [Range(0, double.MaxValue)]
+        public decimal CashDeclared { get; set; }
+        
+        [Required]
+        [MaxLength(50)]
+        public string ClosedBy { get; set; } = string.Empty;
+        
+        [MaxLength(50)]
+        public string? SupervisedBy { get; set; }
+        
+        [MaxLength(500)]
+        public string? Observations { get; set; }
     }
 
     public class CashRegisterClosureDto
