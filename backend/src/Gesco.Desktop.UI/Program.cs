@@ -161,7 +161,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IActivationService, ActivationService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-
+builder.Services.AddScoped<ICashRegisterService, CashRegisterService>();
+builder.Services.AddScoped<ISalesTransactionService, SalesTransactionService>();
 // ============================================
 // MIGRATION SERVICE
 // ============================================

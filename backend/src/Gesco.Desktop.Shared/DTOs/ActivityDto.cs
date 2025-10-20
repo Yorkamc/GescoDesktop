@@ -194,27 +194,7 @@ namespace Gesco.Desktop.Shared.DTOs
         public DateTime CreatedAt { get; set; }
     }
 
-    public class CreateCashRegisterRequest
-    {
-        [Required]
-        public Guid ActivityId { get; set; } // ✅ Guid
-        
-        [Required]
-        public int RegisterNumber { get; set; }
-        
-        [MaxLength(100)]
-        public string? Name { get; set; }
-        
-        [MaxLength(200)]
-        public string? Location { get; set; }
-        
-        [MaxLength(50)]
-        public string? OperatorUserId { get; set; } // ✅ string para cédula
-        
-        [MaxLength(50)]
-        public string? SupervisorUserId { get; set; } // ✅ string para cédula
-    }
-
+    
     // ============================================
     // DASHBOARD DTOs
     // ============================================
