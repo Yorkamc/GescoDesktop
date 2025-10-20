@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Gesco.Desktop.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateWithSeedData_20251013_204418 : Migration
+    public partial class InitialCreateWithSeedData_20251019_215501 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -1321,10 +1321,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2854), null, "Activity not started", "Not Started", null, null },
-                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2858), null, "Activity in development", "In Progress", null, null },
-                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2860), null, "Activity completed", "Completed", null, null },
-                    { 4L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2862), null, "Activity cancelled", "Cancelled", null, null }
+                    { 1L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3569), null, "Activity not started", "Not Started", null, null },
+                    { 2L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3580), null, "Activity in development", "In Progress", null, null },
+                    { 3L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3589), null, "Activity completed", "Completed", null, null },
+                    { 4L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3600), null, "Activity cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1332,9 +1332,11 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "requires_justification", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3012), null, "Merchandise entry to inventory", "Stock In", false, null, null },
-                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3015), null, "Stock out by product sale", "Sale", false, null, null },
-                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3017), null, "Inventory adjustment for differences", "Adjustment", true, null, null }
+                    { 1L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4273), null, "Merchandise entry to inventory", "Stock In", false, null, null },
+                    { 2L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4283), null, "Stock out by product sale", "Sale", false, null, null },
+                    { 3L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4291), null, "Inventory adjustment for differences", "Adjustment", true, null, null },
+                    { 4L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4301), null, "Product return", "Return", true, null, null },
+                    { 5L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4310), null, "Product damaged or expired", "Damaged", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1342,9 +1344,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "annual_price", "created_at", "created_by", "description", "monthly_price", "name", "updated_at", "updated_by", "user_limit" },
                 values: new object[,]
                 {
-                    { 1L, true, 299.99m, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3165), null, "Basic membership with essential features", 29.99m, "Basic", null, null, 5 },
-                    { 2L, true, 599.99m, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3169), null, "Professional membership with advanced features", 59.99m, "Professional", null, null, 25 },
-                    { 3L, true, 1299.99m, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3172), null, "Enterprise membership with unlimited features", 129.99m, "Enterprise", null, null, 100 }
+                    { 1L, true, 299.99m, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4803), null, "Basic membership with essential features", 29.99m, "Basic", null, null, 5 },
+                    { 2L, true, 599.99m, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4818), null, "Professional membership with advanced features", 59.99m, "Professional", null, null, 25 },
+                    { 3L, true, 1299.99m, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4830), null, "Enterprise membership with unlimited features", 129.99m, "Enterprise", null, null, 100 }
                 });
 
             migrationBuilder.InsertData(
@@ -1352,25 +1354,31 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "code", "created_at", "created_by", "description", "level", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, "low_stock", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3276), null, "Product inventory is running low", "warning", "Low Stock Alert", null, null },
-                    { 2L, true, "activity_reminder", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3279), null, "Upcoming activity notification", "info", "Activity Reminder", null, null },
-                    { 3L, true, "system_alert", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3282), null, "Critical system notification", "critical", "System Alert", null, null },
-                    { 4L, true, "sync_error", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3284), null, "Data synchronization failed", "error", "Sync Error", null, null }
+                    { 1L, true, "low_stock", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5282), null, "Product inventory is running low", "warning", "Low Stock Alert", null, null },
+                    { 2L, true, "activity_reminder", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5295), null, "Upcoming activity notification", "info", "Activity Reminder", null, null },
+                    { 3L, true, "system_alert", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5306), null, "Critical system notification", "critical", "System Alert", null, null },
+                    { 4L, true, "sync_error", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5316), null, "Data synchronization failed", "error", "Sync Error", null, null },
+                    { 5L, true, "cash_register_closed", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5326), null, "Cash register has been closed", "info", "Cash Register Closed", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "organizations",
                 columns: new[] { "id", "active", "address", "conflict_resolution", "contact_email", "contact_phone", "created_at", "created_by", "integrity_hash", "last_sync", "last_sync_error", "name", "purchaser_name", "sync_status", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { new Guid("14c2818e-a421-4047-a660-c6e19d867648"), true, "San José, Costa Rica", null, "demo@gesco.com", "2222-2222", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2435), null, null, null, null, "Demo Organization", "Demo Administrator", "pending", 1L, null, null });
+                values: new object[,]
+                {
+                    { new Guid("6fc5db83-5ee2-4d86-8877-8d5ec923b612"), true, "Heredia, Costa Rica", null, "info@eventoscr.com", "2233-4455", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(1371), null, null, null, null, "Empresa de Eventos CR", "Maria Rodriguez", "pending", 1L, null, null },
+                    { new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), true, "San José, Costa Rica", null, "demo@gesco.com", "2222-2222", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(1347), null, null, null, null, "GESCO Demo Organization", "Demo Administrator", "pending", 1L, null, null }
+                });
 
             migrationBuilder.InsertData(
                 table: "payment_methods",
                 columns: new[] { "id", "active", "created_at", "created_by", "name", "requires_reference", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2955), null, "Cash", false, null, null },
-                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2958), null, "Card", true, null, null },
-                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2969), null, "SINPE Mobile", true, null, null }
+                    { 1L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3976), null, "Cash", false, null, null },
+                    { 2L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4052), null, "Card", true, null, null },
+                    { 3L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4062), null, "SINPE Mobile", true, null, null },
+                    { 4L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4070), null, "Transfer", true, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1378,9 +1386,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2695), null, "Full system access", "Administrator", null, null },
-                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2699), null, "Sales and cash register access", "Salesperson", null, null },
-                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2701), null, "Activity supervision", "Supervisor", null, null }
+                    { 1L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(2974), null, "Full system access", "Administrator", null, null },
+                    { 2L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(2994), null, "Sales and cash register access", "Salesperson", null, null },
+                    { 3L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3003), null, "Activity supervision", "Supervisor", null, null },
+                    { 4L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3012), null, "Cash register operator", "Operator", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1388,9 +1397,9 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2908), null, "Sale pending processing", "Pending", null, null },
-                    { 2L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2910), null, "Sale completed successfully", "Completed", null, null },
-                    { 3L, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2912), null, "Sale cancelled", "Cancelled", null, null }
+                    { 1L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3794), null, "Sale pending processing", "Pending", null, null },
+                    { 2L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3805), null, "Sale completed successfully", "Completed", null, null },
+                    { 3L, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3814), null, "Sale cancelled", "Cancelled", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1398,9 +1407,10 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "active", "allows_system_usage", "created_at", "created_by", "description", "name", "updated_at", "updated_by" },
                 values: new object[,]
                 {
-                    { 1L, true, true, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3065), null, "Active subscription", "Active", null, null },
-                    { 2L, true, false, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3067), null, "Suspended subscription", "Suspended", null, null },
-                    { 3L, true, false, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3070), null, "Cancelled subscription", "Cancelled", null, null }
+                    { 1L, true, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4540), null, "Active subscription", "Active", null, null },
+                    { 2L, true, false, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4550), null, "Suspended subscription", "Suspended", null, null },
+                    { 3L, true, false, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4559), null, "Cancelled subscription", "Cancelled", null, null },
+                    { 4L, true, true, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4568), null, "Trial period", "Trial", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1408,25 +1418,104 @@ namespace Gesco.Desktop.Data.Migrations
                 columns: new[] { "id", "access_level", "allowed_values", "category", "created_at", "created_by", "data_type", "description", "display_order", "environment", "is_editable", "is_sensitive", "key", "max_value", "min_value", "organization_id", "restart_required", "updated_at", "updated_by", "validation_pattern", "value" },
                 values: new object[,]
                 {
-                    { 1L, "admin", null, "system", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3119), null, "string", "System version", 0, "all", false, false, "system.version", null, null, null, false, null, null, null, "1.0.0" },
-                    { 2L, "admin", null, "backup", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3122), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, null, false, null, null, null, "6" },
-                    { 3L, "admin", null, "license", new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3125), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, null, false, null, null, null, "7" }
+                    { 1L, "admin", null, "system", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5511), null, "string", "System version", 0, "all", false, false, "system.version", null, null, null, false, null, null, null, "1.0.0" },
+                    { 2L, "admin", null, "backup", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5525), null, "int", "Backup interval in hours", 0, "all", true, false, "backup.interval_hours", null, null, null, false, null, null, null, "6" },
+                    { 3L, "admin", null, "license", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5535), null, "int", "License check interval in days", 0, "all", true, false, "license.check_interval_days", null, null, null, false, null, null, null, "7" },
+                    { 4L, "admin", null, "sales", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5545), null, "bool", "Allow sales with negative stock", 0, "all", true, false, "sales.allow_negative_stock", null, null, null, false, null, null, null, "false" },
+                    { 5L, "admin", null, "sales", new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5554), null, "decimal", "Default tax rate percentage", 0, "all", true, false, "sales.default_tax_rate", null, null, null, false, null, null, null, "13" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "service_categories",
+                columns: new[] { "id", "active", "conflict_resolution", "created_at", "created_by", "description", "integrity_hash", "last_sync", "last_sync_error", "name", "organization_id", "sync_status", "sync_version", "updated_at", "updated_by" },
+                values: new object[,]
+                {
+                    { 1L, true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5752), null, "Comidas y bebidas", null, null, null, "Alimentos", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "pending", 1L, null, null },
+                    { 2L, true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5766), null, "Bebidas alcohólicas y no alcohólicas", null, null, null, "Bebidas", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "pending", 1L, null, null },
+                    { 3L, true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5776), null, "Recuerdos y merchandising", null, null, null, "Souvenirs", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "pending", 1L, null, null },
+                    { 4L, true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5786), null, "Servicios adicionales", null, null, null, "Servicios", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "pending", 1L, null, null },
+                    { 5L, true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5795), null, "Tickets y boletos", null, null, null, "Entradas", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "pending", 1L, null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "subscriptions",
                 columns: new[] { "id", "cancellation_date", "conflict_resolution", "created_at", "created_by", "expiration_date", "grace_period_end", "integrity_hash", "last_sync", "last_sync_error", "membership_id", "organization_id", "start_date", "subscription_status_id", "sync_status", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { 1L, null, null, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3231), null, new DateTime(2026, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3217), new DateTime(2026, 11, 13, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3225), null, null, null, 1L, new Guid("14c2818e-a421-4047-a660-c6e19d867648"), new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3215), 1L, "pending", 1L, null, null });
+                values: new object[] { 1L, null, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5086), null, new DateTime(2026, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5041), new DateTime(2026, 11, 19, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5069), null, null, null, 2L, new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5035), 1L, "pending", 1L, null, null });
 
             migrationBuilder.InsertData(
                 table: "users",
                 columns: new[] { "id", "active", "conflict_resolution", "created_at", "created_by", "email", "email_verified_at", "first_login", "first_login_at", "full_name", "integrity_hash", "last_login_at", "last_sync", "last_sync_error", "organization_id", "password", "phone", "role_id", "sync_status", "sync_version", "updated_at", "updated_by", "username" },
-                values: new object[] { "118640123", true, null, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(2754), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, null, new Guid("14c2818e-a421-4047-a660-c6e19d867648"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8888-8888", 1L, "pending", 1L, null, null, "admin" });
+                values: new object[,]
+                {
+                    { "105550789", true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3336), null, "operador1@gesco.com", null, false, null, "Luis Operador", null, null, null, null, new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8555-5555", 4L, "pending", 1L, null, null, "operador1" },
+                    { "118640123", true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3292), null, "admin@gesco.com", null, true, null, "System Administrator", null, null, null, null, new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8888-8888", 1L, "pending", 1L, null, null, "admin" },
+                    { "205550123", true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3308), null, "vendedor1@gesco.com", null, false, null, "Carlos Vendedor", null, null, null, null, new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8777-7777", 2L, "pending", 1L, null, null, "vendedor1" },
+                    { "305550456", true, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3323), null, "supervisor1@gesco.com", null, false, null, "Ana Supervisor", null, null, null, null, new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a", "8666-6666", 3L, "pending", 1L, null, null, "supervisor1" }
+                });
 
             migrationBuilder.InsertData(
                 table: "activities",
                 columns: new[] { "id", "activity_status_id", "conflict_resolution", "created_at", "created_by", "description", "end_date", "end_time", "integrity_hash", "last_sync", "last_sync_error", "location", "manager_user_id", "name", "organization_id", "start_date", "start_time", "sync_status", "sync_version", "updated_at", "updated_by" },
-                values: new object[] { 1L, 1L, null, new DateTime(2025, 10, 14, 2, 44, 36, 129, DateTimeKind.Utc).AddTicks(3403), "118640123", "Sample activity for demonstration", new DateOnly(2025, 10, 14), new TimeOnly(4, 44, 36, 129).Add(TimeSpan.FromTicks(3399)), null, null, null, "Demo Location", "118640123", "Demo Activity", new Guid("14c2818e-a421-4047-a660-c6e19d867648"), new DateOnly(2025, 10, 13), new TimeOnly(20, 44, 36, 129).Add(TimeSpan.FromTicks(3388)), "pending", 1L, null, null });
+                values: new object[,]
+                {
+                    { 1L, 1L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(6896), "118640123", "Festival anual de música en vivo", new DateOnly(2025, 11, 20), new TimeOnly(23, 0, 0), null, null, null, "Parque Central, San José", "118640123", "Festival de Música 2025", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), new DateOnly(2025, 11, 18), new TimeOnly(14, 0, 0), "pending", 1L, null, null },
+                    { 2L, 2L, null, new DateTime(2025, 10, 15, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7095), "118640123", "Exposición de comida típica costarricense", new DateOnly(2025, 10, 28), new TimeOnly(22, 0, 0), null, null, null, "Centro de Convenciones", "305550456", "Feria Gastronómica", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), new DateOnly(2025, 10, 26), new TimeOnly(10, 0, 0), "pending", 1L, null, null },
+                    { 3L, 1L, null, new DateTime(2025, 10, 10, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7177), "118640123", "Carrera de 10K y 5K", new DateOnly(2025, 12, 18), new TimeOnly(12, 0, 0), null, null, null, "Sabana Metropolitana", "305550456", "Maratón Ciudad 2025", new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"), new DateOnly(2025, 12, 18), new TimeOnly(6, 0, 0), "pending", 1L, null, null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "activity_categories",
+                columns: new[] { "id", "activity_id", "conflict_resolution", "created_at", "created_by", "integrity_hash", "last_sync", "last_sync_error", "service_category_id", "sync_status", "sync_version", "updated_at", "updated_by" },
+                values: new object[,]
+                {
+                    { 1L, 1L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7513), null, null, null, null, 1L, "pending", 1L, null, null },
+                    { 2L, 1L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7522), null, null, null, null, 2L, "pending", 1L, null, null },
+                    { 3L, 1L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7530), null, null, null, null, 3L, "pending", 1L, null, null },
+                    { 4L, 2L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7538), null, null, null, null, 1L, "pending", 1L, null, null },
+                    { 5L, 2L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7547), null, null, null, null, 2L, "pending", 1L, null, null },
+                    { 6L, 3L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7555), null, null, null, null, 5L, "pending", 1L, null, null },
+                    { 7L, 3L, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7565), null, null, null, null, 2L, "pending", 1L, null, null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "cash_registers",
+                columns: new[] { "id", "activity_id", "closed_at", "conflict_resolution", "created_at", "created_by", "integrity_hash", "is_open", "last_sync", "last_sync_error", "location", "name", "opened_at", "operator_user_id", "register_number", "supervisor_user_id", "sync_status", "sync_version", "updated_at", "updated_by" },
+                values: new object[,]
+                {
+                    { 1L, 1L, null, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8523), null, null, false, null, null, "Zona de comidas Norte", "Caja Principal - Alimentos", null, "205550123", 1, "305550456", "pending", 1L, null, null },
+                    { 2L, 1L, null, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8539), null, null, false, null, null, "Bar Central", "Caja Bebidas", null, "105550789", 2, "305550456", "pending", 1L, null, null },
+                    { 3L, 1L, null, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8550), null, null, false, null, null, "Tienda de Recuerdos", "Caja Souvenirs", null, null, 3, null, "pending", 1L, null, null },
+                    { 4L, 2L, null, null, new DateTime(2025, 10, 15, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8582), null, null, true, null, null, "Stand 1", "Caja 1 - Comidas", new DateTime(2025, 10, 19, 23, 56, 34, 392, DateTimeKind.Utc).AddTicks(8561), "205550123", 1, "305550456", "pending", 1L, null, null },
+                    { 5L, 2L, null, null, new DateTime(2025, 10, 15, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8597), null, null, false, null, null, "Stand 2", "Caja 2 - Bebidas", null, "105550789", 2, "305550456", "pending", 1L, null, null },
+                    { 6L, 3L, null, null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8608), null, null, false, null, null, "Punto de Registro", "Caja Inscripciones", null, null, 1, null, "pending", 1L, null, null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "category_products",
+                columns: new[] { "id", "active", "activity_category_id", "alert_quantity", "code", "conflict_resolution", "created_at", "created_by", "current_quantity", "description", "initial_quantity", "integrity_hash", "last_sync", "last_sync_error", "name", "sync_status", "sync_version", "unit_price", "updated_at", "updated_by" },
+                values: new object[,]
+                {
+                    { 1L, true, 1L, 20, "ALM-001", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7837), null, 200, "Hamburguesa con queso, lechuga y tomate", 200, null, null, null, "Hamburguesa Clásica", "pending", 1L, 3500m, null, null },
+                    { 2L, true, 1L, 30, "ALM-002", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7856), null, 300, "Perro caliente con salsa especial", 300, null, null, null, "Hot Dog", "pending", 1L, 2000m, null, null },
+                    { 3L, true, 1L, 25, "ALM-003", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7870), null, 250, "Porción grande de papas fritas", 250, null, null, null, "Papas Fritas", "pending", 1L, 1500m, null, null },
+                    { 4L, true, 1L, 15, "ALM-004", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7887), null, 150, "Pizza individual", 150, null, null, null, "Pizza Personal", "pending", 1L, 4000m, null, null },
+                    { 5L, true, 2L, 50, "BEB-001", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7901), null, 500, "Cerveza nacional 355ml", 500, null, null, null, "Cerveza Nacional", "pending", 1L, 2500m, null, null },
+                    { 6L, true, 2L, 40, "BEB-002", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7916), null, 400, "Refresco natural de frutas", 400, null, null, null, "Refresco Natural", "pending", 1L, 1500m, null, null },
+                    { 7L, true, 2L, 60, "BEB-003", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7929), null, 600, "Agua purificada 500ml", 600, null, null, null, "Agua Embotellada", "pending", 1L, 1000m, null, null },
+                    { 8L, true, 2L, 20, "BEB-004", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7943), null, 200, "Café costarricense premium", 200, null, null, null, "Café Premium", "pending", 1L, 2000m, null, null },
+                    { 9L, true, 3L, 10, "SOU-001", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7957), null, 100, "Camiseta oficial del evento", 100, null, null, null, "Camiseta Festival 2025", "pending", 1L, 8000m, null, null },
+                    { 10L, true, 3L, 10, "SOU-002", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7971), null, 80, "Gorra bordada del festival", 80, null, null, null, "Gorra Edición Especial", "pending", 1L, 6000m, null, null },
+                    { 11L, true, 3L, 5, "SOU-003", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7985), null, 60, "Taza cerámica del evento", 60, null, null, null, "Taza Conmemorativa", "pending", 1L, 5000m, null, null },
+                    { 12L, true, 4L, 15, "FER-001", null, new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7998), null, 120, "Plato típico costarricense", 150, null, null, null, "Gallo Pinto", "pending", 1L, 3000m, null, null },
+                    { 13L, true, 4L, 10, "FER-002", null, new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8015), null, 75, "Casado con carne, arroz, frijoles y ensalada", 100, null, null, null, "Casado Completo", "pending", 1L, 4500m, null, null },
+                    { 14L, true, 4L, 20, "FER-003", null, new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8031), null, 180, "Par de tamales tradicionales", 200, null, null, null, "Tamales", "pending", 1L, 2500m, null, null },
+                    { 15L, true, 5L, 15, "FER-BEB-001", null, new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8047), null, 130, "Bebida tradicional de arroz", 150, null, null, null, "Horchata", "pending", 1L, 1500m, null, null },
+                    { 16L, true, 5L, 20, "FER-BEB-002", null, new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8119), null, 185, "Bebida refrescante natural", 200, null, null, null, "Chan con Limón", "pending", 1L, 1200m, null, null },
+                    { 17L, true, 6L, 20, "MAR-ENT-001", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8136), null, 300, "Entrada para carrera 10 kilómetros", 300, null, null, null, "Inscripción 10K", "pending", 1L, 15000m, null, null },
+                    { 18L, true, 6L, 30, "MAR-ENT-002", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8149), null, 500, "Entrada para carrera 5 kilómetros", 500, null, null, null, "Inscripción 5K", "pending", 1L, 10000m, null, null },
+                    { 19L, true, 7L, 60, "MAR-BEB-001", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8164), null, 600, "Bebida isotónica 500ml", 600, null, null, null, "Bebida Deportiva", "pending", 1L, 2000m, null, null },
+                    { 20L, true, 7L, 80, "MAR-BEB-002", null, new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8178), null, 800, "Agua enriquecida 750ml", 800, null, null, null, "Agua con Electrolitos", "pending", 1L, 1500m, null, null }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_activation_history_activated_by_user_id",
