@@ -138,31 +138,35 @@ namespace Gesco.Desktop.Core.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.CategoryProducts.Add(product);
+ _context.CategoryProducts.Add(product);
+        
+        // ✅ CORREGIDO: Guardar primero el producto para obtener su ID
+        await _context.SaveChangesAsync();
 
-                // Create initial stock movement if there's initial quantity
-                if (request.InitialQuantity > 0)
+        // Create initial stock movement if there's initial quantity
+        if (request.InitialQuantity > 0)
+        {
+            var stockInType = await _context.InventoryMovementTypes
+                .FirstOrDefaultAsync(t => t.Name == "Stock In");
+
+            if (stockInType != null)
+            {
+                var movement = new InventoryMovement
                 {
-                    var stockInType = await _context.InventoryMovementTypes
-                        .FirstOrDefaultAsync(t => t.Name == "Stock In");
+                    ProductId = product.Id, // Ahora product.Id ya tiene valor
+                    MovementTypeId = stockInType.Id,
+                    Quantity = request.InitialQuantity,
+                    PreviousQuantity = 0,
+                    NewQuantity = request.InitialQuantity,
+                    MovementDate = DateTime.UtcNow,
+                    Justification = "Initial stock",
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                    if (stockInType != null)
-                    {
-                        var movement = new InventoryMovement
-                        {
-                            ProductId = product.Id, // long -> long
-                            MovementTypeId = stockInType.Id, // long -> long
-                            Quantity = request.InitialQuantity,
-                            PreviousQuantity = 0,
-                            NewQuantity = request.InitialQuantity,
-                            MovementDate = DateTime.UtcNow,
-                            Justification = "Initial stock",
-                            CreatedAt = DateTime.UtcNow
-                        };
-
-                        _context.InventoryMovements.Add(movement);
-                    }
-                }
+                _context.InventoryMovements.Add(movement);
+                await _context.SaveChangesAsync(); // Guardar el movimiento
+            }
+        }
 
                 await _context.SaveChangesAsync();
 
