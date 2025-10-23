@@ -275,6 +275,51 @@ export const MovementType = {
   TRANSFER: 7,
 } as const;
 
+export interface ServiceCategory {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  name: string;
+  description: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateServiceCategoryRequest {
+  organizationId: string;
+  name: string;
+  description: string;
+}
+
+/**
+ * Activity Category (Categoría de Actividad)
+ */
+export interface ActivityCategory {
+  id: string;
+  activityId: string;
+  activityName: string;
+  serviceCategoryId: string;
+  serviceCategoryName: string;
+  createdAt: string;
+}
+
+export interface CreateActivityCategoryRequest {
+  activityId: string;
+  serviceCategoryId: string;
+}
+
+/**
+ * API Response wrapper
+ */
+export interface CategoryApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  errors: string[];
+  timestamp: string;
+}
+
+
 export type MovementTypeId = typeof MovementType[keyof typeof MovementType];
 
 // ============================================
@@ -286,3 +331,4 @@ export interface CustomEventMap {
   'auth-token-expired': CustomEvent;
   'license-expired': CustomEvent<{ daysRemaining: number }>;
 }
+

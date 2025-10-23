@@ -7,6 +7,7 @@ export interface AlertProps {
   message: string;
   onRetry?: () => void;
   onDismiss?: () => void;
+  onClose?: () => void;
 }
 
 const alertStyles = {
