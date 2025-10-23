@@ -6,6 +6,7 @@ import { LicenseActivation } from './pages/LicenseActivation/LicenseActivation';
 import { Activities } from './pages/Activities/Activities';
 import { ProtectedRoute } from './components/Common/ProtectedRoute';
 import { Products } from './pages/Products/Products';
+import { ServiceCategories } from './pages/Category/Category';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -61,6 +62,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Products />
+              </ProtectedRoute>
+            } 
+          />
+            <Route 
+            path="/categories" 
+            element={
+              <ProtectedRoute>
+                <ServiceCategories />
               </ProtectedRoute>
             } 
           />
