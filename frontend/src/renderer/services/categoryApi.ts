@@ -20,8 +20,9 @@ export const serviceCategoriesService = {
       console.log('🔍 Obteniendo categorías de servicio...');
       const params = organizationId ? { organizationId } : {};
       
+      // CORREGIDO: Usar la ruta correcta del backend
       const response = await api.get<CategoryApiResponse<ServiceCategory[]>>(
-        '/service-categories',
+        '/Categories/service',
         { params }
       );
       
@@ -45,7 +46,7 @@ export const serviceCategoriesService = {
       
       // Manejo específico de errores
       if (error.response?.status === 404) {
-        console.error('❌ Endpoint no encontrado - Verifica que el backend tenga el endpoint /api/service-categories');
+        console.error('❌ Endpoint no encontrado - Verifica que el backend tenga el endpoint /api/Categories/service');
         throw new Error('El endpoint de categorías no está disponible. Contacta al administrador.');
       }
       
@@ -73,7 +74,7 @@ export const serviceCategoriesService = {
   async getServiceCategoryById(id: string): Promise<ServiceCategory> {
     try {
       const response = await api.get<CategoryApiResponse<ServiceCategory>>(
-        `/service-categories/${id}`
+        `/Categories/service/${id}`
       );
       
       if (response.data && response.data.data) {
@@ -95,7 +96,7 @@ export const serviceCategoriesService = {
       console.log('📝 Creando categoría:', data);
       
       const response = await api.post<CategoryApiResponse<ServiceCategory>>(
-        '/service-categories',
+        '/Categories/service',
         data
       );
       
@@ -127,7 +128,7 @@ export const serviceCategoriesService = {
       console.log('📝 Actualizando categoría:', id, data);
       
       const response = await api.put<CategoryApiResponse<ServiceCategory>>(
-        `/service-categories/${id}`,
+        `/Categories/service/${id}`,
         data
       );
       
@@ -147,7 +148,7 @@ export const serviceCategoriesService = {
    */
   async deleteServiceCategory(id: string): Promise<void> {
     try {
-      await api.delete(`/service-categories/${id}`);
+      await api.delete(`/Categories/service/${id}`);
     } catch (error) {
       console.error('Error deleting service category:', error);
       throw error;
@@ -160,7 +161,7 @@ export const serviceCategoriesService = {
   async toggleServiceCategoryStatus(id: string, active: boolean): Promise<ServiceCategory> {
     try {
       const response = await api.patch<CategoryApiResponse<ServiceCategory>>(
-        `/service-categories/${id}/status`,
+        `/Categories/service/${id}/status`,
         { active }
       );
       
@@ -187,7 +188,7 @@ export const activityCategoriesService = {
     try {
       const params = activityId ? { activityId } : {};
       const response = await api.get<CategoryApiResponse<ActivityCategory[]>>(
-        '/activity-categories',
+        '/Categories/activity',
         { params }
       );
       
@@ -212,7 +213,7 @@ export const activityCategoriesService = {
   async getActivityCategoryById(id: string): Promise<ActivityCategory> {
     try {
       const response = await api.get<CategoryApiResponse<ActivityCategory>>(
-        `/activity-categories/${id}`
+        `/Categories/activity/${id}`
       );
       
       if (response.data && response.data.data) {
@@ -232,7 +233,7 @@ export const activityCategoriesService = {
   async createActivityCategory(data: CreateActivityCategoryRequest): Promise<ActivityCategory> {
     try {
       const response = await api.post<CategoryApiResponse<ActivityCategory>>(
-        '/activity-categories',
+        '/Categories/activity',
         data
       );
       
@@ -252,7 +253,7 @@ export const activityCategoriesService = {
    */
   async deleteActivityCategory(id: string): Promise<void> {
     try {
-      await api.delete(`/activity-categories/${id}`);
+      await api.delete(`/Categories/activity/${id}`);
     } catch (error) {
       console.error('Error deleting activity category:', error);
       throw error;
