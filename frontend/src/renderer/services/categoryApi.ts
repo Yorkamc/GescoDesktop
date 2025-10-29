@@ -1,3 +1,4 @@
+// frontend/src/renderer/services/categoryApi.ts
 import api from './api';
 import type {
   ServiceCategory,
@@ -16,14 +17,52 @@ export const serviceCategoriesService = {
    */
   async getServiceCategories(organizationId?: string): Promise<ServiceCategory[]> {
     try {
+      console.log('🔍 Obteniendo categorías de servicio...');
       const params = organizationId ? { organizationId } : {};
+      
       const response = await api.get<CategoryApiResponse<ServiceCategory[]>>(
         '/service-categories',
         { params }
       );
-      return response.data.data;
-    } catch (error) {
-      console.error('Error fetching service categories:', error);
+      
+      console.log('✅ Categorías obtenidas:', response.data);
+      
+      // Verificar si la respuesta tiene la estructura correcta
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      // Si la respuesta es directamente un array
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      console.warn('⚠️ Estructura de respuesta inesperada:', response.data);
+      return [];
+      
+    } catch (error: any) {
+      console.error('❌ Error fetching service categories:', error);
+      
+      // Manejo específico de errores
+      if (error.response?.status === 404) {
+        console.error('❌ Endpoint no encontrado - Verifica que el backend tenga el endpoint /api/service-categories');
+        throw new Error('El endpoint de categorías no está disponible. Contacta al administrador.');
+      }
+      
+      if (error.response?.status === 401) {
+        console.error('❌ No autorizado - Token inválido o expirado');
+        throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      }
+      
+      if (error.response?.status === 403) {
+        console.error('❌ Prohibido - No tienes permisos');
+        throw new Error('No tienes permisos para ver las categorías.');
+      }
+      
+      if (error.code === 'ERR_NETWORK') {
+        throw new Error('Error de conexión con el servidor. Verifica que el backend esté corriendo.');
+      }
+      
       throw error;
     }
   },
@@ -36,7 +75,12 @@ export const serviceCategoriesService = {
       const response = await api.get<CategoryApiResponse<ServiceCategory>>(
         `/service-categories/${id}`
       );
-      return response.data.data;
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data as any;
     } catch (error) {
       console.error('Error fetching service category:', error);
       throw error;
@@ -48,13 +92,26 @@ export const serviceCategoriesService = {
    */
   async createServiceCategory(data: CreateServiceCategoryRequest): Promise<ServiceCategory> {
     try {
+      console.log('📝 Creando categoría:', data);
+      
       const response = await api.post<CategoryApiResponse<ServiceCategory>>(
         '/service-categories',
         data
       );
-      return response.data.data;
-    } catch (error) {
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data as any;
+    } catch (error: any) {
       console.error('Error creating service category:', error);
+      
+      if (error.response?.status === 400) {
+        const errors = error.response.data.errors || [error.response.data.message];
+        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
+      }
+      
       throw error;
     }
   },
@@ -67,11 +124,18 @@ export const serviceCategoriesService = {
     data: Partial<CreateServiceCategoryRequest>
   ): Promise<ServiceCategory> {
     try {
+      console.log('📝 Actualizando categoría:', id, data);
+      
       const response = await api.put<CategoryApiResponse<ServiceCategory>>(
         `/service-categories/${id}`,
         data
       );
-      return response.data.data;
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data as any;
     } catch (error) {
       console.error('Error updating service category:', error);
       throw error;
@@ -99,7 +163,12 @@ export const serviceCategoriesService = {
         `/service-categories/${id}/status`,
         { active }
       );
-      return response.data.data;
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data as any;
     } catch (error) {
       console.error('Error toggling service category status:', error);
       throw error;
@@ -121,7 +190,16 @@ export const activityCategoriesService = {
         '/activity-categories',
         { params }
       );
-      return response.data.data;
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      return [];
     } catch (error) {
       console.error('Error fetching activity categories:', error);
       throw error;
@@ -136,7 +214,12 @@ export const activityCategoriesService = {
       const response = await api.get<CategoryApiResponse<ActivityCategory>>(
         `/activity-categories/${id}`
       );
-      return response.data.data;
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data as any;
     } catch (error) {
       console.error('Error fetching activity category:', error);
       throw error;
@@ -152,7 +235,12 @@ export const activityCategoriesService = {
         '/activity-categories',
         data
       );
-      return response.data.data;
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data as any;
     } catch (error) {
       console.error('Error creating activity category:', error);
       throw error;

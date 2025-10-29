@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ServiceCategory, CreateServiceCategoryRequest } from '../types';
-import { InlineSpinner } from '../pages/Category/LoadingSpinner';
+import { InlineSpinner } from './LoadingSpinner';
 
 interface ServiceCategoryFormProps {
   category?: ServiceCategory | null;

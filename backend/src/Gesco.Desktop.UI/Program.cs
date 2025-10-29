@@ -152,6 +152,7 @@ builder.Services.AddResponseCaching();
 builder.Services.AddSingleton<DatabaseEncryption>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // ============================================
 // BUSINESS SERVICES
