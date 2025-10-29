@@ -101,16 +101,16 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         )}
       </div>
 
-      {/* Botones con diseño responsive mejorado */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        {/* Botón Editar - Siempre visible */}
+      {/* Botones con diseño responsive mejorado - Grid de 2 columnas */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* Botón Editar */}
         <button
           onClick={() => onEdit(activity)}
-          className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 
-                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
+          className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 
+                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
         >
           <svg
-            className="w-4 h-4"
+            className="w-4 h-4 flex-shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -129,11 +129,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         {onManageCategories && (
           <button
             onClick={() => onManageCategories(activity)}
-            className="flex-1 bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 
-                     transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
+            className="bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 
+                     transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
           >
             <svg
-              className="w-4 h-4"
+              className="w-4 h-4 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -147,21 +147,22 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             </svg>
             <span className="hidden sm:inline">Categorías</span>
             {categoryCount > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-purple-600 rounded-full">
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-purple-600 rounded-full">
                 {categoryCount}
               </span>
             )}
           </button>
         )}
 
-        {/* Botón Eliminar */}
+        {/* Botón Eliminar - Ocupa toda la fila si no hay categorías */}
         <button
           onClick={() => onDelete(activity.id)}
-          className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-lg hover:bg-red-100 
-                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
+          className={`bg-red-50 text-red-700 px-3 py-2 rounded-lg hover:bg-red-100 
+                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium
+                   ${!onManageCategories ? 'col-span-2' : ''}`}
         >
           <svg
-            className="w-4 h-4"
+            className="w-4 h-4 flex-shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
