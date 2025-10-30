@@ -54,7 +54,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </svg>
           <span className="font-medium">Inicio:</span>
           <span className="ml-1">{startDate}</span>
-          {activity.startTime && <span className="ml-1">• {activity.startTime}</span>}
+          {activity.startTime && <span className="ml-1">• {activity.startTime.substring(0, 5)}</span>}
         </div>
 
         <div className="flex items-center">
@@ -63,7 +63,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </svg>
           <span className="font-medium">Fin:</span>
           <span className="ml-1">{endDate}</span>
-          {activity.endTime && <span className="ml-1">• {activity.endTime}</span>}
+          {activity.endTime && <span className="ml-1">• {activity.endTime.substring(0, 5)}</span>}
         </div>
 
         {activity.location && (
@@ -122,8 +122,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         )}
       </div>
 
-      {/* Botones con diseño responsive mejorado - Grid de 2x2 */}
+      {/* Botones con diseño responsive mejorado - Grid de 2x2 REORGANIZADO */}
       <div className="grid grid-cols-2 gap-2">
+        {/* PRIMERA FILA: Editar + Eliminar */}
+        
         {/* Botón Editar */}
         <button
           onClick={() => onEdit(activity)}
@@ -145,6 +147,30 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </svg>
           <span className="hidden sm:inline">Editar</span>
         </button>
+
+        {/* Botón Eliminar */}
+        <button
+          onClick={() => onDelete(activity.id)}
+          className="bg-red-50 text-red-700 px-3 py-2 rounded-lg hover:bg-red-100 
+                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+        >
+          <svg
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+          <span className="hidden sm:inline">Eliminar</span>
+        </button>
+
+        {/* SEGUNDA FILA: Categorías + Productos */}
 
         {/* Botón Categorías */}
         {onManageCategories && (
@@ -203,29 +229,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             )}
           </button>
         )}
-
-        {/* Botón Eliminar - Ocupa las columnas restantes */}
-        <button
-          onClick={() => onDelete(activity.id)}
-          className={`bg-red-50 text-red-700 px-3 py-2 rounded-lg hover:bg-red-100 
-                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium
-                   ${!onManageCategories && !onManageProducts ? 'col-span-2' : ''}`}
-        >
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-          <span className="hidden sm:inline">Eliminar</span>
-        </button>
       </div>
     </div>
   );

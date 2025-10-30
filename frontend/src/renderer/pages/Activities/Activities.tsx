@@ -2,9 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActivities } from '../../hooks/useActivities';
 import { activityCategoriesService } from '../../services/categoryApi';
+import { activityProductsService } from '../../services/activityProductsApi';
 import { ActivityCard } from '../../components/ActivityCard';
 import { ActivityForm } from './ActivityForm';
 import { ActivityCategoryManager } from '../../components/ActivityCategoryManager';
+import { ActivityProductManager } from '../../components/ActivityProductManager';
 import { Alert } from '../../components/Alert';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import type { Activity, CreateActivityRequest } from '../../types';
@@ -32,6 +34,10 @@ export const Activities: React.FC = () => {
   const [managingActivity, setManagingActivity] = useState<Activity | null>(null);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
+  // Gestión de productos
+  const [managingProductsActivity, setManagingProductsActivity] = useState<Activity | null>(null);
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({});
+
   // Cargar conteo de categorías para cada actividad
   useEffect(() => {
     const loadCategoryCounts = async () => {
@@ -52,6 +58,29 @@ export const Activities: React.FC = () => {
 
     if (activities.length > 0) {
       loadCategoryCounts();
+    }
+  }, [activities]);
+
+  // Cargar conteo de productos para cada actividad
+  useEffect(() => {
+    const loadProductCounts = async () => {
+      const counts: Record<string, number> = {};
+      
+      for (const activity of activities) {
+        try {
+          const products = await activityProductsService.getActivityProducts(activity.id);
+          counts[activity.id] = products.length;
+        } catch (err) {
+          console.error(`Error loading products for activity ${activity.id}:`, err);
+          counts[activity.id] = 0;
+        }
+      }
+      
+      setProductCounts(counts);
+    };
+
+    if (activities.length > 0) {
+      loadProductCounts();
     }
   }, [activities]);
 
@@ -100,6 +129,16 @@ export const Activities: React.FC = () => {
   const handleCloseCategoryManager = () => {
     setManagingActivity(null);
     // Recargar conteo de categorías
+    refreshActivities();
+  };
+
+  const handleManageProducts = (activity: Activity) => {
+    setManagingProductsActivity(activity);
+  };
+
+  const handleCloseProductManager = () => {
+    setManagingProductsActivity(null);
+    // Recargar conteo de productos
     refreshActivities();
   };
 
@@ -382,7 +421,9 @@ export const Activities: React.FC = () => {
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onManageCategories={handleManageCategories}
+                        onManageProducts={handleManageProducts}
                         categoryCount={categoryCounts[activity.id] || 0}
+                        productCount={productCounts[activity.id] || 0}
                       />
                     ))}
                   </div>
@@ -409,6 +450,15 @@ export const Activities: React.FC = () => {
           activityId={managingActivity.id}
           activityName={managingActivity.name}
           onClose={handleCloseCategoryManager}
+        />
+      )}
+
+      {/* Product Manager Modal */}
+      {managingProductsActivity && (
+        <ActivityProductManager
+          activityId={managingProductsActivity.id}
+          activityName={managingProductsActivity.name}
+          onClose={handleCloseProductManager}
         />
       )}
     </div>
