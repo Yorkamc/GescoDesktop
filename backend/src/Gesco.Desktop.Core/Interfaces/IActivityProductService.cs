@@ -68,7 +68,7 @@ namespace Gesco.Desktop.Core.Interfaces
         /// Obtiene las categorías disponibles para asignar a una actividad
         /// (categorías que aún no están asignadas)
         /// </summary>
-        Task<List<ServiceCategoryDto>> GetAvailableCategories ForActivityAsync(
+        Task<List<ServiceCategoryDto>> GetAvailableCategoriesForActivityAsync(
             Guid activityId);
         
         /// <summary>
