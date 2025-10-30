@@ -7,7 +7,9 @@ interface ActivityCardProps {
   onEdit: (activity: Activity) => void;
   onDelete: (id: string) => void;
   onManageCategories?: (activity: Activity) => void;
+  onManageProducts?: (activity: Activity) => void;
   categoryCount?: number;
+  productCount?: number;
 }
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({
@@ -15,7 +17,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   onEdit,
   onDelete,
   onManageCategories,
+  onManageProducts,
   categoryCount = 0,
+  productCount = 0,
 }) => {
   const startDate = formatDate(activity.startDate);
   const endDate = activity.endDate ? formatDate(activity.endDate) : 'Sin definir';
@@ -99,9 +103,26 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             </span>
           </div>
         )}
+
+        {/* Indicador de productos */}
+        {productCount > 0 && (
+          <div className="flex items-center text-green-600">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+            <span className="font-medium">
+              {productCount} {productCount === 1 ? 'producto asignado' : 'productos asignados'}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Botones con diseño responsive mejorado - Grid de 2 columnas */}
+      {/* Botones con diseño responsive mejorado - Grid de 2x2 */}
       <div className="grid grid-cols-2 gap-2">
         {/* Botón Editar */}
         <button
@@ -125,7 +146,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           <span className="hidden sm:inline">Editar</span>
         </button>
 
-        {/* Botón Categorías - Solo si está disponible */}
+        {/* Botón Categorías */}
         {onManageCategories && (
           <button
             onClick={() => onManageCategories(activity)}
@@ -154,12 +175,41 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </button>
         )}
 
-        {/* Botón Eliminar - Ocupa toda la fila si no hay categorías */}
+        {/* Botón Productos */}
+        {onManageProducts && (
+          <button
+            onClick={() => onManageProducts(activity)}
+            className="bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 
+                     transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+          >
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+            <span className="hidden sm:inline">Productos</span>
+            {productCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-600 rounded-full">
+                {productCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Botón Eliminar - Ocupa las columnas restantes */}
         <button
           onClick={() => onDelete(activity.id)}
           className={`bg-red-50 text-red-700 px-3 py-2 rounded-lg hover:bg-red-100 
                    transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium
-                   ${!onManageCategories ? 'col-span-2' : ''}`}
+                   ${!onManageCategories && !onManageProducts ? 'col-span-2' : ''}`}
         >
           <svg
             className="w-4 h-4 flex-shrink-0"
