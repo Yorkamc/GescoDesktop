@@ -108,9 +108,7 @@ export const Dashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Bienvenido{user?.nombreCompleto ? `, ${user.nombreCompleto.split(' ')[0]}` : ''}
               </h2>
-              <p className="text-gray-600">
-                {stats.reportPeriod || 'Aquí tienes un resumen de la actividad actual'}
-              </p>
+              
             </div>
 
             {error && (
