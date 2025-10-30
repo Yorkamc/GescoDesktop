@@ -152,7 +152,7 @@ builder.Services.AddResponseCaching();
 builder.Services.AddSingleton<DatabaseEncryption>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 
 // ============================================
 // BUSINESS SERVICES
@@ -164,6 +164,8 @@ builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICashRegisterService, CashRegisterService>();
 builder.Services.AddScoped<ISalesTransactionService, SalesTransactionService>();
+builder.Services.AddScoped<IActivityProductService, ActivityProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 // ============================================
 // MIGRATION SERVICE
 // ============================================
