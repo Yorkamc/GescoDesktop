@@ -2,7 +2,7 @@ import React from 'react';
 import type { Activity } from '../types';
 import { formatDate, getActivityStatusColor } from '../utils/formatters';
 
-interface ActivityCardProps {
+export interface ActivityCardProps {
   activity: Activity;
   onEdit: (activity: Activity) => void;
   onDelete: (id: string) => void;
