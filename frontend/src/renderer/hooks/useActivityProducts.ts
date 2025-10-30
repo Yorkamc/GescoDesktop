@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { activityProductsService } from '../services/activityProductsApi';
-import type { Product, CreateProductRequest } from '../types';
+import type { Product } from '../types';
 
 export interface UseActivityProductsReturn {
   products: Product[];
   isLoading: boolean;
   error: string | null;
-  createProduct: (activityId: string, product: CreateProductRequest) => Promise<void>;
-  updateProduct: (activityId: string, productId: string, product: CreateProductRequest) => Promise<void>;
-  deleteProduct: (activityId: string, productId: string) => Promise<void>;
+  assignProduct: (activityId: string, productId: string) => Promise<void>;
+  removeProduct: (activityId: string, productId: string) => Promise<void>;
   refreshProducts: () => Promise<void>;
   clearError: () => void;
 }
@@ -43,44 +42,23 @@ export const useActivityProducts = (activityId?: string): UseActivityProductsRet
     fetchProducts();
   }, [fetchProducts]);
 
-  const createProduct = async (activityId: string, product: CreateProductRequest): Promise<void> => {
+  const assignProduct = async (activityId: string, productId: string): Promise<void> => {
     try {
       setError(null);
-      const newProduct = await activityProductsService.createActivityProduct(activityId, product);
-      setProducts(prev => [...prev, newProduct]);
+      await activityProductsService.assignProductToActivity(activityId, productId);
+      // Recargar la lista de productos después de asignar
+      await fetchProducts();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al crear el producto';
+      const errorMessage = err instanceof Error ? err.message : 'Error al asignar el producto';
       setError(errorMessage);
       throw err;
     }
   };
 
-  const updateProduct = async (
-    activityId: string,
-    productId: string,
-    product: CreateProductRequest
-  ): Promise<void> => {
+  const removeProduct = async (activityId: string, productId: string): Promise<void> => {
     try {
       setError(null);
-      const updatedProduct = await activityProductsService.updateActivityProduct(
-        activityId,
-        productId,
-        product
-      );
-      setProducts(prev =>
-        prev.map(p => (p.id === productId ? updatedProduct : p))
-      );
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar el producto';
-      setError(errorMessage);
-      throw err;
-    }
-  };
-
-  const deleteProduct = async (activityId: string, productId: string): Promise<void> => {
-    try {
-      setError(null);
-      await activityProductsService.deleteActivityProduct(activityId, productId);
+      await activityProductsService.removeProductFromActivity(activityId, productId);
       setProducts(prev => prev.filter(p => p.id !== productId));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al eliminar el producto';
@@ -101,9 +79,8 @@ export const useActivityProducts = (activityId?: string): UseActivityProductsRet
     products,
     isLoading,
     error,
-    createProduct,
-    updateProduct,
-    deleteProduct,
+    assignProduct,
+    removeProduct,
     refreshProducts,
     clearError,
   };

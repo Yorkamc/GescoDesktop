@@ -1,5 +1,5 @@
 import api from './api';
-import type { Product, CreateProductRequest, ApiResponse } from '../types';
+import type { Product, ApiResponse } from '../types';
 
 export interface ActivityProductSummary {
   activityId: string;
@@ -21,7 +21,7 @@ export interface ActivityProductSummary {
 
 export const activityProductsService = {
   /**
-   * Obtener todos los productos de una actividad
+   * Obtener todos los productos asignados a una actividad
    */
   async getActivityProducts(activityId: string): Promise<Product[]> {
     try {
@@ -59,6 +59,55 @@ export const activityProductsService = {
   },
 
   /**
+   * Asignar un producto existente a una actividad
+   */
+  async assignProductToActivity(activityId: string, productId: string): Promise<void> {
+    try {
+      console.log('➕ Asignando producto a actividad:', { activityId, productId });
+      
+      await api.post(`/activities/${activityId}/products/${productId}`);
+      
+      console.log('✅ Producto asignado exitosamente');
+      
+    } catch (error: any) {
+      console.error('❌ Error assigning product to activity:', error);
+      
+      if (error.response?.status === 409) {
+        throw new Error('Este producto ya está asignado a la actividad');
+      }
+      
+      if (error.response?.status === 404) {
+        throw new Error('Actividad o producto no encontrado');
+      }
+      
+      throw new Error('Error al asignar el producto a la actividad');
+    }
+  },
+
+  /**
+   * Eliminar un producto de una actividad (desasignar)
+   * Nota: Esto NO elimina el producto de la base de datos, solo lo desasocia de la actividad
+   */
+  async removeProductFromActivity(activityId: string, productId: string): Promise<void> {
+    try {
+      console.log('➖ Eliminando producto de actividad:', { activityId, productId });
+      
+      await api.delete(`/activities/${activityId}/products/${productId}`);
+      
+      console.log('✅ Producto eliminado de la actividad exitosamente');
+      
+    } catch (error: any) {
+      console.error('❌ Error removing product from activity:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado en la actividad');
+      }
+      
+      throw new Error('Error al eliminar el producto de la actividad');
+    }
+  },
+
+  /**
    * Obtener resumen de productos de una actividad
    */
   async getActivityProductsSummary(activityId: string): Promise<ActivityProductSummary> {
@@ -82,7 +131,7 @@ export const activityProductsService = {
   },
 
   /**
-   * Obtener productos de una actividad por categoría
+   * Obtener productos de una actividad filtrados por categoría
    */
   async getActivityProductsByCategory(
     activityId: string, 
@@ -106,101 +155,6 @@ export const activityProductsService = {
     } catch (error: any) {
       console.error('❌ Error fetching products by category:', error);
       throw new Error('Error al cargar productos por categoría');
-    }
-  },
-
-  /**
-   * Crear un producto para una actividad
-   */
-  async createActivityProduct(
-    activityId: string,
-    product: CreateProductRequest
-  ): Promise<Product> {
-    try {
-      console.log('📝 Creando producto para actividad:', activityId, product);
-      
-      const response = await api.post<ApiResponse<Product>>(
-        `/activities/${activityId}/products`,
-        product
-      );
-      
-      if (response.data && response.data.data) {
-        return response.data.data;
-      }
-      
-      return response.data as any;
-      
-    } catch (error: any) {
-      console.error('❌ Error creating activity product:', error);
-      
-      if (error.response?.status === 400) {
-        const errors = error.response.data.errors || [error.response.data.message];
-        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
-      }
-      
-      if (error.response?.status === 404) {
-        throw new Error('Actividad no encontrada');
-      }
-      
-      throw new Error('Error al crear el producto');
-    }
-  },
-
-  /**
-   * Actualizar un producto de una actividad
-   */
-  async updateActivityProduct(
-    activityId: string,
-    productId: string,
-    product: CreateProductRequest
-  ): Promise<Product> {
-    try {
-      console.log('📝 Actualizando producto:', productId, product);
-      
-      const response = await api.put<ApiResponse<Product>>(
-        `/activities/${activityId}/products/${productId}`,
-        product
-      );
-      
-      if (response.data && response.data.data) {
-        return response.data.data;
-      }
-      
-      return response.data as any;
-      
-    } catch (error: any) {
-      console.error('❌ Error updating activity product:', error);
-      
-      if (error.response?.status === 404) {
-        throw new Error('Producto no encontrado');
-      }
-      
-      if (error.response?.status === 400) {
-        const errors = error.response.data.errors || [error.response.data.message];
-        throw new Error(`Datos inválidos: ${errors.join(', ')}`);
-      }
-      
-      throw new Error('Error al actualizar el producto');
-    }
-  },
-
-  /**
-   * Eliminar un producto de una actividad
-   */
-  async deleteActivityProduct(activityId: string, productId: string): Promise<void> {
-    try {
-      console.log('🗑️ Eliminando producto:', productId);
-      
-      await api.delete(`/activities/${activityId}/products/${productId}`);
-      
-    } catch (error: any) {
-      console.error('❌ Error deleting activity product:', error);
-      
-      if (error.response?.status === 404) {
-        throw new Error('Producto no encontrado');
-      }
-      
-      throw new Error('Error al eliminar el producto');
     }
   }
 };
