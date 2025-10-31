@@ -111,7 +111,7 @@ namespace Gesco.Desktop.Shared.DTOs
     public class CategoryProductDto
     {
         public Guid Id { get; set; } // ✅ Guid (mapea desde long)
-        public int ActivityCategoryId { get; set; } // ✅ int para frontend (orden)
+        public int? ActivityCategoryId { get; set; } // ✅ int para frontend (orden)
         public string? Code { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -121,11 +121,12 @@ namespace Gesco.Desktop.Shared.DTOs
         public int AlertQuantity { get; set; }
         public bool Active { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsAssignedToActivity => ActivityCategoryId.HasValue;
     }
 
     public class CreateProductRequest
     {
-        public int ActivityCategoryId { get; set; } // ✅ int (orden de categoría)
+        public int? ActivityCategoryId { get; set; } // ✅ int (orden de categoría)
         
         [MaxLength(50)]
         public string? Code { get; set; }

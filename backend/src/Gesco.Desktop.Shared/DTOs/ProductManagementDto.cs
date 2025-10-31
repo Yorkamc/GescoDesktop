@@ -15,15 +15,15 @@ namespace Gesco.Desktop.Shared.DTOs
         public Guid Id { get; set; }
         
         // Información de ActivityCategory
-        public Guid ActivityCategoryId { get; set; }
+        public Guid? ActivityCategoryId { get; set; }
         public string? ActivityCategoryName { get; set; }
         
         // Información de Activity
-        public Guid ActivityId { get; set; }
+        public Guid? ActivityId { get; set; }
         public string? ActivityName { get; set; }
         
         // Información de ServiceCategory
-        public Guid ServiceCategoryId { get; set; }
+        public Guid? ServiceCategoryId { get; set; }
         public string? ServiceCategoryName { get; set; }
         
         // Información del producto
@@ -36,6 +36,7 @@ namespace Gesco.Desktop.Shared.DTOs
         public int AlertQuantity { get; set; }
         public bool Active { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsAssignedToActivity => ActivityCategoryId.HasValue;
     }
 
     /// <summary>
@@ -43,29 +44,36 @@ namespace Gesco.Desktop.Shared.DTOs
     /// </summary>
     public class CreateProductForActivityRequest
     {
-        [Required(ErrorMessage = "La categoría de actividad es requerida")]
-        public Guid ActivityCategoryId { get; set; }
-        
+        public Guid? ActivityCategoryId { get; set; }
+
         [MaxLength(50)]
         public string? Code { get; set; }
-        
+
         [Required(ErrorMessage = "El nombre es requerido")]
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
-        
+
         [MaxLength(1000)]
         public string? Description { get; set; }
-        
+
         [Required]
         [Range(0, double.MaxValue, ErrorMessage = "El precio debe ser mayor o igual a 0")]
         public decimal UnitPrice { get; set; }
-        
+
         [Range(0, int.MaxValue, ErrorMessage = "La cantidad inicial debe ser mayor o igual a 0")]
         public int InitialQuantity { get; set; }
-        
+
         [Range(0, int.MaxValue, ErrorMessage = "La cantidad de alerta debe ser mayor o igual a 0")]
         public int AlertQuantity { get; set; } = 10;
     }
+    public class AssignProductToActivityRequest
+{
+    [Required]
+    public Guid ProductId { get; set; }
+    
+    [Required]
+    public Guid ActivityCategoryId { get; set; }
+}
 
     /// <summary>
     /// DTO para obtener resumen de productos por actividad

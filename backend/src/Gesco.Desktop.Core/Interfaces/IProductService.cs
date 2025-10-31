@@ -12,5 +12,6 @@ namespace Gesco.Desktop.Core.Interfaces
         Task<List<CategoryProductDto>> GetLowStockProductsAsync();
         Task<bool> UpdateStockAsync(Guid productId, int newQuantity, string? reason = null);
         Task<List<InventoryMovementDto>> GetInventoryMovementsAsync(Guid? productId = null);
+        Task<List<CategoryProductDto>> GetUnassignedProductsAsync();
     }
 }

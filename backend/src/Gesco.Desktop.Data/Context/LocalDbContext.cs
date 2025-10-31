@@ -378,6 +378,7 @@ namespace Gesco.Desktop.Data.Context
                 .HasOne(cp => cp.ActivityCategory)
                 .WithMany(ac => ac.CategoryProducts)
                 .HasForeignKey(cp => cp.ActivityCategoryId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // TransactionDetail

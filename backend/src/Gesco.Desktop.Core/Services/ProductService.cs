@@ -50,8 +50,10 @@ namespace Gesco.Desktop.Core.Services
                 {
                     result.Add(new CategoryProductDto
                     {
-                        Id = GenerateGuidFromLong(p.Id), // ✅ ACTUALIZADO: long -> Guid
-                        ActivityCategoryId = GetCategoryOrder(p.ActivityCategoryId, allCategories),
+                        Id = GenerateGuidFromLong(p.Id),
+                        ActivityCategoryId = p.ActivityCategoryId.HasValue 
+                            ? GetCategoryOrder(p.ActivityCategoryId.Value, allCategories) 
+                            : (int?)null,
                         Code = p.Code,
                         Name = p.Name,
                         Description = p.Description,
@@ -74,13 +76,51 @@ namespace Gesco.Desktop.Core.Services
             }
         }
 
+        public async Task<List<CategoryProductDto>> GetUnassignedProductsAsync()
+        {
+            try
+            {
+                var products = await _context.CategoryProducts
+                    .Where(p => p.Active && p.ActivityCategoryId == null)
+                    .OrderBy(p => p.Name)
+                    .ToListAsync();
+
+                var result = new List<CategoryProductDto>();
+
+                foreach (var p in products)
+                {
+                    result.Add(new CategoryProductDto
+                    {
+                        Id = GenerateGuidFromLong(p.Id),
+                        ActivityCategoryId = null, // ✅ Sin asignar
+                        Code = p.Code,
+                        Name = p.Name,
+                        Description = p.Description,
+                        UnitPrice = p.UnitPrice,
+                        InitialQuantity = p.InitialQuantity,
+                        CurrentQuantity = p.CurrentQuantity,
+                        AlertQuantity = p.AlertQuantity,
+                        Active = p.Active,
+                        CreatedAt = p.CreatedAt
+                    });
+                }
+
+                _logger.LogInformation("Retrieved {Count} unassigned products", result.Count);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving unassigned products");
+                throw;
+            }
+        }
+
         public async Task<CategoryProductDto?> GetProductByIdAsync(Guid id)
         {
             try
             {
-                // ✅ ACTUALIZADO: Convertir Guid del DTO a long de la entidad
                 var longId = ExtractLongFromGuid(id);
-                
+
                 var product = await _context.CategoryProducts
                     .Include(p => p.ActivityCategory)
                     .FirstOrDefaultAsync(p => p.Id == longId);
@@ -95,7 +135,9 @@ namespace Gesco.Desktop.Core.Services
                 return new CategoryProductDto
                 {
                     Id = id,
-                    ActivityCategoryId = GetCategoryOrder(product.ActivityCategoryId, allCategories),
+                    ActivityCategoryId = product.ActivityCategoryId.HasValue 
+                        ? GetCategoryOrder(product.ActivityCategoryId.Value, allCategories) 
+                        : (int?)null,
                     Code = product.Code,
                     Name = product.Name,
                     Description = product.Description,
@@ -118,15 +160,21 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var categoryId = await GetActivityCategoryIdByOrder(request.ActivityCategoryId);
-                if (!categoryId.HasValue)
+                // ✅ ActivityCategoryId ahora puede ser null
+                long? categoryId = null;
+
+                if (request.ActivityCategoryId.HasValue)
                 {
-                    throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
+                    categoryId = await GetActivityCategoryIdByOrder(request.ActivityCategoryId.Value);
+                    if (!categoryId.HasValue)
+                    {
+                        throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
+                    }
                 }
 
                 var product = new CategoryProduct
                 {
-                    ActivityCategoryId = categoryId.Value, // long -> long
+                    ActivityCategoryId = categoryId, // ✅ Puede ser null
                     Code = request.Code,
                     Name = request.Name,
                     Description = request.Description,
@@ -138,44 +186,39 @@ namespace Gesco.Desktop.Core.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
- _context.CategoryProducts.Add(product);
-        
-        // ✅ CORREGIDO: Guardar primero el producto para obtener su ID
-        await _context.SaveChangesAsync();
-
-        // Create initial stock movement if there's initial quantity
-        if (request.InitialQuantity > 0)
-        {
-            var stockInType = await _context.InventoryMovementTypes
-                .FirstOrDefaultAsync(t => t.Name == "Stock In");
-
-            if (stockInType != null)
-            {
-                var movement = new InventoryMovement
-                {
-                    ProductId = product.Id, // Ahora product.Id ya tiene valor
-                    MovementTypeId = stockInType.Id,
-                    Quantity = request.InitialQuantity,
-                    PreviousQuantity = 0,
-                    NewQuantity = request.InitialQuantity,
-                    MovementDate = DateTime.UtcNow,
-                    Justification = "Initial stock",
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.InventoryMovements.Add(movement);
-                await _context.SaveChangesAsync(); // Guardar el movimiento
-            }
-        }
-
+                _context.CategoryProducts.Add(product);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Created new product: {ProductName} with ID {ProductId}", 
+                // Crear movimiento inicial si hay cantidad
+                if (request.InitialQuantity > 0)
+                {
+                    var stockInType = await _context.InventoryMovementTypes
+                        .FirstOrDefaultAsync(t => t.Name == "Stock In");
+
+                    if (stockInType != null)
+                    {
+                        var movement = new InventoryMovement
+                        {
+                            ProductId = product.Id,
+                            MovementTypeId = stockInType.Id,
+                            Quantity = request.InitialQuantity,
+                            PreviousQuantity = 0,
+                            NewQuantity = request.InitialQuantity,
+                            MovementDate = DateTime.UtcNow,
+                            Justification = "Initial stock",
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.InventoryMovements.Add(movement);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                _logger.LogInformation("Created new product: {ProductName} with ID {ProductId}",
                     product.Name, product.Id);
 
-                // ✅ ACTUALIZADO: Generar Guid para el DTO de respuesta
                 var responseGuid = GenerateGuidFromLong(product.Id);
-                return await GetProductByIdAsync(responseGuid) ?? 
+                return await GetProductByIdAsync(responseGuid) ??
                     throw new InvalidOperationException("Failed to retrieve created product");
             }
             catch (Exception ex)
@@ -189,24 +232,26 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                // ✅ ACTUALIZADO: Convertir Guid del DTO a long de la entidad
                 var longId = ExtractLongFromGuid(id);
-                
+
                 var product = await _context.CategoryProducts.FindAsync(longId);
                 if (product == null)
                 {
                     return null;
                 }
 
-                var categoryId = await GetActivityCategoryIdByOrder(request.ActivityCategoryId);
-                if (!categoryId.HasValue)
+                // ✅ Solo validar si se proporciona ActivityCategoryId
+                long? categoryId = null;
+                if (request.ActivityCategoryId.HasValue)
                 {
-                    throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
+                    categoryId = await GetActivityCategoryIdByOrder(request.ActivityCategoryId.Value);
+                    if (!categoryId.HasValue)
+                    {
+                        throw new ArgumentException($"Activity category with order {request.ActivityCategoryId} not found");
+                    }
                 }
 
-                var oldQuantity = product.CurrentQuantity;
-
-                product.ActivityCategoryId = categoryId.Value; // long -> long
+                product.ActivityCategoryId = categoryId; // ✅ Puede ser null
                 product.Code = request.Code;
                 product.Name = request.Name;
                 product.Description = request.Description;
@@ -236,9 +281,8 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                // ✅ ACTUALIZADO: Convertir Guid del DTO a long de la entidad
                 var longId = ExtractLongFromGuid(id);
-                
+
                 var product = await _context.CategoryProducts.FindAsync(longId);
                 if (product == null)
                 {
@@ -278,8 +322,10 @@ namespace Gesco.Desktop.Core.Services
                 {
                     result.Add(new CategoryProductDto
                     {
-                        Id = GenerateGuidFromLong(p.Id), // ✅ ACTUALIZADO: long -> Guid
-                        ActivityCategoryId = GetCategoryOrder(p.ActivityCategoryId, allCategories),
+                        Id = GenerateGuidFromLong(p.Id),
+                        ActivityCategoryId = p.ActivityCategoryId.HasValue 
+                            ? GetCategoryOrder(p.ActivityCategoryId.Value, allCategories) 
+                            : (int?)null,
                         Code = p.Code,
                         Name = p.Name,
                         Description = p.Description,
@@ -306,9 +352,8 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                // ✅ ACTUALIZADO: Convertir Guid del DTO a long de la entidad
                 var longId = ExtractLongFromGuid(productId);
-                
+
                 var product = await _context.CategoryProducts.FindAsync(longId);
                 if (product == null)
                 {
@@ -329,8 +374,8 @@ namespace Gesco.Desktop.Core.Services
                 {
                     var movement = new InventoryMovement
                     {
-                        ProductId = longId, // long -> long
-                        MovementTypeId = adjustmentType.Id, // long -> long
+                        ProductId = longId,
+                        MovementTypeId = adjustmentType.Id,
                         Quantity = difference,
                         PreviousQuantity = oldQuantity,
                         NewQuantity = newQuantity,
@@ -344,7 +389,7 @@ namespace Gesco.Desktop.Core.Services
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Updated stock for product {ProductId}: {OldQuantity} -> {NewQuantity}", 
+                _logger.LogInformation("Updated stock for product {ProductId}: {OldQuantity} -> {NewQuantity}",
                     productId, oldQuantity, newQuantity);
 
                 return true;
@@ -367,7 +412,6 @@ namespace Gesco.Desktop.Core.Services
 
                 if (productId.HasValue)
                 {
-                    // ✅ ACTUALIZADO: Convertir Guid del DTO a long de la entidad
                     var longId = ExtractLongFromGuid(productId.Value);
                     query = query.Where(m => m.ProductId == longId);
                 }
@@ -384,8 +428,8 @@ namespace Gesco.Desktop.Core.Services
                 {
                     result.Add(new InventoryMovementDto
                     {
-                        Id = GenerateGuidFromLong(m.Id), // ✅ ACTUALIZADO: long -> Guid
-                        ProductId = GenerateGuidFromLong(m.ProductId), // ✅ ACTUALIZADO: long -> Guid
+                        Id = GenerateGuidFromLong(m.Id),
+                        ProductId = GenerateGuidFromLong(m.ProductId),
                         ProductName = m.Product.Name,
                         MovementTypeId = GetMovementTypeOrder(m.MovementTypeId, allMovementTypes),
                         MovementTypeName = m.MovementType.Name,
@@ -413,7 +457,7 @@ namespace Gesco.Desktop.Core.Services
         // ============================================
 
         /// <summary>
-        /// ✅ ACTUALIZADO: Retorna long en lugar de int
+        /// Retorna long en lugar de int, acepta valores nullable
         /// </summary>
         private async Task<long?> GetActivityCategoryIdByOrder(int order)
         {
@@ -421,13 +465,13 @@ namespace Gesco.Desktop.Core.Services
                 .OrderBy(ac => ac.CreatedAt)
                 .ToListAsync();
 
-            return order > 0 && order <= categories.Count 
-                ? categories[order - 1].Id 
+            return order > 0 && order <= categories.Count
+                ? categories[order - 1].Id
                 : null;
         }
 
         /// <summary>
-        /// ✅ ACTUALIZADO: Acepta long en lugar de int
+        /// Acepta long en lugar de int, maneja valores nullable
         /// </summary>
         private static int GetCategoryOrder(long categoryId, List<ActivityCategory> categories)
         {
@@ -436,7 +480,7 @@ namespace Gesco.Desktop.Core.Services
         }
 
         /// <summary>
-        /// ✅ ACTUALIZADO: Acepta long en lugar de int
+        /// Acepta long en lugar de int
         /// </summary>
         private static int GetMovementTypeOrder(long movementTypeId, List<InventoryMovementType> types)
         {
@@ -449,27 +493,27 @@ namespace Gesco.Desktop.Core.Services
         // ============================================
 
         /// <summary>
-        /// ✅ ACTUALIZADO: Convierte long a Guid determinístico
+        /// Convierte long a Guid determinístico
         /// </summary>
         private static Guid GenerateGuidFromLong(long longId)
         {
             var bytes = new byte[16];
             var longBytes = BitConverter.GetBytes(longId);
-            
+
             // Copiar los 8 bytes del long a los primeros 8 bytes del Guid
             Array.Copy(longBytes, 0, bytes, 0, 8);
-            
+
             // Llenar el resto con un patrón determinístico
             for (int i = 8; i < 16; i++)
             {
                 bytes[i] = (byte)((longId >> ((i - 8) * 8)) % 256);
             }
-            
+
             return new Guid(bytes);
         }
 
         /// <summary>
-        /// ✅ ACTUALIZADO: Extrae long desde Guid
+        /// Extrae long desde Guid
         /// </summary>
         private static long ExtractLongFromGuid(Guid guid)
         {

@@ -36,18 +36,18 @@ namespace Gesco.Desktop.Core.Services
                         .ThenInclude(ac => ac.ServiceCategory)
                     .Include(p => p.ActivityCategory)
                         .ThenInclude(ac => ac.Activity)
-                    .Where(p => p.ActivityCategory.ActivityId == activityIdLong && p.Active)
+                    .Where(p => p.ActivityCategory != null && p.ActivityCategory.ActivityId == activityIdLong && p.Active)
                     .OrderBy(p => p.ActivityCategory.ServiceCategory.Name)
                     .ThenBy(p => p.Name)
                     .Select(p => new CategoryProductDetailedDto
                     {
                         Id = MapLongToGuid(p.Id),
-                        ActivityCategoryId = MapLongToGuid(p.ActivityCategoryId),
-                        ActivityCategoryName = p.ActivityCategory.ServiceCategory.Name,
-                        ActivityId = MapLongToGuid(p.ActivityCategory.ActivityId),
-                        ActivityName = p.ActivityCategory.Activity.Name,
-                        ServiceCategoryId = MapLongToGuid(p.ActivityCategory.ServiceCategoryId),
-                        ServiceCategoryName = p.ActivityCategory.ServiceCategory.Name,
+                        ActivityCategoryId = p.ActivityCategoryId.HasValue ? MapLongToGuid(p.ActivityCategoryId.Value) : null,
+                        ActivityCategoryName = p.ActivityCategory != null ? p.ActivityCategory.ServiceCategory.Name : null,
+                        ActivityId = p.ActivityCategory != null ? MapLongToGuid(p.ActivityCategory.ActivityId) : null,
+                        ActivityName = p.ActivityCategory != null ? p.ActivityCategory.Activity.Name : null,
+                        ServiceCategoryId = p.ActivityCategory != null ? MapLongToGuid(p.ActivityCategory.ServiceCategoryId) : null,
+                        ServiceCategoryName = p.ActivityCategory != null ? p.ActivityCategory.ServiceCategory.Name : null,
                         Code = p.Code,
                         Name = p.Name,
                         Description = p.Description,
@@ -170,19 +170,20 @@ namespace Gesco.Desktop.Core.Services
                         .ThenInclude(ac => ac.ServiceCategory)
                     .Include(p => p.ActivityCategory)
                         .ThenInclude(ac => ac.Activity)
-                    .Where(p => p.ActivityCategory.ActivityId == activityIdLong 
+                    .Where(p => p.ActivityCategory != null
+                             && p.ActivityCategory.ActivityId == activityIdLong 
                              && p.ActivityCategory.ServiceCategoryId == serviceCategoryIdLong
                              && p.Active)
                     .OrderBy(p => p.Name)
                     .Select(p => new CategoryProductDetailedDto
                     {
                         Id = MapLongToGuid(p.Id),
-                        ActivityCategoryId = MapLongToGuid(p.ActivityCategoryId),
-                        ActivityCategoryName = p.ActivityCategory.ServiceCategory.Name,
+                        ActivityCategoryId = p.ActivityCategoryId.HasValue ? MapLongToGuid(p.ActivityCategoryId.Value) : null,
+                        ActivityCategoryName = p.ActivityCategory != null ? p.ActivityCategory.ServiceCategory.Name : null,
                         ActivityId = activityId,
-                        ActivityName = p.ActivityCategory.Activity.Name,
+                        ActivityName = p.ActivityCategory != null ? p.ActivityCategory.Activity.Name : null,
                         ServiceCategoryId = serviceCategoryId,
-                        ServiceCategoryName = p.ActivityCategory.ServiceCategory.Name,
+                        ServiceCategoryName = p.ActivityCategory != null ? p.ActivityCategory.ServiceCategory.Name : null,
                         Code = p.Code,
                         Name = p.Name,
                         Description = p.Description,
@@ -230,23 +231,28 @@ namespace Gesco.Desktop.Core.Services
                     activityId,
                     request.Name);
 
-                // Validar que la ActivityCategory pertenece a la actividad
-                var isValid = await ValidateActivityCategoryBelongsToActivityAsync(
-                    activityId, 
-                    request.ActivityCategoryId);
+                long? activityCategoryIdLong = null;
 
-                if (!isValid)
+                // ✅ Solo validar si se proporciona ActivityCategoryId
+                if (request.ActivityCategoryId.HasValue)
                 {
-                    throw new ArgumentException(
-                        $"ActivityCategory {request.ActivityCategoryId} does not belong to Activity {activityId}");
-                }
+                    var isValid = await ValidateActivityCategoryBelongsToActivityAsync(
+                        activityId, 
+                        request.ActivityCategoryId.Value);
 
-                var activityCategoryIdLong = MapGuidToLong(request.ActivityCategoryId);
+                    if (!isValid)
+                    {
+                        throw new ArgumentException(
+                            $"ActivityCategory {request.ActivityCategoryId} does not belong to Activity {activityId}");
+                    }
+
+                    activityCategoryIdLong = MapGuidToLong(request.ActivityCategoryId.Value);
+                }
 
                 // Crear el producto
                 var product = new CategoryProduct
                 {
-                    ActivityCategoryId = activityCategoryIdLong,
+                    ActivityCategoryId = activityCategoryIdLong, // ✅ Puede ser null
                     Code = request.Code?.Trim(),
                     Name = request.Name.Trim(),
                     Description = request.Description?.Trim(),
@@ -321,6 +327,96 @@ namespace Gesco.Desktop.Core.Services
             }
         }
 
+        public async Task<CategoryProductDetailedDto?> AssignProductToActivityAsync(
+            Guid activityId,
+            Guid productId,
+            Guid activityCategoryId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation(
+                    "Assigning product {ProductId} to activity {ActivityId}",
+                    productId,
+                    activityId);
+
+                // Validar que la ActivityCategory pertenece a la actividad
+                var isValid = await ValidateActivityCategoryBelongsToActivityAsync(
+                    activityId,
+                    activityCategoryId);
+
+                if (!isValid)
+                {
+                    throw new ArgumentException(
+                        $"ActivityCategory {activityCategoryId} does not belong to Activity {activityId}");
+                }
+
+                var productIdLong = MapGuidToLong(productId);
+                var product = await _context.CategoryProducts.FindAsync(productIdLong);
+
+                if (product == null)
+                {
+                    return null;
+                }
+
+                // Verificar que no esté ya asignado a otra actividad
+                if (product.ActivityCategoryId.HasValue)
+                {
+                    var currentActivity = await _context.ActivityCategories
+                        .Where(ac => ac.Id == product.ActivityCategoryId.Value)
+                        .Select(ac => ac.ActivityId)
+                        .FirstOrDefaultAsync();
+
+                    if (currentActivity != 0 && currentActivity != MapGuidToLong(activityId))
+                    {
+                        throw new InvalidOperationException(
+                            "Product is already assigned to another activity. Unassign it first.");
+                    }
+                }
+
+                // Asignar a la actividad
+                product.ActivityCategoryId = MapGuidToLong(activityCategoryId);
+                product.UpdatedAt = DateTime.UtcNow;
+                product.SyncVersion++;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                // Recargar con includes
+                var updatedProduct = await _context.CategoryProducts
+                    .AsNoTracking()
+                    .Include(p => p.ActivityCategory)
+                        .ThenInclude(ac => ac.ServiceCategory)
+                    .Include(p => p.ActivityCategory)
+                        .ThenInclude(ac => ac.Activity)
+                    .FirstOrDefaultAsync(p => p.Id == productIdLong);
+
+                if (updatedProduct == null)
+                {
+                    return null;
+                }
+
+                var dto = MapToDetailedDto(updatedProduct, activityId);
+
+                _logger.LogInformation(
+                    "Product assigned successfully: {ProductId} to activity {ActivityId}",
+                    productId,
+                    activityId);
+
+                return dto;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(
+                    ex,
+                    "Error assigning product {ProductId} to activity {ActivityId}",
+                    productId,
+                    activityId);
+                throw;
+            }
+        }
+
         public async Task<CategoryProductDetailedDto?> UpdateProductForActivityAsync(
             Guid activityId,
             Guid productId,
@@ -345,15 +441,18 @@ namespace Gesco.Desktop.Core.Services
                     return null;
                 }
 
-                // Validar nueva ActivityCategory si cambió
-                var isValidCategory = await ValidateActivityCategoryBelongsToActivityAsync(
-                    activityId,
-                    request.ActivityCategoryId);
-
-                if (!isValidCategory)
+                // Validar nueva ActivityCategory si se proporcionó
+                if (request.ActivityCategoryId.HasValue)
                 {
-                    throw new ArgumentException(
-                        $"ActivityCategory {request.ActivityCategoryId} does not belong to Activity {activityId}");
+                    var isValidCategory = await ValidateActivityCategoryBelongsToActivityAsync(
+                        activityId,
+                        request.ActivityCategoryId.Value);
+
+                    if (!isValidCategory)
+                    {
+                        throw new ArgumentException(
+                            $"ActivityCategory {request.ActivityCategoryId} does not belong to Activity {activityId}");
+                    }
                 }
 
                 var productIdLong = MapGuidToLong(productId);
@@ -365,7 +464,9 @@ namespace Gesco.Desktop.Core.Services
                 }
 
                 // Actualizar campos
-                product.ActivityCategoryId = MapGuidToLong(request.ActivityCategoryId);
+                product.ActivityCategoryId = request.ActivityCategoryId.HasValue 
+                    ? MapGuidToLong(request.ActivityCategoryId.Value) 
+                    : null;
                 product.Code = request.Code?.Trim();
                 product.Name = request.Name.Trim();
                 product.Description = request.Description?.Trim();
@@ -425,7 +526,7 @@ namespace Gesco.Desktop.Core.Services
                 if (!isValid)
                 {
                     _logger.LogWarning(
-                        "Cannot delete: Product {ProductId} does not belong to activity {ActivityId}",
+                        "Cannot unassign: Product {ProductId} does not belong to activity {ActivityId}",
                         productId,
                         activityId);
                     return false;
@@ -439,8 +540,8 @@ namespace Gesco.Desktop.Core.Services
                     return false;
                 }
 
-                // Soft delete
-                product.Active = false;
+                // ✅ Desasignar en lugar de soft delete
+                product.ActivityCategoryId = null; // Vuelve a NULL
                 product.UpdatedAt = DateTime.UtcNow;
                 product.SyncVersion++;
 
@@ -448,7 +549,7 @@ namespace Gesco.Desktop.Core.Services
                 await transaction.CommitAsync();
 
                 _logger.LogInformation(
-                    "Product soft deleted: {ProductId} from activity {ActivityId}",
+                    "Product unassigned from activity: {ProductId} from activity {ActivityId}",
                     productId,
                     activityId);
 
@@ -459,7 +560,7 @@ namespace Gesco.Desktop.Core.Services
                 await transaction.RollbackAsync();
                 _logger.LogError(
                     ex,
-                    "Error deleting product {ProductId} from activity {ActivityId}",
+                    "Error unassigning product {ProductId} from activity {ActivityId}",
                     productId,
                     activityId);
                 throw;
@@ -714,6 +815,7 @@ namespace Gesco.Desktop.Core.Services
                 var exists = await _context.CategoryProducts
                     .Include(p => p.ActivityCategory)
                     .AnyAsync(p => p.Id == productIdLong 
+                                && p.ActivityCategory != null
                                 && p.ActivityCategory.ActivityId == activityIdLong);
 
                 return exists;
@@ -762,13 +864,15 @@ namespace Gesco.Desktop.Core.Services
             return new CategoryProductDetailedDto
             {
                 Id = MapLongToGuid(product.Id),
-                ActivityCategoryId = MapLongToGuid(product.ActivityCategoryId),
+                ActivityCategoryId = product.ActivityCategoryId.HasValue 
+                    ? MapLongToGuid(product.ActivityCategoryId.Value) 
+                    : null,
                 ActivityCategoryName = product.ActivityCategory?.ServiceCategory?.Name,
-                ActivityId = activityId,
+                ActivityId = product.ActivityCategory != null ? activityId : null,
                 ActivityName = product.ActivityCategory?.Activity?.Name,
                 ServiceCategoryId = product.ActivityCategory != null 
                     ? MapLongToGuid(product.ActivityCategory.ServiceCategoryId) 
-                    : Guid.Empty,
+                    : null,
                 ServiceCategoryName = product.ActivityCategory?.ServiceCategory?.Name,
                 Code = product.Code,
                 Name = product.Name,
