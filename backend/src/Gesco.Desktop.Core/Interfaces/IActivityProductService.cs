@@ -41,6 +41,20 @@ namespace Gesco.Desktop.Core.Interfaces
             CreateProductForActivityRequest request);
         
         /// <summary>
+        /// Asigna un producto existente a una actividad
+        /// Valida que la ActivityCategory pertenezca a la actividad
+        /// y que el producto no esté ya asignado a otra actividad
+        /// </summary>
+        /// <param name="activityId">ID de la actividad</param>
+        /// <param name="productId">ID del producto existente a asignar</param>
+        /// <param name="activityCategoryId">ID de la categoría de actividad</param>
+        /// <returns>Producto asignado con información completa</returns>
+        Task<CategoryProductDetailedDto?> AssignProductToActivityAsync(
+            Guid activityId,
+            Guid productId,
+            Guid activityCategoryId);
+        
+        /// <summary>
         /// Actualiza un producto existente
         /// Valida que el producto pertenezca a la actividad
         /// </summary>

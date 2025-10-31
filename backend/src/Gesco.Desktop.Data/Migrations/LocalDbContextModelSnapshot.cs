@@ -336,16 +336,16 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             ActivityStatusId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(6896),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7725),
                             CreatedBy = "118640123",
                             Description = "Festival anual de música en vivo",
-                            EndDate = new DateOnly(2025, 11, 20),
+                            EndDate = new DateOnly(2025, 12, 2),
                             EndTime = new TimeOnly(23, 0, 0),
                             Location = "Parque Central, San José",
                             ManagerUserId = "118640123",
                             Name = "Festival de Música 2025",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
-                            StartDate = new DateOnly(2025, 11, 18),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
+                            StartDate = new DateOnly(2025, 11, 30),
                             StartTime = new TimeOnly(14, 0, 0),
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -354,16 +354,16 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             ActivityStatusId = 2L,
-                            CreatedAt = new DateTime(2025, 10, 15, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7095),
+                            CreatedAt = new DateTime(2025, 10, 26, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7743),
                             CreatedBy = "118640123",
                             Description = "Exposición de comida típica costarricense",
-                            EndDate = new DateOnly(2025, 10, 28),
+                            EndDate = new DateOnly(2025, 11, 9),
                             EndTime = new TimeOnly(22, 0, 0),
                             Location = "Centro de Convenciones",
                             ManagerUserId = "305550456",
                             Name = "Feria Gastronómica",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
-                            StartDate = new DateOnly(2025, 10, 26),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
+                            StartDate = new DateOnly(2025, 11, 7),
                             StartTime = new TimeOnly(10, 0, 0),
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -372,16 +372,16 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             ActivityStatusId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 10, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7177),
+                            CreatedAt = new DateTime(2025, 10, 21, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7758),
                             CreatedBy = "118640123",
                             Description = "Carrera de 10K y 5K",
-                            EndDate = new DateOnly(2025, 12, 18),
+                            EndDate = new DateOnly(2025, 12, 30),
                             EndTime = new TimeOnly(12, 0, 0),
                             Location = "Sabana Metropolitana",
                             ManagerUserId = "305550456",
                             Name = "Maratón Ciudad 2025",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
-                            StartDate = new DateOnly(2025, 12, 18),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
+                            StartDate = new DateOnly(2025, 12, 30),
                             StartTime = new TimeOnly(6, 0, 0),
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -462,7 +462,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             ActivityId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7513),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7810),
                             ServiceCategoryId = 1L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -471,7 +471,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             ActivityId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7522),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7813),
                             ServiceCategoryId = 2L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -480,7 +480,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             ActivityId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7530),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7824),
                             ServiceCategoryId = 3L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -489,7 +489,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             ActivityId = 2L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7538),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7826),
                             ServiceCategoryId = 1L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -498,7 +498,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 5L,
                             ActivityId = 2L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7547),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7829),
                             ServiceCategoryId = 2L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -507,7 +507,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 6L,
                             ActivityId = 3L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7555),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7831),
                             ServiceCategoryId = 5L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -516,7 +516,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 7L,
                             ActivityId = 3L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7565),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7833),
                             ServiceCategoryId = 2L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -705,7 +705,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3569),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6954),
                             Description = "Activity not started",
                             Name = "Not Started"
                         },
@@ -713,7 +713,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3580),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6957),
                             Description = "Activity in development",
                             Name = "In Progress"
                         },
@@ -721,7 +721,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3589),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6960),
                             Description = "Activity completed",
                             Name = "Completed"
                         },
@@ -729,7 +729,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3600),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6962),
                             Description = "Activity cancelled",
                             Name = "Cancelled"
                         });
@@ -911,7 +911,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             ActivityId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8523),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(8053),
                             IsOpen = false,
                             Location = "Zona de comidas Norte",
                             Name = "Caja Principal - Alimentos",
@@ -925,7 +925,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             ActivityId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8539),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(8057),
                             IsOpen = false,
                             Location = "Bar Central",
                             Name = "Caja Bebidas",
@@ -939,7 +939,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             ActivityId = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8550),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(8060),
                             IsOpen = false,
                             Location = "Tienda de Recuerdos",
                             Name = "Caja Souvenirs",
@@ -951,11 +951,11 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             ActivityId = 2L,
-                            CreatedAt = new DateTime(2025, 10, 15, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8582),
+                            CreatedAt = new DateTime(2025, 10, 26, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(8068),
                             IsOpen = true,
                             Location = "Stand 1",
                             Name = "Caja 1 - Comidas",
-                            OpenedAt = new DateTime(2025, 10, 19, 23, 56, 34, 392, DateTimeKind.Utc).AddTicks(8561),
+                            OpenedAt = new DateTime(2025, 10, 31, 17, 24, 58, 706, DateTimeKind.Utc).AddTicks(8062),
                             OperatorUserId = "205550123",
                             RegisterNumber = 1,
                             SupervisorUserId = "305550456",
@@ -966,7 +966,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 5L,
                             ActivityId = 2L,
-                            CreatedAt = new DateTime(2025, 10, 15, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8597),
+                            CreatedAt = new DateTime(2025, 10, 26, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(8071),
                             IsOpen = false,
                             Location = "Stand 2",
                             Name = "Caja 2 - Bebidas",
@@ -980,7 +980,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 6L,
                             ActivityId = 3L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8608),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(8074),
                             IsOpen = false,
                             Location = "Punto de Registro",
                             Name = "Caja Inscripciones",
@@ -1129,7 +1129,7 @@ namespace Gesco.Desktop.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("active");
 
-                    b.Property<long>("ActivityCategoryId")
+                    b.Property<long?>("ActivityCategoryId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("activity_category_id");
 
@@ -1225,7 +1225,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 1L,
                             AlertQuantity = 20,
                             Code = "ALM-001",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7837),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7902),
                             CurrentQuantity = 200,
                             Description = "Hamburguesa con queso, lechuga y tomate",
                             InitialQuantity = 200,
@@ -1241,7 +1241,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 1L,
                             AlertQuantity = 30,
                             Code = "ALM-002",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7856),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7908),
                             CurrentQuantity = 300,
                             Description = "Perro caliente con salsa especial",
                             InitialQuantity = 300,
@@ -1257,7 +1257,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 1L,
                             AlertQuantity = 25,
                             Code = "ALM-003",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7870),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7912),
                             CurrentQuantity = 250,
                             Description = "Porción grande de papas fritas",
                             InitialQuantity = 250,
@@ -1273,7 +1273,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 1L,
                             AlertQuantity = 15,
                             Code = "ALM-004",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7887),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7916),
                             CurrentQuantity = 150,
                             Description = "Pizza individual",
                             InitialQuantity = 150,
@@ -1289,7 +1289,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 2L,
                             AlertQuantity = 50,
                             Code = "BEB-001",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7901),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7919),
                             CurrentQuantity = 500,
                             Description = "Cerveza nacional 355ml",
                             InitialQuantity = 500,
@@ -1305,7 +1305,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 2L,
                             AlertQuantity = 40,
                             Code = "BEB-002",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7916),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7923),
                             CurrentQuantity = 400,
                             Description = "Refresco natural de frutas",
                             InitialQuantity = 400,
@@ -1321,7 +1321,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 2L,
                             AlertQuantity = 60,
                             Code = "BEB-003",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7929),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7927),
                             CurrentQuantity = 600,
                             Description = "Agua purificada 500ml",
                             InitialQuantity = 600,
@@ -1337,7 +1337,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 2L,
                             AlertQuantity = 20,
                             Code = "BEB-004",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7943),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7933),
                             CurrentQuantity = 200,
                             Description = "Café costarricense premium",
                             InitialQuantity = 200,
@@ -1353,7 +1353,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 3L,
                             AlertQuantity = 10,
                             Code = "SOU-001",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7957),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7937),
                             CurrentQuantity = 100,
                             Description = "Camiseta oficial del evento",
                             InitialQuantity = 100,
@@ -1369,7 +1369,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 3L,
                             AlertQuantity = 10,
                             Code = "SOU-002",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7971),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7942),
                             CurrentQuantity = 80,
                             Description = "Gorra bordada del festival",
                             InitialQuantity = 80,
@@ -1385,7 +1385,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 3L,
                             AlertQuantity = 5,
                             Code = "SOU-003",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7985),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7945),
                             CurrentQuantity = 60,
                             Description = "Taza cerámica del evento",
                             InitialQuantity = 60,
@@ -1401,7 +1401,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 4L,
                             AlertQuantity = 15,
                             Code = "FER-001",
-                            CreatedAt = new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(7998),
+                            CreatedAt = new DateTime(2025, 10, 29, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7949),
                             CurrentQuantity = 120,
                             Description = "Plato típico costarricense",
                             InitialQuantity = 150,
@@ -1417,7 +1417,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 4L,
                             AlertQuantity = 10,
                             Code = "FER-002",
-                            CreatedAt = new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8015),
+                            CreatedAt = new DateTime(2025, 10, 29, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7954),
                             CurrentQuantity = 75,
                             Description = "Casado con carne, arroz, frijoles y ensalada",
                             InitialQuantity = 100,
@@ -1433,7 +1433,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 4L,
                             AlertQuantity = 20,
                             Code = "FER-003",
-                            CreatedAt = new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8031),
+                            CreatedAt = new DateTime(2025, 10, 29, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7958),
                             CurrentQuantity = 180,
                             Description = "Par de tamales tradicionales",
                             InitialQuantity = 200,
@@ -1449,7 +1449,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 5L,
                             AlertQuantity = 15,
                             Code = "FER-BEB-001",
-                            CreatedAt = new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8047),
+                            CreatedAt = new DateTime(2025, 10, 29, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7962),
                             CurrentQuantity = 130,
                             Description = "Bebida tradicional de arroz",
                             InitialQuantity = 150,
@@ -1465,7 +1465,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 5L,
                             AlertQuantity = 20,
                             Code = "FER-BEB-002",
-                            CreatedAt = new DateTime(2025, 10, 18, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8119),
+                            CreatedAt = new DateTime(2025, 10, 29, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7966),
                             CurrentQuantity = 185,
                             Description = "Bebida refrescante natural",
                             InitialQuantity = 200,
@@ -1481,7 +1481,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 6L,
                             AlertQuantity = 20,
                             Code = "MAR-ENT-001",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8136),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7970),
                             CurrentQuantity = 300,
                             Description = "Entrada para carrera 10 kilómetros",
                             InitialQuantity = 300,
@@ -1497,7 +1497,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 6L,
                             AlertQuantity = 30,
                             Code = "MAR-ENT-002",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8149),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7974),
                             CurrentQuantity = 500,
                             Description = "Entrada para carrera 5 kilómetros",
                             InitialQuantity = 500,
@@ -1513,7 +1513,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 7L,
                             AlertQuantity = 60,
                             Code = "MAR-BEB-001",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8164),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7977),
                             CurrentQuantity = 600,
                             Description = "Bebida isotónica 500ml",
                             InitialQuantity = 600,
@@ -1529,7 +1529,7 @@ namespace Gesco.Desktop.Data.Migrations
                             ActivityCategoryId = 7L,
                             AlertQuantity = 80,
                             Code = "MAR-BEB-002",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(8178),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7981),
                             CurrentQuantity = 800,
                             Description = "Agua enriquecida 750ml",
                             InitialQuantity = 800,
@@ -1879,7 +1879,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4273),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7104),
                             Description = "Merchandise entry to inventory",
                             Name = "Stock In",
                             RequiresJustification = false
@@ -1888,7 +1888,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4283),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7107),
                             Description = "Stock out by product sale",
                             Name = "Sale",
                             RequiresJustification = false
@@ -1897,7 +1897,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4291),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7109),
                             Description = "Inventory adjustment for differences",
                             Name = "Adjustment",
                             RequiresJustification = true
@@ -1906,7 +1906,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4301),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7111),
                             Description = "Product return",
                             Name = "Return",
                             RequiresJustification = true
@@ -1915,7 +1915,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 5L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4310),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7113),
                             Description = "Product damaged or expired",
                             Name = "Damaged",
                             RequiresJustification = true
@@ -2031,7 +2031,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 1L,
                             Active = true,
                             AnnualPrice = 299.99m,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4803),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7233),
                             Description = "Basic membership with essential features",
                             MonthlyPrice = 29.99m,
                             Name = "Basic",
@@ -2042,7 +2042,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 2L,
                             Active = true,
                             AnnualPrice = 599.99m,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4818),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7237),
                             Description = "Professional membership with advanced features",
                             MonthlyPrice = 59.99m,
                             Name = "Professional",
@@ -2053,7 +2053,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 3L,
                             Active = true,
                             AnnualPrice = 1299.99m,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4830),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7240),
                             Description = "Enterprise membership with unlimited features",
                             MonthlyPrice = 129.99m,
                             Name = "Enterprise",
@@ -2212,7 +2212,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 1L,
                             Active = true,
                             Code = "low_stock",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5282),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7340),
                             Description = "Product inventory is running low",
                             Level = "warning",
                             Name = "Low Stock Alert"
@@ -2222,7 +2222,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 2L,
                             Active = true,
                             Code = "activity_reminder",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5295),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7343),
                             Description = "Upcoming activity notification",
                             Level = "info",
                             Name = "Activity Reminder"
@@ -2232,7 +2232,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 3L,
                             Active = true,
                             Code = "system_alert",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5306),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7346),
                             Description = "Critical system notification",
                             Level = "critical",
                             Name = "System Alert"
@@ -2242,7 +2242,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 4L,
                             Active = true,
                             Code = "sync_error",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5316),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7348),
                             Description = "Data synchronization failed",
                             Level = "error",
                             Name = "Sync Error"
@@ -2252,7 +2252,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 5L,
                             Active = true,
                             Code = "cash_register_closed",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5326),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7352),
                             Description = "Cash register has been closed",
                             Level = "info",
                             Name = "Cash Register Closed"
@@ -2427,12 +2427,12 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            Id = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             Active = true,
                             Address = "San José, Costa Rica",
                             ContactEmail = "demo@gesco.com",
                             ContactPhone = "2222-2222",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(1347),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6536),
                             Name = "GESCO Demo Organization",
                             PurchaserName = "Demo Administrator",
                             SyncStatus = "pending",
@@ -2440,12 +2440,12 @@ namespace Gesco.Desktop.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6fc5db83-5ee2-4d86-8877-8d5ec923b612"),
+                            Id = new Guid("db6e1320-fe86-4d5b-922d-8573fead488c"),
                             Active = true,
                             Address = "Heredia, Costa Rica",
                             ContactEmail = "info@eventoscr.com",
                             ContactPhone = "2233-4455",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(1371),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6541),
                             Name = "Empresa de Eventos CR",
                             PurchaserName = "Maria Rodriguez",
                             SyncStatus = "pending",
@@ -2501,7 +2501,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3976),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7054),
                             Name = "Cash",
                             RequiresReference = false
                         },
@@ -2509,7 +2509,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4052),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7057),
                             Name = "Card",
                             RequiresReference = true
                         },
@@ -2517,7 +2517,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4062),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7060),
                             Name = "SINPE Mobile",
                             RequiresReference = true
                         },
@@ -2525,7 +2525,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4070),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7062),
                             Name = "Transfer",
                             RequiresReference = true
                         });
@@ -2580,7 +2580,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(2974),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6832),
                             Description = "Full system access",
                             Name = "Administrator"
                         },
@@ -2588,7 +2588,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(2994),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6837),
                             Description = "Sales and cash register access",
                             Name = "Salesperson"
                         },
@@ -2596,7 +2596,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3003),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6839),
                             Description = "Activity supervision",
                             Name = "Supervisor"
                         },
@@ -2604,7 +2604,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3012),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6841),
                             Description = "Cash register operator",
                             Name = "Operator"
                         });
@@ -2741,7 +2741,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3794),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7009),
                             Description = "Sale pending processing",
                             Name = "Pending"
                         },
@@ -2749,7 +2749,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3805),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7012),
                             Description = "Sale completed successfully",
                             Name = "Completed"
                         },
@@ -2757,7 +2757,7 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3814),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7015),
                             Description = "Sale cancelled",
                             Name = "Cancelled"
                         });
@@ -2935,10 +2935,10 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 1L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5752),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7455),
                             Description = "Comidas y bebidas",
                             Name = "Alimentos",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             SyncStatus = "pending",
                             SyncVersion = 1L
                         },
@@ -2946,10 +2946,10 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 2L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5766),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7458),
                             Description = "Bebidas alcohólicas y no alcohólicas",
                             Name = "Bebidas",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             SyncStatus = "pending",
                             SyncVersion = 1L
                         },
@@ -2957,10 +2957,10 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 3L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5776),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7461),
                             Description = "Recuerdos y merchandising",
                             Name = "Souvenirs",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             SyncStatus = "pending",
                             SyncVersion = 1L
                         },
@@ -2968,10 +2968,10 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 4L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5786),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7463),
                             Description = "Servicios adicionales",
                             Name = "Servicios",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             SyncStatus = "pending",
                             SyncVersion = 1L
                         },
@@ -2979,10 +2979,10 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = 5L,
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5795),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7466),
                             Description = "Tickets y boletos",
                             Name = "Entradas",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             SyncStatus = "pending",
                             SyncVersion = 1L
                         });
@@ -3083,12 +3083,12 @@ namespace Gesco.Desktop.Data.Migrations
                         new
                         {
                             Id = 1L,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5086),
-                            ExpirationDate = new DateTime(2026, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5041),
-                            GracePeriodEnd = new DateTime(2026, 11, 19, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5069),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7297),
+                            ExpirationDate = new DateTime(2026, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7283),
+                            GracePeriodEnd = new DateTime(2026, 11, 30, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7291),
                             MembershipId = 2L,
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
-                            StartDate = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5035),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
+                            StartDate = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7281),
                             SubscriptionStatusId = 1L,
                             SyncStatus = "pending",
                             SyncVersion = 1L
@@ -3148,7 +3148,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 1L,
                             Active = true,
                             AllowsSystemUsage = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4540),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7165),
                             Description = "Active subscription",
                             Name = "Active"
                         },
@@ -3157,7 +3157,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 2L,
                             Active = true,
                             AllowsSystemUsage = false,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4550),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7179),
                             Description = "Suspended subscription",
                             Name = "Suspended"
                         },
@@ -3166,7 +3166,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 3L,
                             Active = true,
                             AllowsSystemUsage = false,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4559),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7182),
                             Description = "Cancelled subscription",
                             Name = "Cancelled"
                         },
@@ -3175,7 +3175,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 4L,
                             Active = true,
                             AllowsSystemUsage = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(4568),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7184),
                             Description = "Trial period",
                             Name = "Trial"
                         });
@@ -3458,7 +3458,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 1L,
                             AccessLevel = "admin",
                             Category = "system",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5511),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7397),
                             DataType = "string",
                             Description = "System version",
                             DisplayOrder = 0,
@@ -3474,7 +3474,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 2L,
                             AccessLevel = "admin",
                             Category = "backup",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5525),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7400),
                             DataType = "int",
                             Description = "Backup interval in hours",
                             DisplayOrder = 0,
@@ -3490,7 +3490,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 3L,
                             AccessLevel = "admin",
                             Category = "license",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5535),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7403),
                             DataType = "int",
                             Description = "License check interval in days",
                             DisplayOrder = 0,
@@ -3506,7 +3506,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 4L,
                             AccessLevel = "admin",
                             Category = "sales",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5545),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7405),
                             DataType = "bool",
                             Description = "Allow sales with negative stock",
                             DisplayOrder = 0,
@@ -3522,7 +3522,7 @@ namespace Gesco.Desktop.Data.Migrations
                             Id = 5L,
                             AccessLevel = "admin",
                             Category = "sales",
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(5554),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(7408),
                             DataType = "decimal",
                             Description = "Default tax rate percentage",
                             DisplayOrder = 0,
@@ -3855,11 +3855,11 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = "118640123",
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3292),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6897),
                             Email = "admin@gesco.com",
                             FirstLogin = true,
                             FullName = "System Administrator",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             Password = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a",
                             Phone = "8888-8888",
                             RoleId = 1L,
@@ -3871,11 +3871,11 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = "205550123",
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3308),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6902),
                             Email = "vendedor1@gesco.com",
                             FirstLogin = false,
                             FullName = "Carlos Vendedor",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             Password = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a",
                             Phone = "8777-7777",
                             RoleId = 2L,
@@ -3887,11 +3887,11 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = "305550456",
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3323),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6906),
                             Email = "supervisor1@gesco.com",
                             FirstLogin = false,
                             FullName = "Ana Supervisor",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             Password = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a",
                             Phone = "8666-6666",
                             RoleId = 3L,
@@ -3903,11 +3903,11 @@ namespace Gesco.Desktop.Data.Migrations
                         {
                             Id = "105550789",
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 20, 3, 56, 34, 392, DateTimeKind.Utc).AddTicks(3336),
+                            CreatedAt = new DateTime(2025, 10, 31, 21, 24, 58, 706, DateTimeKind.Utc).AddTicks(6909),
                             Email = "operador1@gesco.com",
                             FirstLogin = false,
                             FullName = "Luis Operador",
-                            OrganizationId = new Guid("dd4a78f7-3a4d-4f09-b630-7037693482fa"),
+                            OrganizationId = new Guid("ac79e4ec-bc6c-4dbb-9f1f-d56ca8a8e0b8"),
                             Password = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a",
                             Phone = "8555-5555",
                             RoleId = 4L,
@@ -4222,8 +4222,7 @@ namespace Gesco.Desktop.Data.Migrations
                     b.HasOne("Gesco.Desktop.Data.Entities.ActivityCategory", "ActivityCategory")
                         .WithMany("CategoryProducts")
                         .HasForeignKey("ActivityCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ActivityCategory");
                 });

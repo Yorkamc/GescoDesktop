@@ -175,6 +175,10 @@ namespace Gesco.Desktop.UI.Controllers
         /// <param name="activityId">ID de la actividad</param>
         /// <param name="request">Datos del producto a crear</param>
         /// <returns>Producto creado con información completa</returns>
+        /// <remarks>
+        /// El producto se crea y se asigna automáticamente a la actividad especificada.
+        /// Si no se proporciona ActivityCategoryId, el producto se creará sin asignar a una categoría específica.
+        /// </remarks>
         [HttpPost]
         [Authorize]
         [ProducesResponseType(typeof(ApiResponse<CategoryProductDetailedDto>), 201)]
@@ -234,6 +238,109 @@ namespace Gesco.Desktop.UI.Controllers
                 {
                     Success = false,
                     Message = "Error al crear producto",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        /// <summary>
+        /// Asignar un producto existente a una actividad
+        /// </summary>
+        /// <param name="activityId">ID de la actividad</param>
+        /// <param name="request">Datos de asignación (productId y activityCategoryId)</param>
+        /// <returns>Producto asignado con información actualizada</returns>
+        /// <remarks>
+        /// Permite asignar un producto que ya existe en el sistema a una actividad específica.
+        /// El producto debe estar disponible (no asignado a otra actividad).
+        /// </remarks>
+        [HttpPost("assign")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<CategoryProductDetailedDto>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(409)] // Conflict - Ya asignado a otra actividad
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> AssignProduct(
+            Guid activityId,
+            [FromBody] AssignProductToActivityRequest request)
+        {
+            try
+            {
+                _logger.LogInformation(
+                    "Assigning product {ProductId} to activity {ActivityId}",
+                    request.ProductId,
+                    activityId);
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Datos de asignación inválidos",
+                        Errors = ModelState.Values
+                            .SelectMany(v => v.Errors)
+                            .Select(e => e.ErrorMessage)
+                            .ToList()
+                    });
+                }
+
+                var product = await _activityProductService
+                    .AssignProductToActivityAsync(activityId, request.ProductId, request.ActivityCategoryId);
+
+                if (product == null)
+                {
+                    return NotFound(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Producto no encontrado"
+                    });
+                }
+
+                return Ok(new ApiResponse<CategoryProductDetailedDto>
+                {
+                    Success = true,
+                    Data = product,
+                    Message = "Producto asignado exitosamente a la actividad"
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Conflict assigning product {ProductId} to activity {ActivityId}",
+                    request.ProductId,
+                    activityId);
+                return Conflict(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Validation error assigning product {ProductId} to activity {ActivityId}",
+                    request.ProductId,
+                    activityId);
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error assigning product {ProductId} to activity {ActivityId}",
+                    request.ProductId,
+                    activityId);
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error al asignar producto a la actividad",
                     Errors = new List<string> { ex.Message }
                 });
             }
@@ -327,32 +434,38 @@ namespace Gesco.Desktop.UI.Controllers
         }
 
         /// <summary>
-        /// Eliminar un producto de una actividad
+        /// Desasignar un producto de una actividad
         /// </summary>
         /// <param name="activityId">ID de la actividad</param>
         /// <param name="productId">ID del producto</param>
         /// <returns>Resultado de la operación</returns>
+        /// <remarks>
+        /// ⚠️ IMPORTANTE: Este endpoint DESASIGNA el producto de la actividad, 
+        /// NO lo elimina del sistema. El producto quedará disponible para ser 
+        /// asignado a otras actividades. Para eliminar definitivamente un producto, 
+        /// use el endpoint DELETE /api/products/{id}.
+        /// </remarks>
         [HttpDelete("{productId:guid}")]
         [Authorize]
         [ProducesResponseType(typeof(ApiResponse), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> DeleteProduct(
+        public async Task<IActionResult> UnassignProduct(
             Guid activityId,
             Guid productId)
         {
             try
             {
                 _logger.LogInformation(
-                    "Deleting product {ProductId} from activity {ActivityId}",
+                    "Unassigning product {ProductId} from activity {ActivityId}",
                     productId,
                     activityId);
 
-                var deleted = await _activityProductService
+                var unassigned = await _activityProductService
                     .DeleteProductFromActivityAsync(activityId, productId);
 
-                if (!deleted)
+                if (!unassigned)
                 {
                     return NotFound(new ApiResponse
                     {
@@ -364,20 +477,20 @@ namespace Gesco.Desktop.UI.Controllers
                 return Ok(new ApiResponse
                 {
                     Success = true,
-                    Message = "Producto eliminado exitosamente"
+                    Message = "Producto desasignado de la actividad exitosamente. El producto sigue disponible en el sistema."
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Error deleting product {ProductId} from activity {ActivityId}",
+                    "Error unassigning product {ProductId} from activity {ActivityId}",
                     productId,
                     activityId);
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,
-                    Message = "Error al eliminar producto",
+                    Message = "Error al desasignar producto de la actividad",
                     Errors = new List<string> { ex.Message }
                 });
             }
