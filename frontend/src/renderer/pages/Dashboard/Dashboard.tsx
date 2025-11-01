@@ -183,18 +183,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div className="p-6">
                   <div className="space-y-3">
-                    <button
-                      onClick={() => navigate('/license-activation')}
-                      className="w-full flex items-center px-4 py-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-6 6c-1.085 0-2.035-.299-2.886-.737M15 7c0-1.104-.896-2-2-2-1.085 0-2.035.299-2.886.737M15 7v4m-6-2a6 6 0 106 6c1.085 0 2.035-.299 2.886-.737M9 9a2 2 0 012-2c1.085 0 2.035.299 2.886.737" />
-                      </svg>
-                      <div>
-                        <span className="font-medium">Gestionar Licencia</span>
-                        <p className="text-sm text-gray-500">Activar o renovar licencia</p>
-                      </div>
-                    </button>
+
 
                     <button 
                       onClick={() => navigate('/activities')}
@@ -208,6 +197,18 @@ export const Dashboard: React.FC = () => {
                         <p className="text-sm text-gray-500">Ver y crear actividades</p>
                       </div>
                     </button>
+                                        <button 
+                        onClick={() => navigate('/products')}
+                        className="w-full flex items-center px-4 py-3 text-left bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                      >
+                        <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <div>
+                          <span className="font-medium">Gestionar Productos</span>
+                          <p className="text-sm text-gray-500">Ver y crear productos</p>
+                        </div>
+                    </button>
                     <button 
                         onClick={() => navigate('/categories')}
                         className="w-full flex items-center px-4 py-3 text-left bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
@@ -220,19 +221,18 @@ export const Dashboard: React.FC = () => {
                       <p className="text-sm text-gray-500">Configurar categorías de servicio</p>
                     </div>
                   </button>
-                    <button 
-                        onClick={() => navigate('/products')}
-                        className="w-full flex items-center px-4 py-3 text-left bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-                      >
-                        <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        <div>
-                          <span className="font-medium">Gestionar Productos</span>
-                          <p className="text-sm text-gray-500">Ver y crear productos</p>
-                        </div>
+                    <button
+                      onClick={() => navigate('/license-activation')}
+                      className="w-full flex items-center px-4 py-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-6 6c-1.085 0-2.035-.299-2.886-.737M15 7c0-1.104-.896-2-2-2-1.085 0-2.035.299-2.886.737M15 7v4m-6-2a6 6 0 106 6c1.085 0 2.035-.299 2.886-.737M9 9a2 2 0 012-2c1.085 0 2.035.299 2.886.737" />
+                      </svg>
+                      <div>
+                        <span className="font-medium">Gestionar Licencia</span>
+                        <p className="text-sm text-gray-500">Activar o renovar licencia</p>
+                      </div>
                     </button>
-
                   </div>
                 </div>
               </div>
