@@ -142,7 +142,7 @@ interface CreateActivityRequest {
 }
 interface Product {
   id: string;
-  activityCategoryId: number;
+  activityCategoryId: number|null;
   categoryName?: string;
   code: string;
   name: string;
@@ -156,7 +156,7 @@ interface Product {
 }
 
 interface CreateProductRequest {
-  activityCategoryId: number;
+  activityCategoryId: number|null;
   code: string;
   name: string;
   description: string;

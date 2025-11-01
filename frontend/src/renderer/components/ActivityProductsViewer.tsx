@@ -31,57 +31,59 @@ export const ActivityProductsViewer: React.FC<ActivityProductsViewerProps> = ({
     loadActivityProducts();
   }, [activityId]);
 
-  const loadActivityProducts = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+const loadActivityProducts = async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
 
-      // 1. Obtener categorías de la actividad
-      const activityCategories = await activityCategoriesService.getActivityCategories(activityId);
+    // 1. Obtener categorías de la actividad
+    const activityCategories = await activityCategoriesService.getActivityCategories(activityId);
 
-      if (activityCategories.length === 0) {
-        setError('Esta actividad no tiene categorías asignadas. Por favor, asigna categorías primero.');
-        setIsLoading(false);
-        return;
-      }
-
-      // 2. Para cada categoría, obtener sus productos
-      const productsData: ProductsByCategory[] = [];
-
-      for (const actCat of activityCategories) {
-        try {
-          // Obtener productos de esta categoría
-          const allProducts = await productsService.getProducts();
-          
-          // Filtrar productos que pertenecen a esta categoría
-          const categoryProducts = allProducts.filter(
-            p => p.activityCategoryId.toString() === actCat.serviceCategoryId
-          );
-
-          if (categoryProducts.length > 0) {
-            productsData.push({
-              categoryId: actCat.serviceCategoryId,
-              categoryName: actCat.serviceCategoryName,
-              products: categoryProducts,
-            });
-          }
-        } catch (err) {
-          console.error(`Error loading products for category ${actCat.serviceCategoryId}:`, err);
-        }
-      }
-
-      setProductsByCategory(productsData);
-      
-      if (productsData.length === 0) {
-        setError('No hay productos disponibles en las categorías asignadas a esta actividad.');
-      }
-    } catch (err: any) {
-      console.error('Error loading activity products:', err);
-      setError(err.message || 'Error al cargar los productos de la actividad');
-    } finally {
+    if (activityCategories.length === 0) {
+      setError('Esta actividad no tiene categorías asignadas. Por favor, asigna categorías primero.');
       setIsLoading(false);
+      return;
     }
-  };
+
+    // 2. Para cada categoría, obtener sus productos
+    const productsData: ProductsByCategory[] = [];
+
+    for (const actCat of activityCategories) {
+      try {
+        // Obtener productos de esta categoría
+        const allProducts = await productsService.getProducts();
+        
+        // ✅ CORREGIDO: Filtrar productos que pertenecen a esta categoría
+        // Verificar que activityCategoryId no sea null antes de usar toString()
+        const categoryProducts = allProducts.filter(
+          p => p.activityCategoryId !== null && 
+               p.activityCategoryId.toString() === actCat.serviceCategoryId
+        );
+
+        if (categoryProducts.length > 0) {
+          productsData.push({
+            categoryId: actCat.serviceCategoryId,
+            categoryName: actCat.serviceCategoryName,
+            products: categoryProducts,
+          });
+        }
+      } catch (err) {
+        console.error(`Error loading products for category ${actCat.serviceCategoryId}:`, err);
+      }
+    }
+
+    setProductsByCategory(productsData);
+    
+    if (productsData.length === 0) {
+      setError('No hay productos disponibles en las categorías asignadas a esta actividad.');
+    }
+  } catch (err: any) {
+    console.error('Error loading activity products:', err);
+    setError(err.message || 'Error al cargar los productos de la actividad');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-CR', {

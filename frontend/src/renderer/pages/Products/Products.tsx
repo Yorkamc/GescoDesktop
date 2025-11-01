@@ -239,21 +239,6 @@ export const Products: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">Todas las categorías</option>
-                    <option value={1}>General</option>
-                    <option value={2}>Entradas</option>
-                    <option value={3}>Bebidas</option>
-                    <option value={4}>Comida</option>
-                    <option value={5}>Merchandising</option>
-                  </select>
-                </div>
 
                 <div className="flex items-end">
                   <label className="flex items-center cursor-pointer">
