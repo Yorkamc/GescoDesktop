@@ -24,6 +24,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const startDate = formatDate(activity.startDate);
   const endDate = activity.endDate ? formatDate(activity.endDate) : 'Sin definir';
 
+  const handleManageCashRegisters = () => {
+    window.location.href = `#/cash-registers?activityId=${activity.id}`;
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex justify-between items-start mb-4">
@@ -39,6 +43,19 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             {activity.statusName || 'Sin estado'}
           </span>
         </div>
+        
+        {/* ✅ Botón de Cajas en la esquina superior derecha */}
+        <button
+          onClick={handleManageCashRegisters}
+          className="ml-3 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 
+                   transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
+          title="Gestionar Cajas Registradoras"
+        >
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span className="whitespace-nowrap">Cajas</span>
+        </button>
       </div>
 
       {activity.description && (
@@ -122,7 +139,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         )}
       </div>
 
-      {/* Botones con diseño responsive mejorado - Grid de 2x2 REORGANIZADO */}
+      {/* Botones con diseño responsive mejorado - Grid de 2x2 */}
       <div className="grid grid-cols-2 gap-2">
         {/* PRIMERA FILA: Editar + Eliminar */}
         

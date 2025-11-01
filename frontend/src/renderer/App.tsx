@@ -7,6 +7,7 @@ import { Activities } from './pages/Activities/Activities';
 import { ProtectedRoute } from './components/Common/ProtectedRoute';
 import { Products } from './pages/Products/Products';
 import { ServiceCategories } from './pages/Category/Category';
+import { CashRegisters } from './pages/CashRegisters/index';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -67,6 +68,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ServiceCategories />
+              </ProtectedRoute>
+            } 
+          />
+           <Route 
+            path="/cash-registers" 
+            element={
+              <ProtectedRoute>
+                <CashRegisters />
               </ProtectedRoute>
             } 
           />
