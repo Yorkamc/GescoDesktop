@@ -16,7 +16,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onCancel 
 }) => {
   const [formData, setFormData] = useState<CreateProductRequest>({
-    activityCategoryId: 1,
+    activityCategoryId: null, // ← ✅ CAMBIADO: null por defecto
     code: '',
     name: '',
     description: '',
@@ -30,7 +30,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   useEffect(() => {
     if (product) {
       setFormData({
-        activityCategoryId: product.activityCategoryId,
+        activityCategoryId: product.activityCategoryId, // Mantener el valor actual si está editando
         code: product.code,
         name: product.name,
         description: product.description || '',
@@ -71,12 +71,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    // ✅ Asegurar que activityCategoryId sea null al crear
+    const dataToSubmit = {
+      ...formData,
+      activityCategoryId: product ? formData.activityCategoryId : null
+    };
+
+    console.log('📤 Enviando producto:', dataToSubmit);
+    onSubmit(dataToSubmit);
   };
 
   const handleNumberChange = (field: keyof CreateProductRequest, value: string) => {
-    const numValue = value === '' ? 0 : parseFloat(value);
-    setFormData(prev => ({ ...prev, [field]: isNaN(numValue) ? 0 : numValue }));
+    // ✅ MEJORADO: Manejo más robusto de números
+    if (value === '') {
+      setFormData(prev => ({ ...prev, [field]: 0 }));
+      return;
+    }
+    
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      setFormData(prev => ({ ...prev, [field]: numValue }));
+    }
   };
 
   return (
@@ -84,9 +99,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-          <h3 className="text-xl font-semibold text-gray-900">
-            {product ? 'Editar Producto' : 'Nuevo Producto'}
-          </h3>
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900">
+              {product ? 'Editar Producto' : 'Nuevo Producto'}
+            </h3>
+            {!product && (
+              <p className="text-xs text-gray-500 mt-1">
+                El producto se creará sin asignar a ninguna actividad
+              </p>
+            )}
+          </div>
           <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -119,7 +141,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
-                  placeholder="Ej: Entrada General"
+                  placeholder="Ej: Cerveza Imperial"
                   disabled={isSubmitting}
                 />
               </div>
@@ -140,23 +162,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 />
               </div>
 
-              {/* Categoría */}
+              {/* ❌ ELIMINADO: Campo de Categoría */}
+              {/* Ya no mostramos el selector de categoría */}
+              {/* Los productos se crean sin asignar (activityCategoryId = null) */}
+
+              {/* Precio Unitario - ✅ CORREGIDO */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Categoría <span className="text-red-500">*</span>
+                  Precio Unitario (₡) <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.activityCategoryId}
-                  onChange={(e) => setFormData({ ...formData, activityCategoryId: parseInt(e.target.value) })}
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={formData.unitPrice || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      setFormData({ ...formData, unitPrice: 0 });
+                    } else {
+                      const numValue = parseFloat(value);
+                      if (!isNaN(numValue) && numValue >= 0) {
+                        setFormData({ ...formData, unitPrice: numValue });
+                      }
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  placeholder="0.00"
                   disabled={isSubmitting}
-                >
-                  <option value={1}>General</option>
-                  <option value={2}>Entradas</option>
-                  <option value={3}>Bebidas</option>
-                  <option value={4}>Comida</option>
-                  <option value={5}>Merchandising</option>
-                </select>
+                />
               </div>
 
               {/* Descripción */}
@@ -174,24 +209,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 />
               </div>
 
-              {/* Precio Unitario */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Precio Unitario (₡) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.unitPrice}
-                  onChange={(e) => handleNumberChange('unitPrice', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                  placeholder="0.00"
-                  disabled={isSubmitting}
-                />
-              </div>
-
               {/* Cantidad Inicial */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -200,7 +217,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <input
                   type="number"
                   min="0"
-                  value={formData.initialQuantity}
+                  value={formData.initialQuantity || ''}
                   onChange={(e) => handleNumberChange('initialQuantity', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
@@ -217,7 +234,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <input
                   type="number"
                   min="0"
-                  value={formData.alertQuantity}
+                  value={formData.alertQuantity || ''}
                   onChange={(e) => handleNumberChange('alertQuantity', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
