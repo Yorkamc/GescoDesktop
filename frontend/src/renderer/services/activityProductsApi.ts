@@ -60,12 +60,25 @@ export const activityProductsService = {
 
   /**
    * Asignar un producto existente a una actividad
+   * ✅ CORREGIDO: Ahora usa el endpoint y estructura correctos
    */
-  async assignProductToActivity(activityId: string, productId: string): Promise<void> {
+  async assignProductToActivity(
+    activityId: string, 
+    productId: string,
+    activityCategoryId: string  // ← ✅ NUEVO PARÁMETRO REQUERIDO
+  ): Promise<void> {
     try {
-      console.log('➕ Asignando producto a actividad:', { activityId, productId });
+      console.log('➕ Asignando producto a actividad:', { 
+        activityId, 
+        productId, 
+        activityCategoryId 
+      });
       
-      await api.post(`/activities/${activityId}/products/${productId}`);
+      // ✅ CORRECCIÓN: Usar /assign y enviar body
+      await api.post(`/activities/${activityId}/products/assign`, {
+        productId,
+        activityCategoryId
+      });
       
       console.log('✅ Producto asignado exitosamente');
       
@@ -73,11 +86,16 @@ export const activityProductsService = {
       console.error('❌ Error assigning product to activity:', error);
       
       if (error.response?.status === 409) {
-        throw new Error('Este producto ya está asignado a la actividad');
+        throw new Error('Este producto ya está asignado a otra actividad');
       }
       
       if (error.response?.status === 404) {
         throw new Error('Actividad o producto no encontrado');
+      }
+      
+      if (error.response?.status === 400) {
+        const message = error.response?.data?.message || 'Datos inválidos';
+        throw new Error(message);
       }
       
       throw new Error('Error al asignar el producto a la actividad');
@@ -155,6 +173,31 @@ export const activityProductsService = {
     } catch (error: any) {
       console.error('❌ Error fetching products by category:', error);
       throw new Error('Error al cargar productos por categoría');
+    }
+  },
+
+  /**
+   * ✅ NUEVO: Obtener productos no asignados a ninguna actividad
+   */
+  async getUnassignedProducts(): Promise<Product[]> {
+    try {
+      console.log('🔍 Obteniendo productos sin asignar');
+      
+      const response = await api.get<ApiResponse<Product[]>>('/products/unassigned');
+      
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      return [];
+      
+    } catch (error: any) {
+      console.error('❌ Error fetching unassigned products:', error);
+      throw new Error('Error al cargar productos sin asignar');
     }
   }
 };
