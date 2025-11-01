@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useServiceCategories } from '../../hooks/useCategories';
 import { ServiceCategoryCard } from '../../components/CategoryCard';
@@ -25,6 +25,80 @@ export const ServiceCategories: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string>('');
+
+  // ✅ MEJORADO: Obtener organizationId al montar el componente
+  useEffect(() => {
+    const orgId = getOrganizationId();
+    console.log('🏢 Organization ID obtenido:', orgId);
+    setOrganizationId(orgId);
+  }, []);
+
+  // ✅ MEJORADO: Función más robusta para obtener organizationId
+  const getOrganizationId = (): string => {
+    console.log('🔍 Buscando organizationId...');
+    
+    try {
+      // Opción 1: Desde localStorage 'user'
+      const userStr = localStorage.getItem('user');
+      console.log('📦 localStorage user:', userStr);
+      
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        console.log('👤 Usuario parseado:', user);
+        
+        // Intentar diferentes variaciones del campo
+        const orgId = 
+          user.organizationId || 
+          user.organization_id || 
+          user.OrganizationId ||
+          user.organisationId ||
+          '';
+        
+        if (orgId) {
+          console.log('✅ Organization ID encontrado en user:', orgId);
+          return orgId;
+        }
+      }
+
+      // Opción 2: Desde localStorage 'organizationId' directo
+      const directOrgId = localStorage.getItem('organizationId') || localStorage.getItem('organization_id');
+      if (directOrgId) {
+        console.log('✅ Organization ID encontrado directo:', directOrgId);
+        return directOrgId;
+      }
+
+      // Opción 3: Desde JWT token
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          console.log('🎫 Token payload:', payload);
+          
+          const orgId = 
+            payload.organizationId || 
+            payload.organization_id || 
+            payload.OrganizationId ||
+            '';
+          
+          if (orgId) {
+            console.log('✅ Organization ID encontrado en token:', orgId);
+            return orgId;
+          }
+        } catch (tokenErr) {
+          console.error('❌ Error parseando token:', tokenErr);
+        }
+      }
+
+      console.warn('⚠️ No se encontró organizationId en ninguna ubicación');
+      console.log('📋 localStorage keys:', Object.keys(localStorage));
+      
+    } catch (err) {
+      console.error('❌ Error obteniendo organizationId:', err);
+    }
+    
+    return '';
+  };
 
   const handleEdit = (category: ServiceCategory) => {
     setEditingCategory(category);
@@ -43,17 +117,45 @@ export const ServiceCategories: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (data: CreateServiceCategoryRequest) => {
+  const handleSubmit = async (data: Omit<CreateServiceCategoryRequest, 'organizationId'>) => {
+    console.log('📤 Iniciando submit de categoría');
+    console.log('📋 Datos del formulario:', data);
+    console.log('🏢 Organization ID actual:', organizationId);
+    
+    if (!organizationId) {
+      console.error('❌ organizationId está vacío');
+      alert('Error: No se pudo obtener el ID de organización. Por favor, inicia sesión nuevamente.');
+      
+      // Mostrar información de debug
+      console.log('🔍 Debug info:');
+      console.log('- localStorage keys:', Object.keys(localStorage));
+      console.log('- user:', localStorage.getItem('user'));
+      console.log('- token:', localStorage.getItem('token'));
+      
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const fullData: CreateServiceCategoryRequest = {
+        ...data,
+        organizationId
+      };
+
+      console.log('✅ Datos completos a enviar:', fullData);
+
       if (editingCategory) {
-        await updateCategory(editingCategory.id, data);
+        await updateCategory(editingCategory.id, fullData);
+        console.log('✅ Categoría actualizada');
       } else {
-        await createCategory(data);
+        await createCategory(fullData);
+        console.log('✅ Categoría creada');
       }
+      
       handleCancel();
-    } catch (err) {
-      console.error('Error submitting category:', err);
+    } catch (err: any) {
+      console.error('❌ Error submitting category:', err);
+      alert(`Error al guardar la categoría: ${err.message || 'Error desconocido'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +177,13 @@ export const ServiceCategories: React.FC = () => {
       return matchesSearch && matchesActive;
     });
   }, [categories, searchQuery, showActiveOnly]);
+
+  // ✅ NUEVO: Mostrar advertencia si no hay organizationId
+  useEffect(() => {
+    if (!organizationId && !isLoading) {
+      console.warn('⚠️ No se encontró organizationId. Algunas funciones pueden no estar disponibles.');
+    }
+  }, [organizationId, isLoading]);
 
   if (isLoading) {
     return (
@@ -129,7 +238,13 @@ export const ServiceCategories: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                if (!organizationId) {
+                  alert('Error: No se pudo obtener el ID de organización. Por favor, inicia sesión nuevamente.');
+                  return;
+                }
+                setShowForm(true);
+              }}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 
                        transition-colors duration-200 flex items-center gap-2"
             >
@@ -156,6 +271,14 @@ export const ServiceCategories: React.FC = () => {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
+            {/* ✅ NUEVO: Mostrar advertencia si no hay organizationId */}
+            {!organizationId && (
+              <Alert
+                type="warning"
+                message="No se pudo obtener el ID de organización. Algunas funciones pueden no estar disponibles. Por favor, inicia sesión nuevamente."
+              />
+            )}
+
             {error && (
               <Alert
                 type="error"
@@ -248,7 +371,7 @@ export const ServiceCategories: React.FC = () => {
                         ? 'Intenta ajustar los filtros de búsqueda'
                         : 'Comienza creando tu primera categoría'}
                     </p>
-                    {!searchQuery && !showActiveOnly && (
+                    {!searchQuery && !showActiveOnly && organizationId && (
                       <button
                         onClick={() => setShowForm(true)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"

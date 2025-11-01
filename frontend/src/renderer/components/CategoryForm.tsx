@@ -15,8 +15,8 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<CreateServiceCategoryRequest>({
-    organizationId: '',
+  // ✅ CAMBIADO: Ya no incluimos organizationId en el estado del formulario
+  const [formData, setFormData] = useState<Omit<CreateServiceCategoryRequest, 'organizationId'>>({
     name: '',
     description: '',
   });
@@ -26,7 +26,6 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
   useEffect(() => {
     if (category) {
       setFormData({
-        organizationId: category.organizationId,
         name: category.name,
         description: category.description,
       });
@@ -35,10 +34,6 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.organizationId.trim()) {
-      newErrors.organizationId = 'El ID de organización es requerido';
-    }
 
     if (!formData.name.trim()) {
       newErrors.name = 'El nombre es requerido';
@@ -59,11 +54,12 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      // ✅ El componente padre agregará el organizationId automáticamente
+      onSubmit(formData as CreateServiceCategoryRequest);
     }
   };
 
-  const handleChange = (field: keyof CreateServiceCategoryRequest, value: string) => {
+  const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -108,40 +104,14 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
-              <div>
-                <label
-                  htmlFor="organizationId"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  ID de Organización
-                </label>
-                <input
-                  id="organizationId"
-                  type="text"
-                  value={formData.organizationId}
-                  onChange={(e) => handleChange('organizationId', e.target.value)}
-                  disabled={isSubmitting || !!category}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 
-                           focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed
-                           ${errors.organizationId ? 'border-red-500' : 'border-gray-300'}`}
-                  placeholder="Ej: ORG-12345"
-                />
-                {errors.organizationId && (
-                  <p className="mt-1 text-sm text-red-600">{errors.organizationId}</p>
-                )}
-                {category && (
-                  <p className="mt-1 text-sm text-gray-500">
-                    El ID de organización no se puede modificar
-                  </p>
-                )}
-              </div>
+              {/* ❌ ELIMINADO: Campo de organizationId */}
 
               <div>
                 <label
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Nombre de la Categoría
+                  Nombre de la Categoría <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="name"
@@ -152,7 +122,8 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 
                            focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed
                            ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-                  placeholder="Ej: Consultoría Empresarial"
+                  placeholder="Ej: Alimentos y Bebidas"
+                  autoFocus
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -164,7 +135,7 @@ export const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Descripción
+                  Descripción <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="description"
