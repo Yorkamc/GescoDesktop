@@ -5,6 +5,7 @@ import { useActivities } from './../hooks/useActivities';
 
 interface CashRegisterFormProps {
   cashRegister: CashRegister | null;
+  preselectedActivityId?: string;
   isSubmitting: boolean;
   onSubmit: (data: CreateCashRegisterRequest) => void;
   onCancel: () => void;
@@ -12,6 +13,7 @@ interface CashRegisterFormProps {
 
 export const CashRegisterForm: React.FC<CashRegisterFormProps> = ({
   cashRegister,
+  preselectedActivityId,
   isSubmitting,
   onSubmit,
   onCancel,
@@ -19,7 +21,7 @@ export const CashRegisterForm: React.FC<CashRegisterFormProps> = ({
   const { activities } = useActivities();
   
   const [formData, setFormData] = useState<CreateCashRegisterRequest>({
-    activityId: '',
+    activityId:preselectedActivityId || '',
     registerNumber: 1,
     name: '',
     location: '',

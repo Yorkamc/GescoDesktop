@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCashRegisters } from '../../hooks/useCashRegisters';
 import { CashRegisterCard } from '../../components/CashRegisterCard';
 import { CashRegisterForm } from '../../components/CashRegisterForm';
@@ -11,6 +11,11 @@ import type { CashRegister, CreateCashRegisterRequest, CloseCashRegisterRequest 
 
 export const CashRegisters: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // ✅ Obtener activityId de la URL
+  const activityIdFromUrl = searchParams.get('activityId') || undefined;
+  
   const {
     cashRegisters,
     openCashRegisters,
@@ -23,7 +28,7 @@ export const CashRegisters: React.FC = () => {
     closeCashRegister,
     refreshCashRegisters,
     clearError,
-  } = useCashRegisters();
+  } = useCashRegisters(activityIdFromUrl); // ✅ Pasar activityId al hook
 
   const [showForm, setShowForm] = useState(false);
   const [editingCashRegister, setEditingCashRegister] = useState<CashRegister | null>(null);
@@ -109,6 +114,17 @@ export const CashRegisters: React.FC = () => {
     clearError();
   };
 
+  // ✅ Función para volver a actividades
+  const handleBack = () => {
+    if (activityIdFromUrl) {
+      // Si vino de una actividad específica, volver a actividades
+      navigate('/activities');
+    } else {
+      // Si no, volver al dashboard
+      navigate('/dashboard');
+    }
+  };
+
   const filteredCashRegisters = useMemo(() => {
     return cashRegisters.filter(cr => {
       const matchesSearch = cr.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -133,10 +149,11 @@ export const CashRegisters: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
+              {/* ✅ Botón de regreso mejorado */}
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={handleBack}
                 className="p-2 text-gray-500 hover:text-gray-700 rounded-lg mr-3"
-                title="Volver al Dashboard"
+                title={activityIdFromUrl ? "Volver a Actividades" : "Volver al Dashboard"}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -295,6 +312,7 @@ export const CashRegisters: React.FC = () => {
       {showForm && (
         <CashRegisterForm
           cashRegister={editingCashRegister}
+          preselectedActivityId={activityIdFromUrl} 
           isSubmitting={isSubmitting}
           onSubmit={handleSubmitForm}
           onCancel={handleCancel}
