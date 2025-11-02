@@ -8,6 +8,8 @@ import { ProtectedRoute } from './components/Common/ProtectedRoute';
 import { Products } from './pages/Products/Products';
 import { ServiceCategories } from './pages/Category/Category';
 import { CashRegisters } from './pages/CashRegisters/index';
+import { Sales } from './pages/Sales/Sales';
+import { Combos } from './pages/Combos/Combos';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -76,6 +78,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <CashRegisters />
+              </ProtectedRoute>
+            } 
+          />
+             <Route 
+            path="/sales" 
+            element={
+              <ProtectedRoute>
+                <Sales  />
+              </ProtectedRoute>
+            } 
+          />
+             <Route 
+            path="/combos" 
+            element={
+              <ProtectedRoute>
+                <Combos  />
               </ProtectedRoute>
             } 
           />

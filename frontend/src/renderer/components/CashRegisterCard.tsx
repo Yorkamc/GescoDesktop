@@ -1,5 +1,6 @@
 import React from 'react';
-import type { CashRegister } from './../types/cashRegister';
+import { useNavigate } from 'react-router-dom';
+import type { CashRegister } from '../types/cashRegister';
 
 interface CashRegisterCardProps {
   cashRegister: CashRegister;
@@ -16,6 +17,8 @@ export const CashRegisterCard: React.FC<CashRegisterCardProps> = ({
   onOpen,
   onClose,
 }) => {
+  const navigate = useNavigate();
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('es-ES', {
@@ -25,6 +28,10 @@ export const CashRegisterCard: React.FC<CashRegisterCardProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleManageSales = () => {
+    navigate(`/sales?cashRegisterId=${cashRegister.id}`);
   };
 
   return (
@@ -50,6 +57,19 @@ export const CashRegisterCard: React.FC<CashRegisterCardProps> = ({
             {cashRegister.isOpen ? '🟢 Abierta' : '🔴 Cerrada'}
           </span>
         </div>
+        
+        {/* ✅ NUEVO: Botón de Ventas en la esquina superior derecha */}
+        <button
+          onClick={handleManageSales}
+          className="ml-3 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 
+                   transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
+          title="Gestionar Ventas"
+        >
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span className="whitespace-nowrap">Ventas</span>
+        </button>
       </div>
 
       {/* Info */}
