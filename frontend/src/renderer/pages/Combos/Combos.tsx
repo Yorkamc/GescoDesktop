@@ -75,7 +75,7 @@ export const Combos: React.FC = () => {
 
   const handleBack = () => {
 
-      navigate('/cash-registers');
+      navigate('/activities');
   
   };
 

@@ -15,14 +15,13 @@ export interface TransactionDetail {
   id: string;
   productId?: string;
   productName?: string;
-  comboId?: string;
-  comboName?: string;
+  comboId?: string;  
+  comboName?: string;  
   quantity: number;
   unitPrice: number;
   totalAmount: number;
   isCombo: boolean;
 }
-
 export interface TransactionPayment {
   id: string;
   paymentMethodId: number;

@@ -107,24 +107,25 @@ export const SaleCard: React.FC<SaleCardProps> = ({
       </div>
 
       {/* Detalles de productos */}
-      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-        <h4 className="text-xs font-semibold text-gray-700 mb-2">Detalle:</h4>
-        <div className="space-y-1">
-          {sale.details.slice(0, 3).map((detail) => (
-            <div key={detail.id} className="flex justify-between text-xs text-gray-600">
-              <span className="truncate flex-1">
-                {detail.quantity}x {detail.productName || detail.comboName}
-              </span>
-              <span className="font-medium ml-2">₡{detail.totalAmount.toLocaleString()}</span>
-            </div>
-          ))}
-          {sale.details.length > 3 && (
-            <p className="text-xs text-gray-500 italic">
-              +{sale.details.length - 3} productos más...
-            </p>
-          )}
-        </div>
+<div className="mb-4 p-3 bg-gray-50 rounded-lg">
+  <h4 className="text-xs font-semibold text-gray-700 mb-2">Detalle:</h4>
+  <div className="space-y-1">
+    {sale.details.slice(0, 3).map((detail) => (
+      <div key={detail.id} className="flex justify-between text-xs text-gray-600">
+        <span className="truncate flex-1">
+          {detail.isCombo && '🎁 '}
+          {detail.quantity}x {detail.productName || detail.comboName}
+        </span>
+        <span className="font-medium ml-2">₡{detail.totalAmount.toLocaleString()}</span>
       </div>
+    ))}
+    {sale.details.length > 3 && (
+      <p className="text-xs text-gray-500 italic">
+        +{sale.details.length - 3} productos más...
+      </p>
+    )}
+  </div>
+</div>
 
       {/* Botones */}
       <div className="grid grid-cols-2 gap-2">

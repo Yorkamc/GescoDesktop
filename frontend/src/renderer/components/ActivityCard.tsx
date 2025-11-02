@@ -29,7 +29,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const handleManageCashRegisters = () => {
    navigate(`/cash-registers?activityId=${activity.id}`);
   };
-
+  const handleManageCombos = () => {
+    navigate(`/combos?activityId=${activity.id}`);
+  };
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex justify-between items-start mb-4">
@@ -58,6 +60,17 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </svg>
           <span className="whitespace-nowrap">Cajas</span>
         </button>
+                  <button
+            onClick={handleManageCombos}
+            className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 
+                     transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
+            title="Gestionar Combos"
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span className="whitespace-nowrap">Combos</span>
+          </button>
       </div>
 
       {activity.description && (

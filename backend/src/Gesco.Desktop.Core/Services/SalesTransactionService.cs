@@ -22,14 +22,7 @@ namespace Gesco.Desktop.Core.Services
         {
             try
             {
-                var query = _context.SalesTransactions
-                    .Include(st => st.CashRegister)
-                    .Include(st => st.SalesStatus)
-                    .Include(st => st.TransactionDetails)
-                        .ThenInclude(td => td.Product)
-                    .Include(st => st.TransactionPayments)
-                        .ThenInclude(tp => tp.PaymentMethod)
-                    .AsQueryable();
+                var query = _context.SalesTransactions.AsQueryable();
 
                 if (cashRegisterId.HasValue)
                 {
@@ -49,18 +42,104 @@ namespace Gesco.Desktop.Core.Services
 
                 var sales = await query
                     .OrderByDescending(st => st.TransactionDate)
-                    .Select(st => MapToDto(st))
                     .ToListAsync();
 
-                _logger.LogInformation("Retrieved {Count} sales transactions", sales.Count);
-                return sales;
+                // ✅ Mapear manualmente
+                var result = new List<SalesTransactionDto>();
+
+                foreach (var sale in sales)
+                {
+                    var dto = await MapToDtoAsync(sale);
+                    result.Add(dto);
+                }
+
+                _logger.LogInformation("Retrieved {Count} sales transactions", result.Count);
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving sales transactions");
+                _logger.LogError(ex, "Error retrieving sales transactions: {Message}", ex.Message);
                 throw;
             }
         }
+private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
+{
+    // Cargar relaciones
+    var cashRegister = await _context.CashRegisters.FindAsync(sale.CashRegisterId);
+    var status = await _context.SalesStatuses.FindAsync(sale.SalesStatusId);
+    
+    // Cargar detalles
+    var details = await _context.TransactionDetails
+        .Where(td => td.SalesTransactionId == sale.Id)
+        .ToListAsync();
+    
+    var detailDtos = new List<TransactionDetailDto>();
+    foreach (var detail in details)
+    {
+        CategoryProduct? product = null;
+        SalesCombo? combo = null;
+        
+        if (detail.ProductId.HasValue)
+        {
+            product = await _context.CategoryProducts.FindAsync(detail.ProductId.Value);
+        }
+        
+        if (detail.ComboId.HasValue)
+        {
+            combo = await _context.SalesCombos.FindAsync(detail.ComboId.Value);
+        }
+        
+        detailDtos.Add(new TransactionDetailDto
+        {
+            Id = MapLongToGuid(detail.Id),
+            ProductId = detail.ProductId.HasValue ? MapLongToGuid(detail.ProductId.Value) : null,
+            ProductName = product?.Name ?? combo?.Name,
+            ComboId = detail.ComboId.HasValue ? MapLongToGuid(detail.ComboId.Value) : null,
+            ComboName = combo?.Name,
+            Quantity = detail.Quantity,
+            UnitPrice = detail.UnitPrice,
+            TotalAmount = detail.TotalAmount,
+            IsCombo = detail.IsCombo
+        });
+    }
+    
+    // Cargar pagos
+    var payments = await _context.TransactionPayments
+        .Where(tp => tp.SalesTransactionId == sale.Id)
+        .ToListAsync();
+    
+    var paymentDtos = new List<TransactionPaymentDto>();
+    foreach (var payment in payments)
+    {
+        var paymentMethod = await _context.PaymentMethods.FindAsync(payment.PaymentMethodId);
+        
+        paymentDtos.Add(new TransactionPaymentDto
+        {
+            Id = MapLongToGuid(payment.Id),
+            PaymentMethodId = (int)payment.PaymentMethodId,
+            PaymentMethodName = paymentMethod?.Name,
+            Amount = payment.Amount,
+            Reference = payment.Reference,
+            ProcessedAt = payment.ProcessedAt,
+            ProcessedBy = payment.ProcessedBy,
+            ProcessedByName = payment.ProcessedBy
+        });
+    }
+    
+    return new SalesTransactionDto
+    {
+        Id = MapLongToGuid(sale.Id),
+        CashRegisterId = MapLongToGuid(sale.CashRegisterId),
+        TransactionNumber = sale.TransactionNumber,
+        InvoiceNumber = sale.InvoiceNumber,
+        SalesStatusId = (int)sale.SalesStatusId,
+        StatusName = status?.Name,
+        TransactionDate = sale.TransactionDate,
+        TotalAmount = sale.TotalAmount,
+        Details = detailDtos,
+        Payments = paymentDtos
+    };
+}
 
         public async Task<SalesTransactionDto?> GetSaleByIdAsync(Guid id)
         {

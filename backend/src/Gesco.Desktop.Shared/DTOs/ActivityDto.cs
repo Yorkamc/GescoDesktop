@@ -80,17 +80,21 @@ namespace Gesco.Desktop.Shared.DTOs
         public List<TransactionPaymentDto> Payments { get; set; } = new();
     }
 
-    public class TransactionDetailDto
-    {
-        public Guid Id { get; set; } // ✅ Guid (mapea desde long)
-        public Guid? ProductId { get; set; } // ✅ Guid (mapea desde long)
-        public Guid? ComboId { get; set; } // ✅ Guid (mapea desde long)
-        public string? ProductName { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal TotalAmount { get; set; }
-        public bool IsCombo { get; set; }
-    }
+public class TransactionDetailDto
+{
+    public Guid Id { get; set; }
+    public Guid? ProductId { get; set; }
+    public string? ProductName { get; set; }
+    
+    // ✅ AGREGAR campos de combo
+    public Guid? ComboId { get; set; }
+    public string? ComboName { get; set; }
+    
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal TotalAmount { get; set; }
+    public bool IsCombo { get; set; }
+}
 
     public class TransactionPaymentDto
     {

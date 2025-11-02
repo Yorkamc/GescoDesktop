@@ -18,56 +18,127 @@ namespace Gesco.Desktop.Core.Services
             _logger = logger;
         }
 
-        public async Task<List<SalesComboDto>> GetCombosAsync(Guid? activityId = null)
-        {
-            try
-            {
-                var query = _context.SalesCombos
-                    .Include(c => c.Activity)
-                    .Include(c => c.ComboItems)
-                        .ThenInclude(ci => ci.Product)
-                    .AsQueryable();
+       public async Task<List<SalesComboDto>> GetCombosAsync(Guid? activityId = null)
+{
+    try
+    {
+        var query = _context.SalesCombos.AsQueryable();
 
-                if (activityId.HasValue)
+        if (activityId.HasValue)
+        {
+            var longActivityId = MapGuidToLong(activityId.Value);
+            query = query.Where(c => c.ActivityId == longActivityId);
+        }
+
+        // ✅ Cargar datos sin includes problemáticos
+        var combos = await query
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        // ✅ Mapear manualmente para evitar lazy loading
+        var result = new List<SalesComboDto>();
+        
+        foreach (var combo in combos)
+        {
+            // Cargar actividad separadamente
+            var activity = await _context.Activities.FindAsync(combo.ActivityId);
+            
+            // Cargar items del combo
+            var comboItems = await _context.ComboItems
+                .Where(ci => ci.ComboId == combo.Id)
+                .ToListAsync();
+            
+            var items = new List<ComboItemDto>();
+            foreach (var ci in comboItems)
+            {
+                // Cargar producto
+                var product = await _context.CategoryProducts.FindAsync(ci.ProductId);
+                
+                items.Add(new ComboItemDto
                 {
-                    var longActivityId = MapGuidToLong(activityId.Value);
-                    query = query.Where(c => c.ActivityId == longActivityId);
-                }
-
-                var combos = await query
-                    .OrderBy(c => c.Name)
-                    .Select(c => MapToDto(c))
-                    .ToListAsync();
-
-                _logger.LogInformation("Retrieved {Count} combos", combos.Count);
-                return combos;
+                    Id = MapLongToGuid(ci.Id),
+                    ProductId = MapLongToGuid(ci.ProductId),
+                    ProductName = product?.Name ?? "Producto no encontrado",
+                    ProductPrice = product?.UnitPrice ?? 0m,
+                    Quantity = ci.Quantity
+                });
             }
-            catch (Exception ex)
+            
+            result.Add(new SalesComboDto
             {
-                _logger.LogError(ex, "Error retrieving combos");
-                throw;
-            }
+                Id = MapLongToGuid(combo.Id),
+                ActivityId = MapLongToGuid(combo.ActivityId),
+                ActivityName = activity?.Name ?? "Actividad no encontrada",
+                Name = combo.Name,
+                Description = combo.Description,
+                ComboPrice = combo.ComboPrice,
+                Active = combo.Active,
+                CreatedAt = combo.CreatedAt,
+                Items = items
+            });
         }
 
-        public async Task<SalesComboDto?> GetComboByIdAsync(Guid id)
+        _logger.LogInformation("Retrieved {Count} combos", result.Count);
+        return result;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving combos: {Message}", ex.Message);
+        throw;
+    }
+}
+
+public async Task<SalesComboDto?> GetComboByIdAsync(Guid id)
+{
+    try
+    {
+        var longId = MapGuidToLong(id);
+        var combo = await _context.SalesCombos.FindAsync(longId);
+        
+        if (combo == null) return null;
+
+        // Cargar actividad
+        var activity = await _context.Activities.FindAsync(combo.ActivityId);
+        
+        // Cargar items
+        var comboItems = await _context.ComboItems
+            .Where(ci => ci.ComboId == combo.Id)
+            .ToListAsync();
+        
+        var items = new List<ComboItemDto>();
+        foreach (var ci in comboItems)
         {
-            try
+            var product = await _context.CategoryProducts.FindAsync(ci.ProductId);
+            
+            items.Add(new ComboItemDto
             {
-                var longId = MapGuidToLong(id);
-                var combo = await _context.SalesCombos
-                    .Include(c => c.Activity)
-                    .Include(c => c.ComboItems)
-                        .ThenInclude(ci => ci.Product)
-                    .FirstOrDefaultAsync(c => c.Id == longId);
-
-                return combo != null ? MapToDto(combo) : null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving combo {Id}", id);
-                throw;
-            }
+                Id = MapLongToGuid(ci.Id),
+                ProductId = MapLongToGuid(ci.ProductId),
+                ProductName = product?.Name ?? "Producto no encontrado",
+                ProductPrice = product?.UnitPrice ?? 0m,
+                Quantity = ci.Quantity
+            });
         }
+        
+        return new SalesComboDto
+        {
+            Id = MapLongToGuid(combo.Id),
+            ActivityId = MapLongToGuid(combo.ActivityId),
+            ActivityName = activity?.Name ?? "Actividad no encontrada",
+            Name = combo.Name,
+            Description = combo.Description,
+            ComboPrice = combo.ComboPrice,
+            Active = combo.Active,
+            CreatedAt = combo.CreatedAt,
+            Items = items
+        };
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving combo {Id}: {Message}", id, ex.Message);
+        throw;
+    }
+}
 
         public async Task<SalesComboDto> CreateComboAsync(CreateSalesComboRequest request)
         {
