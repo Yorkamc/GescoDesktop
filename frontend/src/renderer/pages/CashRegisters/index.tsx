@@ -122,13 +122,7 @@ export const CashRegisters: React.FC = () => {
 
   // ✅ Función para volver a actividades
   const handleBack = () => {
-    if (activityIdFromUrl) {
-      // Si vino de una actividad específica, volver a actividades
-      navigate('/activities');
-    } else {
-      // Si no, volver al dashboard
-      navigate('/dashboard');
-    }
+     navigate('/activities');
   };
 
   const filteredCashRegisters = useMemo(() => {

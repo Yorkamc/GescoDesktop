@@ -65,11 +65,7 @@ export const Sales: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (cashRegisterId) {
       navigate('/cash-registers');
-    } else {
-      navigate('/dashboard');
-    }
   };
 
   const handleManageCombos = () => {

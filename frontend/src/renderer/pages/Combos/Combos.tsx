@@ -74,11 +74,9 @@ export const Combos: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (activityId) {
-      navigate('/activities');
-    } else {
-      navigate('/sales');
-    }
+
+      navigate('/cash-registers');
+  
   };
 
   const filteredCombos = useMemo(() => {
