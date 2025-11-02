@@ -194,7 +194,7 @@ export const Dashboard: React.FC = () => {
                       </svg>
                       <div>
                         <span className="font-medium">Gestionar Actividades</span>
-                        <p className="text-sm text-gray-500">Ver y crear actividades</p>
+                        <p className="text-sm text-gray-500">Ver y crear actividades y ventas</p>
                       </div>
                     </button>
                                         <button 

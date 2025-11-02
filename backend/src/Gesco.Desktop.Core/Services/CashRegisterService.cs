@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Gesco.Desktop.Data.Context;
@@ -18,6 +23,25 @@ namespace Gesco.Desktop.Core.Services
             _logger = logger;
         }
 
+        // Expression traducible por EF Core para proyectar a DTO sin capturar la instancia del servicio.
+        private static readonly Expression<Func<CashRegister, CashRegisterDto>> MapExpression = register => new CashRegisterDto
+        {
+            Id = MapLongToGuid(register.Id),
+            ActivityId = MapLongToGuid(register.ActivityId),
+            ActivityName = register.Activity != null ? register.Activity.Name : null,
+            RegisterNumber = register.RegisterNumber,
+            Name = register.Name,
+            Location = register.Location,
+            IsOpen = register.IsOpen,
+            OpenedAt = register.OpenedAt,
+            ClosedAt = register.ClosedAt,
+            OperatorUserId = register.OperatorUserId,
+            OperatorUserName = register.OperatorUser != null ? (register.OperatorUser.FullName ?? register.OperatorUser.Username) : null,
+            SupervisorUserId = register.SupervisorUserId,
+            SupervisorUserName = register.SupervisorUser != null ? (register.SupervisorUser.FullName ?? register.SupervisorUser.Username) : null,
+            CreatedAt = register.CreatedAt
+        };
+
         public async Task<List<CashRegisterDto>> GetCashRegistersAsync(Guid? activityId = null)
         {
             try
@@ -36,7 +60,7 @@ namespace Gesco.Desktop.Core.Services
 
                 var registers = await query
                     .OrderBy(cr => cr.RegisterNumber)
-                    .Select(cr => MapToDto(cr))
+                    .Select(MapExpression) // <- usa expresión estática traducible
                     .ToListAsync();
 
                 _logger.LogInformation("Retrieved {Count} cash registers", registers.Count);
@@ -266,93 +290,107 @@ namespace Gesco.Desktop.Core.Services
             }
         }
 
-        public async Task<CashRegisterDto?> CloseCashRegisterAsync(Guid id, CloseCashRegisterRequest request)
+      public async Task<CashRegisterDto?> CloseCashRegisterAsync(Guid id, CloseCashRegisterRequest request)
+{
+    using var transaction = await _context.Database.BeginTransactionAsync();
+    try
+    {
+        var longId = MapGuidToLong(id);
+        var register = await _context.CashRegisters
+            .Include(cr => cr.SalesTransactions)
+            .FirstOrDefaultAsync(cr => cr.Id == longId);
+
+        if (register == null)
+            return null;
+
+        if (!register.IsOpen)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                var longId = MapGuidToLong(id);
-                var register = await _context.CashRegisters
-                    .Include(cr => cr.SalesTransactions)
-                    .FirstOrDefaultAsync(cr => cr.Id == longId);
-
-                if (register == null)
-                    return null;
-
-                if (!register.IsOpen)
-                {
-                    throw new InvalidOperationException("Cash register is not open");
-                }
-
-                if (!register.OpenedAt.HasValue)
-                {
-                    throw new InvalidOperationException("Cash register has no opening date");
-                }
-
-                // Calcular estadísticas de cierre
-                var completedStatus = await _context.SalesStatuses
-                    .FirstOrDefaultAsync(s => s.Name == "Completed");
-
-                var transactions = register.SalesTransactions
-                    .Where(st => completedStatus == null || st.SalesStatusId == completedStatus.Id)
-                    .ToList();
-
-                var totalTransactions = transactions.Count;
-                var totalSalesAmount = transactions.Sum(st => st.TotalAmount);
-
-                // Calcular totales por método de pago
-                var paymentTotals = await _context.TransactionPayments
-                    .Where(tp => transactions.Select(t => t.Id).Contains(tp.SalesTransactionId))
-                    .Include(tp => tp.PaymentMethod)
-                    .GroupBy(tp => tp.PaymentMethod.Name)
-                    .Select(g => new { Method = g.Key, Total = g.Sum(tp => tp.Amount) })
-                    .ToListAsync();
-
-                var cashTotal = paymentTotals.FirstOrDefault(pt => pt.Method == "Cash")?.Total ?? 0m;
-                var cardTotal = paymentTotals.FirstOrDefault(pt => pt.Method == "Card")?.Total ?? 0m;
-                var sinpeTotal = paymentTotals.FirstOrDefault(pt => pt.Method == "SINPE Mobile")?.Total ?? 0m;
-
-                // Crear cierre de caja
-                var closure = new CashRegisterClosure
-                {
-                    CashRegisterId = longId,
-                    OpeningDate = register.OpenedAt.Value,
-                    ClosingDate = DateTime.UtcNow,
-                    TotalTransactions = totalTransactions,
-                    TotalItemsSold = await CalculateTotalItemsSoldAsync(longId),
-                    TotalSalesAmount = totalSalesAmount,
-                    CashCalculated = cashTotal,
-                    CardsCalculated = cardTotal,
-                    SinpeCalculated = sinpeTotal,
-                    CashDeclared = request.CashDeclared,
-                    CashDifference = request.CashDeclared - cashTotal,
-                    ClosedBy = request.ClosedBy,
-                    SupervisedBy = request.SupervisedBy,
-                    Observations = request.Observations,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = request.ClosedBy
-                };
-
-                _context.CashRegisterClosures.Add(closure);
-
-                // Cerrar caja
-                register.IsOpen = false;
-                register.ClosedAt = DateTime.UtcNow;
-                register.UpdatedAt = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                _logger.LogInformation("Cash register closed: {Id}, Total sales: {Amount}", id, totalSalesAmount);
-                return await GetCashRegisterByIdAsync(id);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error closing cash register {Id}", id);
-                throw;
-            }
+            throw new InvalidOperationException("Cash register is not open");
         }
+
+        if (!register.OpenedAt.HasValue)
+        {
+            throw new InvalidOperationException("Cash register has no opening date");
+        }
+
+        // Calcular estadísticas de cierre
+        var completedStatus = await _context.SalesStatuses
+            .FirstOrDefaultAsync(s => s.Name == "Completed");
+
+        // Filtrar transacciones ya en memoria
+        var transactions = register.SalesTransactions
+            .Where(st => completedStatus == null || st.SalesStatusId == completedStatus.Id)
+            .ToList();
+
+        var totalTransactions = transactions.Count;
+        var totalSalesAmount = transactions.Sum(st => st.TotalAmount);
+
+        // Obtener ids de transacción para consulta
+        var transactionIds = transactions.Select(t => t.Id).ToList();
+
+        // Traer pagos relevantes a memoria PROYECTANDO monto y nombre del método
+        var paymentRows = await _context.TransactionPayments
+            .Where(tp => transactionIds.Contains(tp.SalesTransactionId))
+            .Include(tp => tp.PaymentMethod)
+            .Select(tp => new
+            {
+                Method = tp.PaymentMethod != null ? tp.PaymentMethod.Name : null,
+                Amount = tp.Amount
+            })
+            .ToListAsync();
+
+        // Agrupar y sumar en memoria (LINQ to Objects) para evitar Sum(decimal) en SQLite
+        var paymentTotals = paymentRows
+            .GroupBy(pr => pr.Method)
+            .Select(g => new { Method = g.Key, Total = g.Sum(x => x.Amount) })
+            .ToList();
+
+        var cashTotal = paymentTotals.FirstOrDefault(pt => pt.Method == "Cash")?.Total ?? 0m;
+        var cardTotal = paymentTotals.FirstOrDefault(pt => pt.Method == "Card")?.Total ?? 0m;
+        var sinpeTotal = paymentTotals.FirstOrDefault(pt => pt.Method == "SINPE Mobile")?.Total ?? 0m;
+
+        // Crear cierre de caja
+        var closure = new CashRegisterClosure
+        {
+            CashRegisterId = longId,
+            OpeningDate = register.OpenedAt.Value,
+            ClosingDate = DateTime.UtcNow,
+            TotalTransactions = totalTransactions,
+            TotalItemsSold = await CalculateTotalItemsSoldAsync(longId),
+            TotalSalesAmount = totalSalesAmount,
+            CashCalculated = cashTotal,
+            CardsCalculated = cardTotal,
+            SinpeCalculated = sinpeTotal,
+            CashDeclared = request.CashDeclared,
+            CashDifference = request.CashDeclared - cashTotal,
+            ClosedBy = request.ClosedBy,
+            SupervisedBy = request.SupervisedBy,
+            Observations = request.Observations,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = request.ClosedBy
+        };
+
+        _context.CashRegisterClosures.Add(closure);
+
+        // Cerrar caja
+        register.IsOpen = false;
+        register.ClosedAt = DateTime.UtcNow;
+        register.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        _logger.LogInformation("Cash register closed: {Id}, Total sales: {Amount}", id, totalSalesAmount);
+        return await GetCashRegisterByIdAsync(id);
+    }
+    catch (Exception ex)
+    {
+        await transaction.RollbackAsync();
+        _logger.LogError(ex, "Error closing cash register {Id}", id);
+        throw;
+    }
+}
+
 
         public async Task<List<CashRegisterDto>> GetOpenCashRegistersAsync()
         {
@@ -364,7 +402,7 @@ namespace Gesco.Desktop.Core.Services
                     .Include(cr => cr.SupervisorUser)
                     .Where(cr => cr.IsOpen)
                     .OrderBy(cr => cr.OpenedAt)
-                    .Select(cr => MapToDto(cr))
+                    .Select(MapExpression) // <- usa expresión estática traducible
                     .ToListAsync();
 
                 _logger.LogInformation("Retrieved {Count} open cash registers", registers.Count);
@@ -472,6 +510,4 @@ namespace Gesco.Desktop.Core.Services
             return BitConverter.ToInt64(bytes, 0);
         }
     }
-
-    // ✅ ELIMINADO: CloseCashRegisterRequest ahora está en Gesco.Desktop.Shared.DTOs
 }
