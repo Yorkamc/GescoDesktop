@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Activity } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { formatDate, getActivityStatusColor } from '../utils/formatters';
 
 export interface ActivityCardProps {
@@ -21,11 +22,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   categoryCount = 0,
   productCount = 0,
 }) => {
+  const navigate = useNavigate();
   const startDate = formatDate(activity.startDate);
   const endDate = activity.endDate ? formatDate(activity.endDate) : 'Sin definir';
 
   const handleManageCashRegisters = () => {
-    window.location.href = `#/cash-registers?activityId=${activity.id}`;
+   navigate(`/cash-registers?activityId=${activity.id}`);
   };
 
   return (

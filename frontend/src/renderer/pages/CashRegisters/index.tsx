@@ -15,7 +15,13 @@ export const CashRegisters: React.FC = () => {
   
   // ✅ Obtener activityId de la URL
   const activityIdFromUrl = searchParams.get('activityId') || undefined;
-  
+    const handleManageCombos = () => {
+  if (activityIdFromUrl) {
+    navigate(`/combos?activityId=${activityIdFromUrl}`);
+  } else {
+    navigate('/combos');
+  }
+};
   const {
     cashRegisters,
     openCashRegisters,
@@ -167,18 +173,30 @@ export const CashRegisters: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setEditingCashRegister(null);
-                setShowForm(true);
-              }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Nueva Caja
-            </button>
+<div className="flex gap-2">
+  <button
+    onClick={handleManageCombos}
+    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center"
+  >
+    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+    Combos
+  </button>
+
+  <button
+    onClick={() => {
+      setEditingCashRegister(null);
+      setShowForm(true);
+    }}
+    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+  >
+    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+    Nueva Caja
+  </button>
+</div>
           </div>
         </div>
       </header>

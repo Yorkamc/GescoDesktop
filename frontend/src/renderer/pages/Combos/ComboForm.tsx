@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { InlineSpinner } from '../../components/LoadingSpinner';
-import { useActivities } from '../../hooks/useActivities';
+import { useActivityProducts } from '../../hooks/useActivityProducts'; // ✅ Tu hook existente
 import type { SalesCombo, CreateComboRequest, CreateComboItem } from '../../types/combo';
 
 interface ComboFormProps {
@@ -18,8 +18,6 @@ export const ComboForm: React.FC<ComboFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const { activities } = useActivities();
-  
   const [formData, setFormData] = useState<CreateComboRequest>({
     activityId: preselectedActivityId || '',
     name: '',
@@ -29,8 +27,12 @@ export const ComboForm: React.FC<ComboFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // ✅ Usar tu hook existente
+  const { 
+    products: availableProducts, 
+    isLoading: loadingProducts 
+  } = useActivityProducts(formData.activityId);
 
   useEffect(() => {
     if (combo) {
@@ -51,30 +53,6 @@ export const ComboForm: React.FC<ComboFormProps> = ({
       }));
     }
   }, [combo, preselectedActivityId]);
-
-  // Cargar productos cuando se seleccione una actividad
-  useEffect(() => {
-    const loadProducts = async () => {
-      if (!formData.activityId) {
-        setAvailableProducts([]);
-        return;
-      }
-
-      setLoadingProducts(true);
-      try {
-        // Aquí deberías cargar los productos de la actividad
-        // Por ahora simulamos con array vacío
-        // TODO: Implementar carga de productos por actividad
-        setAvailableProducts([]);
-      } catch (error) {
-        console.error('Error loading products:', error);
-      } finally {
-        setLoadingProducts(false);
-      }
-    };
-
-    loadProducts();
-  }, [formData.activityId]);
 
   const handleAddItem = () => {
     setFormData({
@@ -135,7 +113,8 @@ export const ComboForm: React.FC<ComboFormProps> = ({
     }
   };
 
-  const isActivityDisabled = !!combo || !!preselectedActivityId;
+  // ✅ Ocultar selector cuando viene pre-seleccionada o es edición
+  const shouldHideActivitySelector = !!combo || !!preselectedActivityId;
 
   // Calcular precio regular del combo
   const regularPrice = formData.items.reduce((total, item) => {
@@ -145,6 +124,9 @@ export const ComboForm: React.FC<ComboFormProps> = ({
 
   const savings = regularPrice - formData.comboPrice;
   const savingsPercentage = regularPrice > 0 ? ((savings / regularPrice) * 100).toFixed(0) : 0;
+
+  // ✅ Obtener nombre de la actividad para mostrar cuando está oculto el selector
+  const activityName = combo?.activityName || 'Actividad seleccionada';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -175,37 +157,42 @@ export const ComboForm: React.FC<ComboFormProps> = ({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Actividad */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Actividad <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.activityId}
-                onChange={(e) => setFormData({ ...formData, activityId: e.target.value })}
-                disabled={isSubmitting || isActivityDisabled}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 
-                         focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed
-                         ${errors.activityId ? 'border-red-500' : 'border-gray-300'}`}
-              >
-                <option value="">Selecciona una actividad...</option>
-                {activities.map((activity) => (
-                  <option key={activity.id} value={activity.id}>
-                    {activity.name}
-                  </option>
-                ))}
-              </select>
-              {errors.activityId && (
-                <p className="mt-1 text-sm text-red-600">{errors.activityId}</p>
-              )}
-              {isActivityDisabled && (
-                <p className="mt-1 text-sm text-gray-500">
-                  {combo 
-                    ? 'La actividad no se puede modificar' 
-                    : 'Actividad pre-seleccionada desde la que vienes'}
-                </p>
-              )}
-            </div>
+            {/* Actividad - Solo mostrar si NO está pre-seleccionada */}
+            {!shouldHideActivitySelector ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Actividad <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.activityId}
+                  onChange={(e) => {
+                    setFormData({ ...formData, activityId: e.target.value, items: [] });
+                  }}
+                  disabled={isSubmitting}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 
+                           focus:border-blue-500 disabled:bg-gray-100
+                           ${errors.activityId ? 'border-red-500' : 'border-gray-300'}`}
+                >
+                  <option value="">Selecciona una actividad...</option>
+                  {/* Aquí deberías cargar las actividades con useActivities() */}
+                </select>
+                {errors.activityId && (
+                  <p className="mt-1 text-sm text-red-600">{errors.activityId}</p>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Actividad:</p>
+                    <p className="text-sm text-blue-700">{activityName}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Nombre y Precio */}
             <div className="grid grid-cols-2 gap-4">
@@ -277,7 +264,7 @@ export const ComboForm: React.FC<ComboFormProps> = ({
                 <button
                   type="button"
                   onClick={handleAddItem}
-                  disabled={isSubmitting || !formData.activityId}
+                  disabled={isSubmitting || !formData.activityId || availableProducts.length === 0}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
                 >
                   + Agregar Producto
@@ -294,14 +281,22 @@ export const ComboForm: React.FC<ComboFormProps> = ({
                 </div>
               )}
 
-              {loadingProducts && (
+              {loadingProducts && formData.activityId && (
                 <div className="p-4 bg-gray-50 rounded-lg text-center">
                   <InlineSpinner className="h-5 w-5 text-blue-600 mx-auto" />
                   <p className="text-sm text-gray-600 mt-2">Cargando productos...</p>
                 </div>
               )}
 
-              {formData.activityId && !loadingProducts && formData.items.length === 0 && (
+              {formData.activityId && !loadingProducts && availableProducts.length === 0 && (
+                <div className="p-4 bg-yellow-50 rounded-lg text-center">
+                  <p className="text-sm text-yellow-800">
+                    No hay productos disponibles para esta actividad.
+                  </p>
+                </div>
+              )}
+
+              {formData.activityId && !loadingProducts && formData.items.length === 0 && availableProducts.length > 0 && (
                 <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-500 text-sm">
                   No hay productos agregados. Haz clic en "Agregar Producto"
                 </div>
