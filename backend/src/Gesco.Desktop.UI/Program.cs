@@ -166,6 +166,7 @@ builder.Services.AddScoped<ICashRegisterService, CashRegisterService>();
 builder.Services.AddScoped<ISalesTransactionService, SalesTransactionService>();
 builder.Services.AddScoped<IActivityProductService, ActivityProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ISalesComboService, SalesComboService>();
 // ============================================
 // MIGRATION SERVICE
 // ============================================

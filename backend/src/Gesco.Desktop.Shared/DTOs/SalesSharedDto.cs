@@ -124,4 +124,56 @@ namespace Gesco.Desktop.Shared.DTOs
         public string? SupervisedByName { get; set; }
         public string? Observations { get; set; }
     }
+    public class SalesComboDto
+{
+    public Guid Id { get; set; }
+    public Guid ActivityId { get; set; }
+    public string ActivityName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal ComboPrice { get; set; }
+    public bool Active { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public List<ComboItemDto> Items { get; set; } = new();
+}
+
+public class ComboItemDto
+{
+    public Guid Id { get; set; }
+    public Guid ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public decimal ProductPrice { get; set; }
+    public int Quantity { get; set; }
+}
+
+public class CreateSalesComboRequest
+{
+    [Required]
+    public Guid ActivityId { get; set; }
+    
+    [Required]
+    [MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
+    
+    [MaxLength(500)]
+    public string? Description { get; set; }
+    
+    [Required]
+    [Range(0.01, double.MaxValue, ErrorMessage = "El precio del combo debe ser mayor a 0")]
+    public decimal ComboPrice { get; set; }
+    
+    [Required]
+    [MinLength(2, ErrorMessage = "Un combo debe tener al menos 2 productos")]
+    public List<CreateComboItemRequest> Items { get; set; } = new();
+}
+
+public class CreateComboItemRequest
+{
+    [Required]
+    public Guid ProductId { get; set; }
+    
+    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser al menos 1")]
+    public int Quantity { get; set; } = 1;
+}
 }
