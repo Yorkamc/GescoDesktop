@@ -212,39 +212,39 @@ export const salesService = {
     }
   },
 
-  /**
-   * Obtener métodos de pago
-   */
-  async getPaymentMethods(): Promise<PaymentMethod[]> {
-    try {
-      const response = await api.get('/paymentmethods');
+/**
+ * Obtener métodos de pago
+ */
+async getPaymentMethods(): Promise<PaymentMethod[]> {
+  try {
+    const response = await api.get('/paymentmethods');
 
-      if (response.data.success) {
-        return response.data.data || [];
-      } else {
-        throw new Error('Error obteniendo métodos de pago');
-      }
-    } catch (error: any) {
-      console.error('❌ Error obteniendo métodos de pago:', error);
-      throw new Error('Error al cargar métodos de pago');
+    if (response.data.success) {
+      return response.data.data || [];
+    } else {
+      throw new Error('Error obteniendo métodos de pago');
     }
-  },
+  } catch (error: any) {
+    console.error('❌ Error obteniendo métodos de pago:', error);
+    throw new Error('Error al cargar métodos de pago');
+  }
+},
 
-  /**
-   * Obtener estados de venta
-   */
-  async getSalesStatuses(): Promise<SalesStatus[]> {
-    try {
-      const response = await api.get('/salesstatuses');
+/**
+ * Obtener estados de venta
+ */
+async getSalesStatuses(): Promise<SalesStatus[]> {
+  try {
+    const response = await api.get('/salesstatuses');
 
-      if (response.data.success) {
-        return response.data.data || [];
-      } else {
-        throw new Error('Error obteniendo estados');
-      }
-    } catch (error: any) {
-      console.error('❌ Error obteniendo estados:', error);
-      throw new Error('Error al cargar estados de venta');
+    if (response.data.success) {
+      return response.data.data || [];
+    } else {
+      throw new Error('Error obteniendo estados');
     }
-  },
+  } catch (error: any) {
+    console.error('❌ Error obteniendo estados:', error);
+    throw new Error('Error al cargar estados de venta');
+  }
+},
 };

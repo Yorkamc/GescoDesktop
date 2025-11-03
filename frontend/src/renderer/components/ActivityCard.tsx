@@ -27,11 +27,13 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const endDate = activity.endDate ? formatDate(activity.endDate) : 'Sin definir';
 
   const handleManageCashRegisters = () => {
-   navigate(`/cash-registers?activityId=${activity.id}`);
+    navigate(`/cash-registers?activityId=${activity.id}`);
   };
+
   const handleManageCombos = () => {
     navigate(`/combos?activityId=${activity.id}`);
   };
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex justify-between items-start mb-4">
@@ -48,29 +50,34 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </span>
         </div>
         
-        {/* ✅ Botón de Cajas en la esquina superior derecha */}
-        <button
-          onClick={handleManageCashRegisters}
-          className="ml-3 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 
-                   transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
-          title="Gestionar Cajas Registradoras"
-        >
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-          <span className="whitespace-nowrap">Cajas</span>
-        </button>
-                  <button
-            onClick={handleManageCombos}
-            className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 
+        {/* ✅ Botones de Editar y Eliminar en la esquina superior derecha */}
+        <div className="flex gap-2 ml-3">
+          {/* Botón Editar */}
+          <button
+            onClick={() => onEdit(activity)}
+            className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 
                      transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
-            title="Gestionar Combos"
+            title="Editar actividad"
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            <span className="whitespace-nowrap">Combos</span>
+            <span className="whitespace-nowrap hidden sm:inline">Editar</span>
           </button>
+
+          {/* Botón Eliminar */}
+          <button
+            onClick={() => onDelete(activity.id)}
+            className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 
+                     transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
+            title="Eliminar actividad"
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span className="whitespace-nowrap hidden sm:inline">Eliminar</span>
+          </button>
+        </div>
       </div>
 
       {activity.description && (
@@ -154,52 +161,34 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         )}
       </div>
 
-      {/* Botones con diseño responsive mejorado - Grid de 2x2 */}
+      {/* ✅ Grid de 2x2: Cajas, Combos, Categorías, Productos */}
       <div className="grid grid-cols-2 gap-2">
-        {/* PRIMERA FILA: Editar + Eliminar */}
+        {/* PRIMERA FILA: Cajas + Combos */}
         
-        {/* Botón Editar */}
+        {/* Botón Cajas */}
         <button
-          onClick={() => onEdit(activity)}
-          className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 
+          onClick={handleManageCashRegisters}
+          className="bg-orange-50 text-orange-700 px-3 py-2 rounded-lg hover:bg-orange-100 
                    transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+          title="Gestionar Cajas Registradoras"
         >
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <span className="hidden sm:inline">Editar</span>
+          <span className="hidden sm:inline">Cajas</span>
         </button>
 
-        {/* Botón Eliminar */}
+        {/* Botón Combos - ✅ Cambiado a color teal/cyan */}
         <button
-          onClick={() => onDelete(activity.id)}
-          className="bg-red-50 text-red-700 px-3 py-2 rounded-lg hover:bg-red-100 
+          onClick={handleManageCombos}
+          className="bg-cyan-50 text-cyan-700 rounded-lg hover:bg-cyan-100 
                    transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+          title="Gestionar Combos"
         >
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
-          <span className="hidden sm:inline">Eliminar</span>
+          <span className="hidden sm:inline">Combos</span>
         </button>
 
         {/* SEGUNDA FILA: Categorías + Productos */}
@@ -210,13 +199,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             onClick={() => onManageCategories(activity)}
             className="bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 
                      transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+            title="Gestionar Categorías"
           >
-            <svg
-              className="w-4 h-4 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -239,13 +224,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             onClick={() => onManageProducts(activity)}
             className="bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 
                      transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+            title="Gestionar Productos"
           >
-            <svg
-              className="w-4 h-4 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
