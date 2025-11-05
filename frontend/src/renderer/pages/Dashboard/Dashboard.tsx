@@ -193,7 +193,7 @@ export const Dashboard: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                       <div>
-                        <span className="font-medium">Gestionar Actividades</span>
+                        <span className="font-medium">Gestionar Actividades y Ventas</span>
                         <p className="text-sm text-gray-500">Ver y crear actividades y ventas</p>
                       </div>
                     </button>

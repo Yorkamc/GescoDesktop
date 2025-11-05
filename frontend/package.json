@@ -1,5 +1,5 @@
 {
-  "name": "Gesco Desktop",
+  "name": "gesco-desktop",
   "version": "1.0.0",
   "description": "GESCO Desktop - Frontend Electron + React",
   "main": "electron-main.cjs",
