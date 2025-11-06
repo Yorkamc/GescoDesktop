@@ -8,11 +8,13 @@ import type { CreateSaleRequest, CreateSaleItem } from '../../types/sales';
 interface NewSaleModalProps {
   cashRegisterId?: string;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const NewSaleModal: React.FC<NewSaleModalProps> = ({
   cashRegisterId,
   onClose,
+  onSuccess,
 }) => {
   const { createSale } = useSales(cashRegisterId);
   const { cashRegisters } = useCashRegisters();
@@ -87,6 +89,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
       const created = await createSale(request);
       if (created) {
         onClose();
+        onSuccess?.();
       }
     } finally {
       setIsSubmitting(false);

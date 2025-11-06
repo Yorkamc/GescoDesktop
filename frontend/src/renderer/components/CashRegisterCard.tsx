@@ -31,7 +31,9 @@ export const CashRegisterCard: React.FC<CashRegisterCardProps> = ({
   };
 
   const handleManageSales = () => {
-    navigate(`/sales?cashRegisterId=${cashRegister.id}`);
+    // ✅ Prevenir navegación si la caja está cerrada
+    if (!cashRegister.isOpen) return;
+    navigate(`/sales?cashRegisterId=${cashRegister.id}&activityId=${cashRegister.activityId}`);
   };
 
   return (
@@ -58,17 +60,27 @@ export const CashRegisterCard: React.FC<CashRegisterCardProps> = ({
           </span>
         </div>
         
-        {/* ✅ NUEVO: Botón de Ventas en la esquina superior derecha */}
+        {/* ✅ Botón de Ventas - Deshabilitado si la caja está cerrada */}
         <button
           onClick={handleManageSales}
-          className="ml-3 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 
-                   transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
-          title="Gestionar Ventas"
+          disabled={!cashRegister.isOpen}
+          className={`ml-3 px-3 py-1.5 rounded-lg transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium
+            ${cashRegister.isOpen
+              ? 'bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+            }`}
+          title={cashRegister.isOpen ? "Gestionar Ventas" : "La caja debe estar abierta para gestionar ventas"}
         >
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <span className="whitespace-nowrap">Ventas</span>
+          {/* ✅ Icono de candado cuando está deshabilitado */}
+          {!cashRegister.isOpen && (
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          )}
         </button>
       </div>
 

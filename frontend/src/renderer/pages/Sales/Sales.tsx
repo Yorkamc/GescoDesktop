@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSales } from '../../hooks/useSales';
+import { useCashRegisters } from '../../hooks/useCashRegisters';
 import { SaleCard } from './SaleCard';
 import { NewSaleModal } from './NewSaleModal';
 import { CompleteSaleModal } from './CompleteSaleModal';
@@ -12,7 +13,9 @@ export const Sales: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
+  // ✅ Obtener ambos parámetros de la URL
   const cashRegisterId = searchParams.get('cashRegisterId') || undefined;
+  const activityIdFromUrl = searchParams.get('activityId') || undefined;
   
   const {
     sales,
@@ -24,6 +27,10 @@ export const Sales: React.FC = () => {
     refreshSales,
     clearError,
   } = useSales(cashRegisterId);
+
+  // ✅ Cargar información de la caja si viene de una
+  const { cashRegisters } = useCashRegisters(activityIdFromUrl);
+  const selectedCashRegister = cashRegisters.find(cr => cr.id === cashRegisterId);
 
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [completingSale, setCompletingSale] = useState<SalesTransaction | null>(null);
@@ -52,10 +59,17 @@ export const Sales: React.FC = () => {
       const completed = await completeSale(completingSale.id, data);
       if (completed) {
         setCompletingSale(null);
+        await refreshSales(); // ✅ Refrescar después de completar
       }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // ✅ Nueva función para manejar el éxito de crear venta
+  const handleSaleCreated = async () => {
+    setShowNewSaleModal(false);
+    await refreshSales(); // ✅ Refrescar lista
   };
 
   const handleCloseModals = () => {
@@ -64,12 +78,21 @@ export const Sales: React.FC = () => {
     clearError();
   };
 
+  // ✅ Volver a cajas manteniendo el activityId
   const handleBack = () => {
+    if (activityIdFromUrl) {
+      navigate(`/cash-registers?activityId=${activityIdFromUrl}`);
+    } else {
       navigate('/cash-registers');
+    }
   };
 
   const handleManageCombos = () => {
-    navigate('/combos');
+    if (activityIdFromUrl) {
+      navigate(`/combos?activityId=${activityIdFromUrl}`);
+    } else {
+      navigate('/combos');
+    }
   };
 
   const filteredSales = useMemo(() => {
@@ -101,21 +124,42 @@ export const Sales: React.FC = () => {
               <button
                 onClick={handleBack}
                 className="p-2 text-gray-500 hover:text-gray-700 rounded-lg mr-3"
-                title={cashRegisterId ? "Volver a Cajas" : "Volver al Dashboard"}
+                title="Volver a Cajas"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Ventas</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Ventas
+                  {/* ✅ Mostrar nombre de la caja si existe */}
+                  {selectedCashRegister && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      - {selectedCashRegister.name}
+                    </span>
+                  )}
+                </h1>
                 <p className="text-xs text-gray-500">
                   {sales.length} ventas • {pendingSales} pendientes • {completedSales} completadas
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-2">    
+            <div className="flex gap-2">
+              {/* ✅ Botón de Combos solo si hay activityId */}
+              {activityIdFromUrl && (
+                <button
+                  onClick={handleManageCombos}
+                  className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Combos
+                </button>
+              )}
+              
               <button
                 onClick={() => setShowNewSaleModal(true)}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
@@ -274,6 +318,7 @@ export const Sales: React.FC = () => {
         <NewSaleModal
           cashRegisterId={cashRegisterId}
           onClose={handleCloseModals}
+          onSuccess={handleSaleCreated} // ✅ Pasar callback de éxito
         />
       )}
 

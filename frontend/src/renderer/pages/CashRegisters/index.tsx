@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCashRegisters } from '../../hooks/useCashRegisters';
+import { useActivities } from '../../hooks/useActivities'; // ✅ Importar
 import { CashRegisterCard } from '../../components/CashRegisterCard';
 import { CashRegisterForm } from '../../components/CashRegisterForm';
 import { OpenCashModal } from '../../components/OpenCashModal';
@@ -28,7 +29,11 @@ export const CashRegisters: React.FC = () => {
     closeCashRegister,
     refreshCashRegisters,
     clearError,
-  } = useCashRegisters(activityIdFromUrl); // ✅ Pasar activityId al hook
+  } = useCashRegisters(activityIdFromUrl);
+
+  // ✅ Cargar información de la actividad para mostrar nombre
+  const { activities } = useActivities();
+  const selectedActivity = activities.find(a => a.id === activityIdFromUrl);
 
   const [showForm, setShowForm] = useState(false);
   const [editingCashRegister, setEditingCashRegister] = useState<CashRegister | null>(null);
@@ -37,6 +42,11 @@ export const CashRegisters: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOpenOnly, setShowOpenOnly] = useState(false);
+
+  // ✅ Refrescar cajas cuando cambia el activityId en la URL
+  useEffect(() => {
+    refreshCashRegisters();
+  }, [activityIdFromUrl, refreshCashRegisters]);
 
   const handleEdit = (cashRegister: CashRegister) => {
     setEditingCashRegister(cashRegister);
@@ -116,7 +126,16 @@ export const CashRegisters: React.FC = () => {
 
   // ✅ Función para volver a actividades
   const handleBack = () => {
-     navigate('/activities');
+    navigate('/activities');
+  };
+
+  // ✅ Función para ir a combos manteniendo activityId
+  const handleManageCombos = () => {
+    if (activityIdFromUrl) {
+      navigate(`/combos?activityId=${activityIdFromUrl}`);
+    } else {
+      navigate('/combos');
+    }
   };
 
   const filteredCashRegisters = useMemo(() => {
@@ -143,39 +162,59 @@ export const CashRegisters: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              {/* ✅ Botón de regreso mejorado */}
+              {/* ✅ Botón de regreso */}
               <button
                 onClick={handleBack}
                 className="p-2 text-gray-500 hover:text-gray-700 rounded-lg mr-3"
-                title={activityIdFromUrl ? "Volver a Actividades" : "Volver al Dashboard"}
+                title="Volver a Actividades"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Cajas Registradoras</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Cajas Registradoras
+                  {/* ✅ Mostrar nombre de actividad si está filtrada */}
+                  {selectedActivity && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      - {selectedActivity.name}
+                    </span>
+                  )}
+                </h1>
                 <p className="text-xs text-gray-500">
                   {cashRegisters.length} cajas • {openCount} abiertas • {closedCount} cerradas
                 </p>
               </div>
             </div>
 
-<div className="flex gap-2">
+            <div className="flex gap-2">
+              {/* ✅ Botón de Combos solo si hay activityId */}
+              {activityIdFromUrl && (
+                <button
+                  onClick={handleManageCombos}
+                  className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Combos
+                </button>
+              )}
 
-  <button
-    onClick={() => {
-      setEditingCashRegister(null);
-      setShowForm(true);
-    }}
-    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-  >
-    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-    </svg>
-    Nueva Caja
-  </button>
-</div>
+              <button
+                onClick={() => {
+                  setEditingCashRegister(null);
+                  setShowForm(true);
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Nueva Caja
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -276,6 +315,8 @@ export const CashRegisters: React.FC = () => {
                 <p className="text-gray-600 mb-4">
                   {searchQuery || showOpenOnly
                     ? 'No se encontraron cajas con los filtros seleccionados'
+                    : activityIdFromUrl
+                    ? 'Esta actividad no tiene cajas registradoras. Crea la primera.'
                     : 'Comienza creando tu primera caja registradora'}
                 </p>
                 {!searchQuery && !showOpenOnly && (

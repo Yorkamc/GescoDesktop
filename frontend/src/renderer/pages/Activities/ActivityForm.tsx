@@ -61,9 +61,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
   });
 
   const [formError, setFormError] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // ✅ Solo inicializar una vez
   useEffect(() => {
-    if (activity) {
+    if (activity && !isInitialized) {
       setFormData({
         name: activity.name,
         description: activity.description || '',
@@ -76,8 +78,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         managerUserId: '',
         organizationId: ''
       });
+      setIsInitialized(true);
+    } else if (!activity && !isInitialized) {
+      setIsInitialized(true);
     }
-  }, [activity]);
+  }, [activity, isInitialized]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +98,22 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       return;
     }
 
+    // ✅ Validar que la fecha de fin no sea anterior a la de inicio
+    if (formData.endDate && formData.startDate > formData.endDate) {
+      setFormError('La fecha de fin no puede ser anterior a la fecha de inicio');
+      return;
+    }
+
     onSubmit(formData);
+  };
+
+  // ✅ Función genérica para actualizar campos
+  const handleFieldChange = (field: keyof CreateActivityRequest, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpiar error cuando el usuario empiece a escribir
+    if (formError) {
+      setFormError('');
+    }
   };
 
   return (
@@ -108,6 +128,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors"
             disabled={isSubmitting}
+            type="button"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -125,6 +146,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
           <form onSubmit={handleSubmit} id="activityForm" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Nombre */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nombre de la Actividad <span className="text-red-500">*</span>
@@ -132,21 +154,23 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   placeholder="Ej: Festival de Verano 2024"
                   disabled={isSubmitting}
+                  autoComplete="off"
                 />
               </div>
 
+              {/* Descripción */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descripción
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => handleFieldChange('description', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={3}
                   placeholder="Descripción detallada de la actividad..."
@@ -154,6 +178,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 />
               </div>
 
+              {/* Fecha de Inicio */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Fecha de Inicio <span className="text-red-500">*</span>
@@ -161,13 +186,14 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 <input
                   type="date"
                   value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  onChange={(e) => handleFieldChange('startDate', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   disabled={isSubmitting}
                 />
               </div>
 
+              {/* Hora de Inicio */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Hora de Inicio
@@ -175,12 +201,13 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 <input
                   type="time"
                   value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  onChange={(e) => handleFieldChange('startTime', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isSubmitting}
                 />
               </div>
 
+              {/* Fecha de Fin */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Fecha de Fin
@@ -188,12 +215,14 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 <input
                   type="date"
                   value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  onChange={(e) => handleFieldChange('endDate', e.target.value)}
+                  min={formData.startDate} // ✅ Prevenir fechas anteriores
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isSubmitting}
                 />
               </div>
 
+              {/* Hora de Fin */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Hora de Fin
@@ -201,12 +230,13 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 <input
                   type="time"
                   value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  onChange={(e) => handleFieldChange('endTime', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isSubmitting}
                 />
               </div>
 
+              {/* Ubicación */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Ubicación
@@ -214,20 +244,22 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                 <input
                   type="text"
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  onChange={(e) => handleFieldChange('location', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Ej: Parque Central, San José"
                   disabled={isSubmitting}
+                  autoComplete="off"
                 />
               </div>
 
+              {/* Estado */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Estado
                 </label>
                 <select
                   value={formData.activityStatusId}
-                  onChange={(e) => setFormData({ ...formData, activityStatusId: parseInt(e.target.value) })}
+                  onChange={(e) => handleFieldChange('activityStatusId', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isSubmitting}
                 >

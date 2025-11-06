@@ -16,7 +16,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onCancel 
 }) => {
   const [formData, setFormData] = useState<CreateProductRequest>({
-    activityCategoryId: null, // ← ✅ CAMBIADO: null por defecto
+    activityCategoryId: null,
     code: '',
     name: '',
     description: '',
@@ -25,12 +25,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     alertQuantity: 10,
   });
 
+  // ✅ Campos de input como strings para permitir edición libre
+  const [unitPriceInput, setUnitPriceInput] = useState('');
+  const [initialQuantityInput, setInitialQuantityInput] = useState('');
+  const [alertQuantityInput, setAlertQuantityInput] = useState('');
+
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (product) {
       setFormData({
-        activityCategoryId: product.activityCategoryId, // Mantener el valor actual si está editando
+        activityCategoryId: product.activityCategoryId,
         code: product.code,
         name: product.name,
         description: product.description || '',
@@ -38,6 +43,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         initialQuantity: product.initialQuantity,
         alertQuantity: product.alertQuantity,
       });
+      // ✅ Inicializar inputs
+      setUnitPriceInput(product.unitPrice.toString());
+      setInitialQuantityInput(product.initialQuantity.toString());
+      setAlertQuantityInput(product.alertQuantity.toString());
+    } else {
+      // ✅ Valores iniciales para nuevo producto
+      setUnitPriceInput('0');
+      setInitialQuantityInput('0');
+      setAlertQuantityInput('10');
     }
   }, [product]);
 
@@ -45,7 +59,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     e.preventDefault();
     setFormError('');
 
-    // Validaciones
+    // ✅ Validaciones
     if (!formData.name.trim()) {
       setFormError('El nombre del producto es requerido');
       return;
@@ -71,7 +85,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
-    // ✅ Asegurar que activityCategoryId sea null al crear
     const dataToSubmit = {
       ...formData,
       activityCategoryId: product ? formData.activityCategoryId : null
@@ -81,16 +94,48 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     onSubmit(dataToSubmit);
   };
 
-  const handleNumberChange = (field: keyof CreateProductRequest, value: string) => {
-    // ✅ MEJORADO: Manejo más robusto de números
-    if (value === '') {
-      setFormData(prev => ({ ...prev, [field]: 0 }));
+  // ✅ Manejo mejorado de precio
+  const handleUnitPriceChange = (value: string) => {
+    setUnitPriceInput(value);
+    
+    if (value === '' || value === '.') {
+      setFormData(prev => ({ ...prev, unitPrice: 0 }));
       return;
     }
     
     const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      setFormData(prev => ({ ...prev, [field]: numValue }));
+    if (!isNaN(numValue) && numValue >= 0) {
+      setFormData(prev => ({ ...prev, unitPrice: numValue }));
+    }
+  };
+
+  // ✅ Manejo mejorado de cantidad inicial
+  const handleInitialQuantityChange = (value: string) => {
+    setInitialQuantityInput(value);
+    
+    if (value === '') {
+      setFormData(prev => ({ ...prev, initialQuantity: 0 }));
+      return;
+    }
+    
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setFormData(prev => ({ ...prev, initialQuantity: numValue }));
+    }
+  };
+
+  // ✅ Manejo mejorado de cantidad de alerta
+  const handleAlertQuantityChange = (value: string) => {
+    setAlertQuantityInput(value);
+    
+    if (value === '') {
+      setFormData(prev => ({ ...prev, alertQuantity: 0 }));
+      return;
+    }
+    
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setFormData(prev => ({ ...prev, alertQuantity: numValue }));
     }
   };
 
@@ -143,6 +188,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   required
                   placeholder="Ej: Cerveza Imperial"
                   disabled={isSubmitting}
+                  autoFocus
                 />
               </div>
 
@@ -162,36 +208,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 />
               </div>
 
-              {/* ❌ ELIMINADO: Campo de Categoría */}
-              {/* Ya no mostramos el selector de categoría */}
-              {/* Los productos se crean sin asignar (activityCategoryId = null) */}
-
-              {/* Precio Unitario - ✅ CORREGIDO */}
+              {/* ✅ Precio Unitario - CORREGIDO */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Precio Unitario (₡) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={formData.unitPrice || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '') {
-                      setFormData({ ...formData, unitPrice: 0 });
-                    } else {
-                      const numValue = parseFloat(value);
-                      if (!isNaN(numValue) && numValue >= 0) {
-                        setFormData({ ...formData, unitPrice: numValue });
-                      }
-                    }
-                  }}
+                  type="text"
+                  inputMode="decimal"
+                  value={unitPriceInput}
+                  onChange={(e) => handleUnitPriceChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   placeholder="0.00"
                   disabled={isSubmitting}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Valor: ₡{formData.unitPrice.toLocaleString('es-CR', { minimumFractionDigits: 2 })}
+                </p>
               </div>
 
               {/* Descripción */}
@@ -209,16 +243,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 />
               </div>
 
-              {/* Cantidad Inicial */}
+              {/* ✅ Cantidad Inicial - CORREGIDO */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Cantidad Inicial <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  min="0"
-                  value={formData.initialQuantity || ''}
-                  onChange={(e) => handleNumberChange('initialQuantity', e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  value={initialQuantityInput}
+                  onChange={(e) => handleInitialQuantityChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   placeholder="100"
@@ -226,16 +260,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 />
               </div>
 
-              {/* Cantidad de Alerta */}
+              {/* ✅ Cantidad de Alerta - CORREGIDO */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Cantidad de Alerta <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  min="0"
-                  value={formData.alertQuantity || ''}
-                  onChange={(e) => handleNumberChange('alertQuantity', e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  value={alertQuantityInput}
+                  onChange={(e) => handleAlertQuantityChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   placeholder="10"

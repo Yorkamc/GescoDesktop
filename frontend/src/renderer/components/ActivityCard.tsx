@@ -26,12 +26,24 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const startDate = formatDate(activity.startDate);
   const endDate = activity.endDate ? formatDate(activity.endDate) : 'Sin definir';
 
+  // ✅ Validaciones para botones
+  const canManageProducts = categoryCount > 0;
+  const canManageCashRegisters = productCount > 0;
+  const canManageCombos = productCount >= 1;
+
   const handleManageCashRegisters = () => {
+    if (!canManageCashRegisters) return;
     navigate(`/cash-registers?activityId=${activity.id}`);
   };
 
   const handleManageCombos = () => {
+    if (!canManageCombos) return;
     navigate(`/combos?activityId=${activity.id}`);
+  };
+
+  const handleManageProducts = () => {
+    if (!canManageProducts || !onManageProducts) return;
+    onManageProducts(activity);
   };
 
   return (
@@ -165,35 +177,53 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       <div className="grid grid-cols-2 gap-2">
         {/* PRIMERA FILA: Cajas + Combos */}
         
-        {/* Botón Cajas */}
+        {/* Botón Cajas - ✅ Deshabilitado si no hay productos */}
         <button
           onClick={handleManageCashRegisters}
-          className="bg-orange-50 text-orange-700 px-3 py-2 rounded-lg hover:bg-orange-100 
-                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-          title="Gestionar Cajas Registradoras"
+          disabled={!canManageCashRegisters}
+          className={`px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium
+            ${canManageCashRegisters
+              ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+            }`}
+          title={canManageCashRegisters ? "Gestionar Cajas Registradoras" : "Requiere al menos 1 producto"}
         >
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
           <span className="hidden sm:inline">Cajas</span>
+          {!canManageCashRegisters && (
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          )}
         </button>
 
-        {/* Botón Combos - ✅ Cambiado a color teal/cyan */}
+        {/* Botón Combos - ✅ Deshabilitado si hay menos de 2 productos */}
         <button
           onClick={handleManageCombos}
-          className="bg-cyan-50 text-cyan-700 rounded-lg hover:bg-cyan-100 
-                   transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-          title="Gestionar Combos"
+          disabled={!canManageCombos}
+          className={`px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium
+            ${canManageCombos
+              ? 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100 cursor-pointer'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+            }`}
+          title={canManageCombos ? "Gestionar Combos" : "Requiere al menos 2 productos"}
         >
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <span className="hidden sm:inline">Combos</span>
+          {!canManageCombos && (
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          )}
         </button>
 
         {/* SEGUNDA FILA: Categorías + Productos */}
 
-        {/* Botón Categorías */}
+        {/* Botón Categorías - Siempre habilitado */}
         {onManageCategories && (
           <button
             onClick={() => onManageCategories(activity)}
@@ -218,13 +248,17 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </button>
         )}
 
-        {/* Botón Productos */}
+        {/* Botón Productos - ✅ Deshabilitado si no hay categorías */}
         {onManageProducts && (
           <button
-            onClick={() => onManageProducts(activity)}
-            className="bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 
-                     transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-            title="Gestionar Productos"
+            onClick={handleManageProducts}
+            disabled={!canManageProducts}
+            className={`px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium
+              ${canManageProducts
+                ? 'bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+              }`}
+            title={canManageProducts ? "Gestionar Productos" : "Requiere al menos 1 categoría"}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -239,6 +273,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-600 rounded-full">
                 {productCount}
               </span>
+            )}
+            {!canManageProducts && (
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
             )}
           </button>
         )}
