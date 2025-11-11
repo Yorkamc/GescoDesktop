@@ -138,21 +138,21 @@
       "signDlls": false,
       "verifyUpdateCodeSignature": false
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": "always",
-      "createStartMenuShortcut": true,
-      "shortcutName": "GESCO Desktop",
-      "runAfterFinish": false,
-      "deleteAppDataOnUninstall": false,
-      "perMachine": false,
-      "allowElevation": true,
-      "installerIcon": "build/icons/win/icon.ico",
-      "uninstallerIcon": "build/icons/win/icon.ico",
-      "artifactName": "${productName}-Setup-${version}.${ext}",
-      "include": "build/installer.nsh"
-    },
+  "nsis": {
+  "oneClick": false,
+  "allowToChangeInstallationDirectory": true,
+  "createDesktopShortcut": "always",
+  "createStartMenuShortcut": true,
+  "shortcutName": "GESCO Desktop",
+  "runAfterFinish": false,
+  "deleteAppDataOnUninstall": false,
+  "perMachine": false,
+  "allowElevation": true,
+  "installerIcon": "build/icons/win/icon.ico",
+  "uninstallerIcon": "build/icons/win/icon.ico",
+  "artifactName": "${productName}-Setup-${version}.${ext}",
+  "include": "build/installer.nsh"
+},
     "portable": {
       "artifactName": "${productName}-Portable-${version}.${ext}"
     },

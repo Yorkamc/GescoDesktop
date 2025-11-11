@@ -21,6 +21,57 @@ namespace Gesco.Desktop.UI.Controllers
         }
 
         /// <summary>
+        /// DEBUG: Ver todas las ventas y sus estados
+        /// </summary>
+        [HttpGet("debug/sales")]
+        [ProducesResponseType(200)]
+        public async Task<IActionResult> DebugSales()
+        {
+            try
+            {
+                var today = DateTime.Today;
+                var thisMonth = new DateTime(today.Year, today.Month, 1);
+
+                var allSales = await _context.SalesTransactions
+                    .Select(t => new
+                    {
+                        t.Id,
+                        t.TransactionNumber,
+                        t.SalesStatusId,
+                        t.TotalAmount,
+                        t.TransactionDate
+                    })
+                    .ToListAsync();
+
+                var todaySales = allSales.Where(s => s.TransactionDate.Date == today).ToList();
+                var monthSales = allSales.Where(s => s.TransactionDate >= thisMonth).ToList();
+
+                var statuses = await _context.SalesStatuses
+                    .Select(s => new { s.Id, s.Name })
+                    .ToListAsync();
+
+                return Ok(new
+                {
+                    Today = today.ToString("yyyy-MM-dd"),
+                    ThisMonth = thisMonth.ToString("yyyy-MM-dd"),
+                    AvailableStatuses = statuses,
+                    TotalSalesInDB = allSales.Count,
+                    TodaySalesCount = todaySales.Count,
+                    TodaySalesTotal = todaySales.Sum(s => s.TotalAmount),
+                    MonthSalesCount = monthSales.Count,
+                    MonthSalesTotal = monthSales.Sum(s => s.TotalAmount),
+                    TodaySales = todaySales,
+                    MonthSales = monthSales
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in debug endpoint");
+                return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        /// <summary>
         /// Obtener estadísticas generales del sistema
         /// </summary>
         [HttpGet]
@@ -35,14 +86,11 @@ namespace Gesco.Desktop.UI.Controllers
                 var today = DateTime.Today;
                 var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-                var inProgressActivityStatus = await _context.ActivityStatuses
-                    .FirstOrDefaultAsync(s => s.Name == "In Progress");
+                // ✅ Usar ID directo: 2 = Completed
+                var completedStatusId = 2;
 
-                var completedSalesStatus = await _context.SalesStatuses
-                    .FirstOrDefaultAsync(s => s.Name == "Completed");
-
-                _logger.LogInformation("Found activity status: {StatusFound}", inProgressActivityStatus != null);
-                _logger.LogInformation("Found sales status: {StatusFound}", completedSalesStatus != null);
+                _logger.LogInformation("Using completed status ID: {StatusId}", completedStatusId);
+                _logger.LogInformation("Today: {Today}, This month: {Month}", today, thisMonth);
 
                 var totalActivities = 0;
                 var activeActivities = 0;
@@ -68,11 +116,9 @@ namespace Gesco.Desktop.UI.Controllers
 
                 try
                 {
-                    if (inProgressActivityStatus != null)
-                    {
-                        activeActivities = await _context.Activities
-                            .CountAsync(a => a.ActivityStatusId == inProgressActivityStatus.Id);
-                    }
+                    // ActivityStatusId 2 = "In Progress"
+                    activeActivities = await _context.Activities
+                        .CountAsync(a => a.ActivityStatusId == 2);
                     _logger.LogInformation("Active activities: {Count}", activeActivities);
                 }
                 catch (Exception ex)
@@ -82,19 +128,16 @@ namespace Gesco.Desktop.UI.Controllers
 
                 try
                 {
-                    if (completedSalesStatus != null)
-                    {
-                        todaySales = await _context.SalesTransactions
-                            .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedSalesStatus.Id)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
-                    }
-                    else
-                    {
-                        todaySales = await _context.SalesTransactions
-                            .Where(t => t.TransactionDate.Date == today)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
-                    }
-                    _logger.LogInformation("Today sales: {Amount}", todaySales);
+                    // ✅ Ventas de HOY con estado Completed (ID = 2)
+                    var todaySalesData = await _context.SalesTransactions
+                        .Where(t => t.TransactionDate.Date == today && t.SalesStatusId == completedStatusId)
+                        .ToListAsync();
+
+                    todaySales = todaySalesData.Sum(t => t.TotalAmount);
+                    todayTransactions = todaySalesData.Count;
+
+                    _logger.LogInformation("Today: Found {Count} completed sales totaling {Amount:C}", 
+                        todayTransactions, todaySales);
                 }
                 catch (Exception ex)
                 {
@@ -103,45 +146,20 @@ namespace Gesco.Desktop.UI.Controllers
 
                 try
                 {
-                    todayTransactions = await _context.SalesTransactions
-                        .CountAsync(t => t.TransactionDate.Date == today);
-                    _logger.LogInformation("Today transactions: {Count}", todayTransactions);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error getting today transactions");
-                }
+                    // ✅ Ventas del MES con estado Completed (ID = 2)
+                    var monthSalesData = await _context.SalesTransactions
+                        .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedStatusId)
+                        .ToListAsync();
 
-                try
-                {
-                    if (completedSalesStatus != null)
-                    {
-                        monthSales = await _context.SalesTransactions
-                            .Where(t => t.TransactionDate >= thisMonth && t.SalesStatusId == completedSalesStatus.Id)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
-                    }
-                    else
-                    {
-                        monthSales = await _context.SalesTransactions
-                            .Where(t => t.TransactionDate >= thisMonth)
-                            .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
-                    }
-                    _logger.LogInformation("Month sales: {Amount}", monthSales);
+                    monthSales = monthSalesData.Sum(t => t.TotalAmount);
+                    monthTransactions = monthSalesData.Count;
+
+                    _logger.LogInformation("Month: Found {Count} completed sales totaling {Amount:C}", 
+                        monthTransactions, monthSales);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Error getting month sales");
-                }
-
-                try
-                {
-                    monthTransactions = await _context.SalesTransactions
-                        .CountAsync(t => t.TransactionDate >= thisMonth);
-                    _logger.LogInformation("Month transactions: {Count}", monthTransactions);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error getting month transactions");
                 }
 
                 try
@@ -186,8 +204,14 @@ namespace Gesco.Desktop.UI.Controllers
                     ReportPeriod = $"Día {today:dd/MM/yyyy} y mes {thisMonth:MM/yyyy}"
                 };
 
-                _logger.LogInformation("Stats retrieved successfully: Activities: {Activities}, Sales today: {SalesToday:C}", 
-                    stats.TotalActivities, stats.TodaySales);
+                _logger.LogInformation(
+                    "✅ Stats retrieved: Activities: {Activities}, Today sales: {TodaySales:C} ({TodayTrans} trans), Month sales: {MonthSales:C} ({MonthTrans} trans)", 
+                    stats.TotalActivities, 
+                    stats.TodaySales, 
+                    stats.TodayTransactions,
+                    stats.MonthSales,
+                    stats.MonthTransactions
+                );
 
                 return Ok(stats);
             }
@@ -223,15 +247,12 @@ namespace Gesco.Desktop.UI.Controllers
         [ProducesResponseType(typeof(List<SalesSummaryDto>), 200)]
         public async Task<IActionResult> GetSalesSummary([FromQuery] int dias = 7)
         {
-            try
-            {
+            try {
                 var startDate = DateTime.Today.AddDays(-dias);
-                var completedStatus = await _context.SalesStatuses
-                    .FirstOrDefaultAsync(s => s.Name == "Completed");
+                var completedStatusId = 2;
                 
                 var salesData = await _context.SalesTransactions
-                    .Where(t => t.TransactionDate >= startDate && 
-                               (completedStatus == null || t.SalesStatusId == completedStatus.Id))
+                    .Where(t => t.TransactionDate >= startDate && t.SalesStatusId == completedStatusId)
                     .GroupBy(t => t.TransactionDate.Date)
                     .Select(g => new SalesSummaryDto
                     {
@@ -240,7 +261,7 @@ namespace Gesco.Desktop.UI.Controllers
                         TotalTransactions = g.Count(),
                         CompletedTransactions = g.Count(),
                         AverageTransaction = g.Average(t => t.TotalAmount),
-                        TotalItemsSold = 0 // Se puede calcular con un join adicional si es necesario
+                        TotalItemsSold = 0
                     })
                     .OrderBy(s => s.Date)
                     .ToListAsync();
@@ -290,10 +311,6 @@ namespace Gesco.Desktop.UI.Controllers
         }
     }
 
-    // ============================================
-    // ✅ DTOs LOCALES - CON NOMBRES ÚNICOS
-    // ============================================
-    
     public class ActivitySummaryDto
     {
         public long Id { get; set; }

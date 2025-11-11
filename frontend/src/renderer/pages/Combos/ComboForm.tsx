@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { InlineSpinner } from '../../components/LoadingSpinner';
-import { useActivityProducts } from '../../hooks/useActivityProducts'; // ✅ Tu hook existente
+import { useActivityProducts } from '../../hooks/useActivityProducts';
 import type { SalesCombo, CreateComboRequest, CreateComboItem } from '../../types/combo';
 
 interface ComboFormProps {
@@ -26,9 +26,11 @@ export const ComboForm: React.FC<ComboFormProps> = ({
     items: [],
   });
 
+  // ✅ Estado separado para el input del precio
+  const [comboPriceInput, setComboPriceInput] = useState('0');
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ✅ Usar tu hook existente
   const { 
     products: availableProducts, 
     isLoading: loadingProducts 
@@ -46,13 +48,32 @@ export const ComboForm: React.FC<ComboFormProps> = ({
           quantity: item.quantity,
         })),
       });
+      // ✅ Inicializar el input del precio
+      setComboPriceInput(combo.comboPrice.toString());
     } else if (preselectedActivityId) {
       setFormData(prev => ({
         ...prev,
         activityId: preselectedActivityId,
       }));
+      setComboPriceInput('0');
     }
   }, [combo, preselectedActivityId]);
+
+  // ✅ Handler mejorado para el precio
+  const handleComboPriceChange = (value: string) => {
+    setComboPriceInput(value);
+    
+    // Permitir cadena vacía o solo punto mientras se escribe
+    if (value === '' || value === '.') {
+      setFormData(prev => ({ ...prev, comboPrice: 0 }));
+      return;
+    }
+    
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setFormData(prev => ({ ...prev, comboPrice: numValue }));
+    }
+  };
 
   const handleAddItem = () => {
     setFormData({
@@ -113,7 +134,6 @@ export const ComboForm: React.FC<ComboFormProps> = ({
     }
   };
 
-  // ✅ Ocultar selector cuando viene pre-seleccionada o es edición
   const shouldHideActivitySelector = !!combo || !!preselectedActivityId;
 
   // Calcular precio regular del combo
@@ -125,7 +145,6 @@ export const ComboForm: React.FC<ComboFormProps> = ({
   const savings = regularPrice - formData.comboPrice;
   const savingsPercentage = regularPrice > 0 ? ((savings / regularPrice) * 100).toFixed(0) : 0;
 
-  // ✅ Obtener nombre de la actividad para mostrar cuando está oculto el selector
   const activityName = combo?.activityName || 'Actividad seleccionada';
 
   return (
@@ -148,6 +167,7 @@ export const ComboForm: React.FC<ComboFormProps> = ({
               onClick={onCancel}
               disabled={isSubmitting}
               className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              type="button"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -209,29 +229,33 @@ export const ComboForm: React.FC<ComboFormProps> = ({
                            focus:border-blue-500 disabled:bg-gray-100
                            ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Ej: Combo Familiar"
-                  autoFocus
+                  autoComplete="off"
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                 )}
               </div>
 
+              {/* ✅ Campo de precio corregido */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Precio del Combo (₡) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.comboPrice}
-                  onChange={(e) => setFormData({ ...formData, comboPrice: parseFloat(e.target.value) || 0 })}
+                  type="text"
+                  inputMode="decimal"
+                  value={comboPriceInput}
+                  onChange={(e) => handleComboPriceChange(e.target.value)}
                   disabled={isSubmitting}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 
                            focus:border-blue-500 disabled:bg-gray-100
                            ${errors.comboPrice ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0.00"
                 />
+                {/* ✅ Mostrar valor formateado */}
+                <p className="text-xs text-gray-500 mt-1">
+                  Valor: ₡{formData.comboPrice.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
                 {errors.comboPrice && (
                   <p className="mt-1 text-sm text-red-600">{errors.comboPrice}</p>
                 )}

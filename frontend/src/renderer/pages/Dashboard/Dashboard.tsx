@@ -11,7 +11,6 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { stats, isLoading, error, lastUpdate, refreshStats, clearError } = useDashboardStats();
-  // CAMBIO: Activar auto-check para verificar conexión automáticamente
   const { status: backendStatus, checkStatus } = useBackendStatus(true);
 
   const formatCurrency = (amount: number) => {
@@ -108,7 +107,6 @@ export const Dashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Bienvenido{user?.nombreCompleto ? `, ${user.nombreCompleto.split(' ')[0]}` : ''}
               </h2>
-              
             </div>
 
             {error && (
@@ -175,101 +173,70 @@ export const Dashboard: React.FC = () => {
               />
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="bg-white overflow-hidden shadow-sm rounded-lg border">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">Acciones Rápidas</h3>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-3">
-
-
-                    <button 
-                      onClick={() => navigate('/activities')}
-                      className="w-full flex items-center px-4 py-3 text-left bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      <div>
-                        <span className="font-medium">Gestionar Actividades y Ventas</span>
-                        <p className="text-sm text-gray-500">Ver y crear actividades y ventas</p>
-                      </div>
-                    </button>
-                                        <button 
-                        onClick={() => navigate('/products')}
-                        className="w-full flex items-center px-4 py-3 text-left bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-                      >
-                        <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        <div>
-                          <span className="font-medium">Gestionar Productos</span>
-                          <p className="text-sm text-gray-500">Ver y crear productos</p>
-                        </div>
-                    </button>
-                    <button 
-                        onClick={() => navigate('/categories')}
-                        className="w-full flex items-center px-4 py-3 text-left bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                      >
-                        <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
+            {/* ✅ Acciones Rápidas - Ahora ocupa todo el ancho */}
+            <div className="bg-white overflow-hidden shadow-sm rounded-lg border">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Acciones Rápidas</h3>
+              </div>
+              <div className="p-6">
+                {/* ✅ Grid de 2 columnas en pantallas grandes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => navigate('/activities')}
+                    className="flex items-center px-4 py-3 text-left bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
                     <div>
-                      <span className="font-medium">Gestionar Categorías</span>
+                      <span className="font-medium text-gray-900">Gestionar Actividades y Ventas</span>
+                      <p className="text-sm text-gray-500">Ver y crear actividades y ventas</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => navigate('/products')}
+                    className="flex items-center px-4 py-3 text-left bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <div>
+                      <span className="font-medium text-gray-900">Gestionar Productos</span>
+                      <p className="text-sm text-gray-500">Ver y crear productos</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => navigate('/categories')}
+                    className="flex items-center px-4 py-3 text-left bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-purple-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <div>
+                      <span className="font-medium text-gray-900">Gestionar Categorías</span>
                       <p className="text-sm text-gray-500">Configurar categorías de servicio</p>
                     </div>
                   </button>
-                    <button
-                      onClick={() => navigate('/license-activation')}
-                      className="w-full flex items-center px-4 py-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-6 6c-1.085 0-2.035-.299-2.886-.737M15 7c0-1.104-.896-2-2-2-1.085 0-2.035.299-2.886.737M15 7v4m-6-2a6 6 0 106 6c1.085 0 2.035-.299 2.886-.737M9 9a2 2 0 012-2c1.085 0 2.035.299 2.886.737" />
-                      </svg>
-                      <div>
-                        <span className="font-medium">Gestionar Licencia</span>
-                        <p className="text-sm text-gray-500">Activar o renovar licencia</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              {/* System Status Panel */}
-              <div className="bg-white overflow-hidden shadow-sm rounded-lg border">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">Estado del Sistema</h3>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">API Backend</span>
-                      <div className="flex items-center">
-                        <div className={`w-2 h-2 ${backendStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'} rounded-full mr-2`}></div>
-                        <span className={`text-sm ${backendStatus === 'connected' ? 'text-green-600' : 'text-red-600'}`}>
-                          {backendStatus === 'connected' ? 'Conectado' : 'Desconectado'}
-                        </span>
-                      </div>
+                  <button
+                    onClick={() => navigate('/license-activation')}
+                    className="flex items-center px-4 py-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-gray-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-6 6c-1.085 0-2.035-.299-2.886-.737M15 7c0-1.104-.896-2-2-2-1.085 0-2.035.299-2.886.737M15 7v4m-6-2a6 6 0 106 6c1.085 0 2.035-.299 2.886-.737M9 9a2 2 0 012-2c1.085 0 2.035.299 2.886.737" />
+                    </svg>
+                    <div>
+                      <span className="font-medium text-gray-900">Gestionar Licencia</span>
+                      <p className="text-sm text-gray-500">Activar o renovar licencia</p>
                     </div>
-
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="space-y-2 text-xs text-gray-500">
-                        <div className="flex justify-between">
-                          <span>Última actualización:</span>
-                          <span>{formatDate(lastUpdate)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Versión:</span>
-                          <span>1.0.0</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  </button>
                 </div>
               </div>
             </div>
+
+            {/* ❌ Estado del Sistema - ELIMINADO */}
 
             {/* Solo mostrar alerta si realmente NO está conectado después de intentar */}
             {backendStatus === 'disconnected' && (
