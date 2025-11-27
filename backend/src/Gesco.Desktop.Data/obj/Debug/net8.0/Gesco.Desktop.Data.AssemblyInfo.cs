@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Gesco.Desktop.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22c304bbe47173c709c9e57feb00b6a6be75f5b3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f4c9e133d38b8cc09f8d43f024d2e9347e0272c5")]
 [assembly: System.Reflection.AssemblyProductAttribute("Gesco.Desktop.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Gesco.Desktop.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
