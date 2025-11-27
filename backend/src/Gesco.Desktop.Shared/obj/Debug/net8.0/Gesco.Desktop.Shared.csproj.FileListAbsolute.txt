@@ -1,0 +1,13 @@
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\bin\Debug\net8.0\Gesco.Desktop.Shared.deps.json
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\bin\Debug\net8.0\Gesco.Desktop.Shared.dll
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\bin\Debug\net8.0\Gesco.Desktop.Shared.pdb
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.csproj.AssemblyReference.cache
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.AssemblyInfoInputs.cache
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.AssemblyInfo.cs
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.csproj.CoreCompileInputs.cache
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.sourcelink.json
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.dll
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\refint\Gesco.Desktop.Shared.dll
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\Gesco.Desktop.Shared.pdb
+C:\Users\HP\Desktop\GescoDesktop\backend\src\Gesco.Desktop.Shared\obj\Debug\net8.0\ref\Gesco.Desktop.Shared.dll

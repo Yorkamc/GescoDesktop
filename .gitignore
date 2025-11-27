@@ -1,121 +1,213 @@
-﻿# Build folders
-bin/
-obj/
-publish/
-dist/
+﻿# ================================
+# BACKEND (.NET)
+# ================================
+
+# Build folders
+backend/bin/
+backend/obj/
+backend/publish/
+backend/dist/
 
 # Visual Studio
-.vs/
+backend/.vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 
 # VS Code
-.vscode/
+backend/.vscode/
 
 # Rider
-.idea/
+backend/.idea/
 
 # NuGet
 *.nupkg
-packages/
+backend/packages/
 *.nuget.props
 *.nuget.targets
 
-# .NET
-project.lock.json
-project.fragment.lock.json
-artifacts/
+# .NET artifacts
+backend/project.lock.json
+backend/project.fragment.lock.json
+backend/artifacts/
 
 # Entity Framework
-*.db
-*.db-shm
-*.db-wal
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
 
-# Logs
-*.log
-logs/
+# Logs del backend
+backend/logs/
+backend/src/Gesco.Desktop.UI/logs/
 
 # Temp files
-*.tmp
-*.temp
-*.bak
-.restructure-state.json
+backend/*.tmp
+backend/*.temp
+backend/*.bak
 
-# OS files
-Thumbs.db
-.DS_Store
+# Base de datos SQLite
+backend/data/*.db
+backend/data/*.sqlite
+backend/src/Gesco.Desktop.UI/data/*.db
+backend/src/Gesco.Desktop.UI/data/*.sqlite
+backend/src/Gesco.Desktop.UI/data/gesco_encrypted.db*
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# ================================
+# FRONTEND (Electron + Vite + React)
+# ================================
 
-# Backup folders
-backup_*/
-
-# SQLite databases
-data/*.db
-*.sqlite
-gesco_local.db
-
-# Node modules (para Electron futuro)
+# Node modules
+frontend/node_modules/
 node_modules/
-package-lock.json
 
-# ==============================
-#  ARCHIVOS DE SEGURIDAD
-# ==============================
+# Dependencias
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+
+# Build outputs
+frontend/dist/
+frontend/dist-electron/
+frontend/out/
+frontend/release/
+frontend/.vite/
+
+# ================================
+# CRÍTICO: BACKEND COPIADO AL FRONTEND
+# ================================
+# Durante el empaquetado de Electron, el backend se copia a:
+# frontend/backend/ (o frontend/resources/backend/)
+# Esta carpeta NO debe ir a Git
+
+frontend/backend/
+frontend/resources/backend/
+frontend/dist-electron/backend/
+frontend/out/backend/
+
+# Instaladores generados
+frontend/*.exe
+frontend/*.dmg
+frontend/*.AppImage
+frontend/*.deb
+frontend/*.rpm
+frontend/*.msi
+
+# ================================
+# ARCHIVOS DE SEGURIDAD (CRÍTICO)
+# ================================
+
+# Variables de entorno
 .env
 .env.local
 .env.production
-*.env
-
-# Base de datos encriptada
-data/gesco_encrypted.db*
-data/*.db
-data/*.sqlite
+.env.staging
+.env.development
+backend/.env
+backend/src/Gesco.Desktop.UI/.env
+frontend/.env
 
 # Llaves de encriptación
 keys/
 certificates/
+backend/keys/
+backend/src/Gesco.Desktop.UI/keys/
 *.pfx
 *.key
 *.pem
+*.crt
 
-# Logs de seguridad
-logs/security/
-logs/audit/
+# Base de datos con datos sensibles
+**/gesco_encrypted.db
+**/gesco_encrypted.db-shm
+**/gesco_encrypted.db-wal
+data/gesco_encrypted.db*
 
 # Configuraciones de producción
-appsettings.Production.json
-appsettings.Staging.json
+backend/src/Gesco.Desktop.UI/appsettings.Production.json
+backend/src/Gesco.Desktop.UI/appsettings.Staging.json
 
-# Electron build
-frontend/dist-electron/
-frontend/dist/
-*.dmg
-*.AppImage
-*.deb
-*.exe
-*.msi
+# ================================
+# LOGS
+# ================================
 
-# Build artifacts
-backend/dist/
-backend/publish/
-
-# Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+backend/logs/
+frontend/logs/
 
-# OS generated files
+# ================================
+# OS GENERATED FILES
+# ================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ================================
+# IDEs
+# ================================
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# JetBrains (Rider, WebStorm)
+.idea/
+*.iml
+
+# ================================
+# TESTING
+# ================================
+
+backend/tests/**/TestResults/
+frontend/coverage/
+*.trx
+*.coverage
+
+# ================================
+# MISC
+# ================================
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*~
+.restructure-state.json
+backup_*/
+
+# Temporales
+*.tmp
+*.temp
+
+# Cache
+.cache/
+.parcel-cache/
