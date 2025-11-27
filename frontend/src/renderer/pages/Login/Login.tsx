@@ -141,14 +141,6 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-600 font-semibold mb-1">Credenciales por defecto:</p>
-          <div className="flex justify-between text-xs text-gray-600">
-            <span>Usuario: <code className="bg-gray-200 px-1 rounded">admin</code></span>
-            <span>Contraseña: <code className="bg-gray-200 px-1 rounded">admin123</code></span>
-          </div>
-        </div>
-
         <div className="mt-4 text-center">
           <div className="flex items-center justify-center text-xs">
             <div className={`w-2 h-2 ${getStatusColor()} rounded-full mr-2 ${isChecking ? 'animate-pulse' : ''}`}></div>
