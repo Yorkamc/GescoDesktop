@@ -613,16 +613,16 @@ private static void SeedData(ModelBuilder modelBuilder)
     );
 
     // ============================================
-    // 5. ESTADOS DE VENTAS
+    // 5. ESTADOS DE VENTAS (CRÍTICO)
     // ============================================
     modelBuilder.Entity<SalesStatus>().HasData(
-        new SalesStatus { Id = 1L, Name = "Pendiente", Description = "Venta pendiente de procesar", Active = true, CreatedAt = DateTime.UtcNow },
-        new SalesStatus { Id = 2L, Name = "Completada", Description = "Venta completada exitosamente", Active = true, CreatedAt = DateTime.UtcNow },
-        new SalesStatus { Id = 3L, Name = "Anulada", Description = "Venta anulada", Active = true, CreatedAt = DateTime.UtcNow }
+        new SalesStatus { Id = 1L, Name = "Pending", Description = "Venta pendiente de procesar", Active = true, CreatedAt = DateTime.UtcNow },
+        new SalesStatus { Id = 2L, Name = "Completed", Description = "Venta completada exitosamente", Active = true, CreatedAt = DateTime.UtcNow },
+        new SalesStatus { Id = 3L, Name = "Cancelled", Description = "Venta anulada", Active = true, CreatedAt = DateTime.UtcNow }
     );
 
     // ============================================
-    // 6. MÉTODOS DE PAGO
+    // 6. MÉTODOS DE PAGO (CRÍTICO)
     // ============================================
     modelBuilder.Entity<PaymentMethod>().HasData(
         new PaymentMethod { Id = 1L, Name = "Efectivo", RequiresReference = false, Active = true, CreatedAt = DateTime.UtcNow },
@@ -799,7 +799,7 @@ private static void SeedData(ModelBuilder modelBuilder)
     );
 
     // ============================================
-    // 13. CATEGORÍAS DE SERVICIO
+    // 13. CATEGORÍAS DE SERVICIO (service_categories)
     // ============================================
     modelBuilder.Entity<ServiceCategory>().HasData(
         new ServiceCategory
@@ -860,7 +860,8 @@ private static void SeedData(ModelBuilder modelBuilder)
     );
 
     // ============================================
-    // 15. CATEGORÍAS DE LA ACTIVIDAD
+    // 15. CATEGORÍAS DE LA ACTIVIDAD (activity_categories)
+    // CRÍTICO: Relación Many-to-Many entre Activity y ServiceCategory
     // ============================================
     modelBuilder.Entity<ActivityCategory>().HasData(
         new ActivityCategory
@@ -890,14 +891,15 @@ private static void SeedData(ModelBuilder modelBuilder)
     );
 
     // ============================================
-    // 16. PRODUCTOS DE EJEMPLO
+    // 16. PRODUCTOS (category_products)
+    // CRÍTICO: Ligados a activity_categories
     // ============================================
     modelBuilder.Entity<CategoryProduct>().HasData(
-        // Alimentos
+        // ===== ALIMENTOS =====
         new CategoryProduct
         {
             Id = 1L,
-            ActivityCategoryId = 1L,
+            ActivityCategoryId = 1L, // Festival - Alimentos
             Code = "ALM-001",
             Name = "Hamburguesa Clásica",
             Description = "Hamburguesa con queso, lechuga y tomate",
@@ -939,12 +941,27 @@ private static void SeedData(ModelBuilder modelBuilder)
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         },
-        
-        // Bebidas
         new CategoryProduct
         {
             Id = 4L,
-            ActivityCategoryId = 2L,
+            ActivityCategoryId = 1L,
+            Code = "ALM-004",
+            Name = "Pizza Personal",
+            Description = "Pizza individual",
+            UnitPrice = 4000m,
+            InitialQuantity = 100,
+            CurrentQuantity = 100,
+            AlertQuantity = 15,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            SyncVersion = 1
+        },
+        
+        // ===== BEBIDAS =====
+        new CategoryProduct
+        {
+            Id = 5L,
+            ActivityCategoryId = 2L, // Festival - Bebidas
             Code = "BEB-001",
             Name = "Cerveza Nacional",
             Description = "Cerveza nacional 355ml",
@@ -958,7 +975,7 @@ private static void SeedData(ModelBuilder modelBuilder)
         },
         new CategoryProduct
         {
-            Id = 5L,
+            Id = 6L,
             ActivityCategoryId = 2L,
             Code = "BEB-002",
             Name = "Refresco Natural",
@@ -973,7 +990,7 @@ private static void SeedData(ModelBuilder modelBuilder)
         },
         new CategoryProduct
         {
-            Id = 6L,
+            Id = 7L,
             ActivityCategoryId = 2L,
             Code = "BEB-003",
             Name = "Agua Embotellada",
@@ -986,12 +1003,27 @@ private static void SeedData(ModelBuilder modelBuilder)
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         },
-        
-        // Souvenirs
         new CategoryProduct
         {
-            Id = 7L,
-            ActivityCategoryId = 3L,
+            Id = 8L,
+            ActivityCategoryId = 2L,
+            Code = "BEB-004",
+            Name = "Café Premium",
+            Description = "Café costarricense premium",
+            UnitPrice = 2000m,
+            InitialQuantity = 100,
+            CurrentQuantity = 100,
+            AlertQuantity = 20,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            SyncVersion = 1
+        },
+        
+        // ===== SOUVENIRS =====
+        new CategoryProduct
+        {
+            Id = 9L,
+            ActivityCategoryId = 3L, // Festival - Souvenirs
             Code = "SOU-001",
             Name = "Camiseta Festival 2025",
             Description = "Camiseta oficial del evento",
@@ -1005,7 +1037,7 @@ private static void SeedData(ModelBuilder modelBuilder)
         },
         new CategoryProduct
         {
-            Id = 8L,
+            Id = 10L,
             ActivityCategoryId = 3L,
             Code = "SOU-002",
             Name = "Gorra Edición Especial",
@@ -1014,6 +1046,21 @@ private static void SeedData(ModelBuilder modelBuilder)
             InitialQuantity = 40,
             CurrentQuantity = 40,
             AlertQuantity = 10,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            SyncVersion = 1
+        },
+        new CategoryProduct
+        {
+            Id = 11L,
+            ActivityCategoryId = 3L,
+            Code = "SOU-003",
+            Name = "Taza Conmemorativa",
+            Description = "Taza cerámica del evento",
+            UnitPrice = 5000m,
+            InitialQuantity = 30,
+            CurrentQuantity = 30,
+            AlertQuantity = 5,
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1

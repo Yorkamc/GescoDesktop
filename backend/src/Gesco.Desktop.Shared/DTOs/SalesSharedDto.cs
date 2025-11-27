@@ -8,27 +8,27 @@ namespace Gesco.Desktop.Shared.DTOs
     // SALES REQUEST DTOs
     // ============================================
     
-    public class CreateSaleRequest
-    {
-        [Required]
-        public Guid CashRegisterId { get; set; }
-        
-        [Required]
-        [MinLength(1, ErrorMessage = "Debe incluir al menos un producto")]
-        public List<CreateSaleItemRequest> Items { get; set; } = new();
-        
-        public string CreatedBy { get; set; } = string.Empty;
-    }
+public class CreateSaleRequest
+{
+    [Required]
+    public Guid CashRegisterId { get; set; }
+    
+    [Required]
+    [MinLength(1, ErrorMessage = "Debe incluir al menos un producto")]
+    public List<CreateSaleItemRequest> Items { get; set; } = new();
+    
+    public string CreatedBy { get; set; } = string.Empty;
+}
 
-    public class CreateSaleItemRequest
-    {
-        [Required]
-        public Guid ProductId { get; set; }
-        
-        [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
-        public int Quantity { get; set; }
-    }
+public class CreateSaleItemRequest
+{
+    [Required]
+    public Guid ProductId { get; set; }  
+    
+    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
+    public int Quantity { get; set; }
+}
 
     public class CreatePaymentRequest
     {
