@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Gesco.Desktop.Shared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+01858af1b0535b0de1769d0d2d103835e866453a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22c304bbe47173c709c9e57feb00b6a6be75f5b3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Gesco.Desktop.Shared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Gesco.Desktop.Shared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -528,29 +528,16 @@ private static void SeedData(ModelBuilder modelBuilder)
     // 1. ORGANIZACIÓN
     // ============================================
     var orgId = Guid.NewGuid();
-    var org2Id = Guid.NewGuid();
 
     modelBuilder.Entity<Organization>().HasData(
         new Organization
         {
             Id = orgId,
-            Name = "GESCO Demo Organization",
+            Name = "GESCO Demo",
             ContactEmail = "demo@gesco.com",
             ContactPhone = "2222-2222",
             Address = "San José, Costa Rica",
-            PurchaserName = "Demo Administrator",
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new Organization
-        {
-            Id = org2Id,
-            Name = "Empresa de Eventos CR",
-            ContactEmail = "info@eventoscr.com",
-            ContactPhone = "2233-4455",
-            Address = "Heredia, Costa Rica",
-            PurchaserName = "Maria Rodriguez",
+            PurchaserName = "Administrador Demo",
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
@@ -563,22 +550,21 @@ private static void SeedData(ModelBuilder modelBuilder)
     var adminRoleId = 1L;
     var salesRoleId = 2L;
     var supervisorRoleId = 3L;
-    var operatorRoleId = 4L;
 
     modelBuilder.Entity<Role>().HasData(
         new Role
         {
             Id = adminRoleId,
-            Name = "Administrator",
-            Description = "Full system access",
+            Name = "Administrador",
+            Description = "Acceso completo al sistema",
             Active = true,
             CreatedAt = DateTime.UtcNow
         },
         new Role
         {
             Id = salesRoleId,
-            Name = "Salesperson",
-            Description = "Sales and cash register access",
+            Name = "Vendedor",
+            Description = "Acceso a ventas y caja",
             Active = true,
             CreatedAt = DateTime.UtcNow
         },
@@ -586,92 +572,31 @@ private static void SeedData(ModelBuilder modelBuilder)
         {
             Id = supervisorRoleId,
             Name = "Supervisor",
-            Description = "Activity supervision",
-            Active = true,
-            CreatedAt = DateTime.UtcNow
-        },
-        new Role
-        {
-            Id = operatorRoleId,
-            Name = "Operator",
-            Description = "Cash register operator",
+            Description = "Supervisión de actividades",
             Active = true,
             CreatedAt = DateTime.UtcNow
         }
     );
 
     // ============================================
-    // 3. USUARIOS
+    // 3. USUARIO ADMINISTRADOR
     // ============================================
     var adminUserId = "118640123"; // Cédula admin
-    var user2Id = "205550123";     // Vendedor
-    var user3Id = "305550456";     // Supervisor
-    var user4Id = "105550789";     // Operador
-
-    var adminPasswordHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a";
+    var adminPasswordHash = "$2a$12$LQV.K4/OOOgwdEXCfC7jC.QLwpZ9HkqhXfOr9p6mTyYFEYGHZcP/a"; // admin123
 
     modelBuilder.Entity<User>().HasData(
-        // Admin
         new User
         {
             Id = adminUserId,
             Username = "admin",
             Email = "admin@gesco.com",
             Password = adminPasswordHash,
-            FullName = "System Administrator",
+            FullName = "Administrador del Sistema",
             Phone = "8888-8888",
             OrganizationId = orgId,
             RoleId = adminRoleId,
             Active = true,
             FirstLogin = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Vendedor
-        new User
-        {
-            Id = user2Id,
-            Username = "vendedor1",
-            Email = "vendedor1@gesco.com",
-            Password = adminPasswordHash, // Mismo password para demo
-            FullName = "Carlos Vendedor",
-            Phone = "8777-7777",
-            OrganizationId = orgId,
-            RoleId = salesRoleId,
-            Active = true,
-            FirstLogin = false,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Supervisor
-        new User
-        {
-            Id = user3Id,
-            Username = "supervisor1",
-            Email = "supervisor1@gesco.com",
-            Password = adminPasswordHash,
-            FullName = "Ana Supervisor",
-            Phone = "8666-6666",
-            OrganizationId = orgId,
-            RoleId = supervisorRoleId,
-            Active = true,
-            FirstLogin = false,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Operador
-        new User
-        {
-            Id = user4Id,
-            Username = "operador1",
-            Email = "operador1@gesco.com",
-            Password = adminPasswordHash,
-            FullName = "Luis Operador",
-            Phone = "8555-5555",
-            OrganizationId = orgId,
-            RoleId = operatorRoleId,
-            Active = true,
-            FirstLogin = false,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         }
@@ -681,50 +606,50 @@ private static void SeedData(ModelBuilder modelBuilder)
     // 4. ESTADOS DE ACTIVIDADES
     // ============================================
     modelBuilder.Entity<ActivityStatus>().HasData(
-        new ActivityStatus { Id = 1L, Name = "Not Started", Description = "Activity not started", Active = true, CreatedAt = DateTime.UtcNow },
-        new ActivityStatus { Id = 2L, Name = "In Progress", Description = "Activity in development", Active = true, CreatedAt = DateTime.UtcNow },
-        new ActivityStatus { Id = 3L, Name = "Completed", Description = "Activity completed", Active = true, CreatedAt = DateTime.UtcNow },
-        new ActivityStatus { Id = 4L, Name = "Cancelled", Description = "Activity cancelled", Active = true, CreatedAt = DateTime.UtcNow }
+        new ActivityStatus { Id = 1L, Name = "No Iniciada", Description = "Actividad no iniciada", Active = true, CreatedAt = DateTime.UtcNow },
+        new ActivityStatus { Id = 2L, Name = "En Progreso", Description = "Actividad en desarrollo", Active = true, CreatedAt = DateTime.UtcNow },
+        new ActivityStatus { Id = 3L, Name = "Completada", Description = "Actividad finalizada", Active = true, CreatedAt = DateTime.UtcNow },
+        new ActivityStatus { Id = 4L, Name = "Cancelada", Description = "Actividad cancelada", Active = true, CreatedAt = DateTime.UtcNow }
     );
 
     // ============================================
     // 5. ESTADOS DE VENTAS
     // ============================================
     modelBuilder.Entity<SalesStatus>().HasData(
-        new SalesStatus { Id = 1L, Name = "Pending", Description = "Sale pending processing", Active = true, CreatedAt = DateTime.UtcNow },
-        new SalesStatus { Id = 2L, Name = "Completed", Description = "Sale completed successfully", Active = true, CreatedAt = DateTime.UtcNow },
-        new SalesStatus { Id = 3L, Name = "Cancelled", Description = "Sale cancelled", Active = true, CreatedAt = DateTime.UtcNow }
+        new SalesStatus { Id = 1L, Name = "Pendiente", Description = "Venta pendiente de procesar", Active = true, CreatedAt = DateTime.UtcNow },
+        new SalesStatus { Id = 2L, Name = "Completada", Description = "Venta completada exitosamente", Active = true, CreatedAt = DateTime.UtcNow },
+        new SalesStatus { Id = 3L, Name = "Anulada", Description = "Venta anulada", Active = true, CreatedAt = DateTime.UtcNow }
     );
 
     // ============================================
     // 6. MÉTODOS DE PAGO
     // ============================================
     modelBuilder.Entity<PaymentMethod>().HasData(
-        new PaymentMethod { Id = 1L, Name = "Cash", RequiresReference = false, Active = true, CreatedAt = DateTime.UtcNow },
-        new PaymentMethod { Id = 2L, Name = "Card", RequiresReference = true, Active = true, CreatedAt = DateTime.UtcNow },
-        new PaymentMethod { Id = 3L, Name = "SINPE Mobile", RequiresReference = true, Active = true, CreatedAt = DateTime.UtcNow },
-        new PaymentMethod { Id = 4L, Name = "Transfer", RequiresReference = true, Active = true, CreatedAt = DateTime.UtcNow }
+        new PaymentMethod { Id = 1L, Name = "Efectivo", RequiresReference = false, Active = true, CreatedAt = DateTime.UtcNow },
+        new PaymentMethod { Id = 2L, Name = "Tarjeta", RequiresReference = true, Active = true, CreatedAt = DateTime.UtcNow },
+        new PaymentMethod { Id = 3L, Name = "SINPE Móvil", RequiresReference = true, Active = true, CreatedAt = DateTime.UtcNow },
+        new PaymentMethod { Id = 4L, Name = "Transferencia", RequiresReference = true, Active = true, CreatedAt = DateTime.UtcNow }
     );
 
     // ============================================
     // 7. TIPOS DE MOVIMIENTO DE INVENTARIO
     // ============================================
     modelBuilder.Entity<InventoryMovementType>().HasData(
-        new InventoryMovementType { Id = 1L, Name = "Stock In", Description = "Merchandise entry to inventory", RequiresJustification = false, Active = true, CreatedAt = DateTime.UtcNow },
-        new InventoryMovementType { Id = 2L, Name = "Sale", Description = "Stock out by product sale", RequiresJustification = false, Active = true, CreatedAt = DateTime.UtcNow },
-        new InventoryMovementType { Id = 3L, Name = "Adjustment", Description = "Inventory adjustment for differences", RequiresJustification = true, Active = true, CreatedAt = DateTime.UtcNow },
-        new InventoryMovementType { Id = 4L, Name = "Return", Description = "Product return", RequiresJustification = true, Active = true, CreatedAt = DateTime.UtcNow },
-        new InventoryMovementType { Id = 5L, Name = "Damaged", Description = "Product damaged or expired", RequiresJustification = true, Active = true, CreatedAt = DateTime.UtcNow }
+        new InventoryMovementType { Id = 1L, Name = "Entrada", Description = "Ingreso de mercadería al inventario", RequiresJustification = false, Active = true, CreatedAt = DateTime.UtcNow },
+        new InventoryMovementType { Id = 2L, Name = "Venta", Description = "Salida por venta de producto", RequiresJustification = false, Active = true, CreatedAt = DateTime.UtcNow },
+        new InventoryMovementType { Id = 3L, Name = "Ajuste", Description = "Ajuste de inventario por diferencias", RequiresJustification = true, Active = true, CreatedAt = DateTime.UtcNow },
+        new InventoryMovementType { Id = 4L, Name = "Devolución", Description = "Devolución de producto", RequiresJustification = true, Active = true, CreatedAt = DateTime.UtcNow },
+        new InventoryMovementType { Id = 5L, Name = "Merma", Description = "Producto dañado o vencido", RequiresJustification = true, Active = true, CreatedAt = DateTime.UtcNow }
     );
 
     // ============================================
     // 8. ESTADOS DE SUSCRIPCIÓN
     // ============================================
     modelBuilder.Entity<SubscriptionStatus>().HasData(
-        new SubscriptionStatus { Id = 1L, Name = "Active", Description = "Active subscription", AllowsSystemUsage = true, Active = true, CreatedAt = DateTime.UtcNow },
-        new SubscriptionStatus { Id = 2L, Name = "Suspended", Description = "Suspended subscription", AllowsSystemUsage = false, Active = true, CreatedAt = DateTime.UtcNow },
-        new SubscriptionStatus { Id = 3L, Name = "Cancelled", Description = "Cancelled subscription", AllowsSystemUsage = false, Active = true, CreatedAt = DateTime.UtcNow },
-        new SubscriptionStatus { Id = 4L, Name = "Trial", Description = "Trial period", AllowsSystemUsage = true, Active = true, CreatedAt = DateTime.UtcNow }
+        new SubscriptionStatus { Id = 1L, Name = "Activa", Description = "Suscripción activa", AllowsSystemUsage = true, Active = true, CreatedAt = DateTime.UtcNow },
+        new SubscriptionStatus { Id = 2L, Name = "Suspendida", Description = "Suscripción suspendida", AllowsSystemUsage = false, Active = true, CreatedAt = DateTime.UtcNow },
+        new SubscriptionStatus { Id = 3L, Name = "Cancelada", Description = "Suscripción cancelada", AllowsSystemUsage = false, Active = true, CreatedAt = DateTime.UtcNow },
+        new SubscriptionStatus { Id = 4L, Name = "Prueba", Description = "Período de prueba", AllowsSystemUsage = true, Active = true, CreatedAt = DateTime.UtcNow }
     );
 
     // ============================================
@@ -734,8 +659,8 @@ private static void SeedData(ModelBuilder modelBuilder)
         new Membership
         {
             Id = 1L,
-            Name = "Basic",
-            Description = "Basic membership with essential features",
+            Name = "Básica",
+            Description = "Plan básico con funciones esenciales",
             MonthlyPrice = 29.99m,
             AnnualPrice = 299.99m,
             UserLimit = 5,
@@ -745,22 +670,11 @@ private static void SeedData(ModelBuilder modelBuilder)
         new Membership
         {
             Id = 2L,
-            Name = "Professional",
-            Description = "Professional membership with advanced features",
+            Name = "Profesional",
+            Description = "Plan profesional con funciones avanzadas",
             MonthlyPrice = 59.99m,
             AnnualPrice = 599.99m,
             UserLimit = 25,
-            Active = true,
-            CreatedAt = DateTime.UtcNow
-        },
-        new Membership
-        {
-            Id = 3L,
-            Name = "Enterprise",
-            Description = "Enterprise membership with unlimited features",
-            MonthlyPrice = 129.99m,
-            AnnualPrice = 1299.99m,
-            UserLimit = 100,
             Active = true,
             CreatedAt = DateTime.UtcNow
         }
@@ -774,8 +688,8 @@ private static void SeedData(ModelBuilder modelBuilder)
         {
             Id = 1L,
             OrganizationId = orgId,
-            MembershipId = 2L, // Professional
-            SubscriptionStatusId = 1L, // Active
+            MembershipId = 2L, // Profesional
+            SubscriptionStatusId = 1L, // Activa
             StartDate = DateTime.UtcNow,
             ExpirationDate = DateTime.UtcNow.AddMonths(12),
             GracePeriodEnd = DateTime.UtcNow.AddMonths(12).AddDays(30),
@@ -792,8 +706,8 @@ private static void SeedData(ModelBuilder modelBuilder)
         {
             Id = 1L,
             Code = "low_stock",
-            Name = "Low Stock Alert",
-            Description = "Product inventory is running low",
+            Name = "Alerta de Stock Bajo",
+            Description = "El inventario del producto está bajo",
             Level = "warning",
             Active = true,
             CreatedAt = DateTime.UtcNow
@@ -802,8 +716,8 @@ private static void SeedData(ModelBuilder modelBuilder)
         {
             Id = 2L,
             Code = "activity_reminder",
-            Name = "Activity Reminder",
-            Description = "Upcoming activity notification",
+            Name = "Recordatorio de Actividad",
+            Description = "Notificación de actividad próxima",
             Level = "info",
             Active = true,
             CreatedAt = DateTime.UtcNow
@@ -812,8 +726,8 @@ private static void SeedData(ModelBuilder modelBuilder)
         {
             Id = 3L,
             Code = "system_alert",
-            Name = "System Alert",
-            Description = "Critical system notification",
+            Name = "Alerta del Sistema",
+            Description = "Notificación crítica del sistema",
             Level = "critical",
             Active = true,
             CreatedAt = DateTime.UtcNow
@@ -822,19 +736,9 @@ private static void SeedData(ModelBuilder modelBuilder)
         {
             Id = 4L,
             Code = "sync_error",
-            Name = "Sync Error",
-            Description = "Data synchronization failed",
+            Name = "Error de Sincronización",
+            Description = "Fallo en la sincronización de datos",
             Level = "error",
-            Active = true,
-            CreatedAt = DateTime.UtcNow
-        },
-        new NotificationType
-        {
-            Id = 5L,
-            Code = "cash_register_closed",
-            Name = "Cash Register Closed",
-            Description = "Cash register has been closed",
-            Level = "info",
             Active = true,
             CreatedAt = DateTime.UtcNow
         }
@@ -851,7 +755,7 @@ private static void SeedData(ModelBuilder modelBuilder)
             Value = "1.0.0",
             DataType = "string",
             Category = "system",
-            Description = "System version",
+            Description = "Versión del sistema",
             IsEditable = false,
             AccessLevel = "admin",
             CreatedAt = DateTime.UtcNow
@@ -863,7 +767,7 @@ private static void SeedData(ModelBuilder modelBuilder)
             Value = "6",
             DataType = "int",
             Category = "backup",
-            Description = "Backup interval in hours",
+            Description = "Intervalo de respaldo en horas",
             IsEditable = true,
             AccessLevel = "admin",
             CreatedAt = DateTime.UtcNow
@@ -871,11 +775,11 @@ private static void SeedData(ModelBuilder modelBuilder)
         new SystemConfiguration
         {
             Id = 3L,
-            Key = "license.check_interval_days",
-            Value = "7",
-            DataType = "int",
-            Category = "license",
-            Description = "License check interval in days",
+            Key = "sales.allow_negative_stock",
+            Value = "false",
+            DataType = "bool",
+            Category = "sales",
+            Description = "Permitir ventas con stock negativo",
             IsEditable = true,
             AccessLevel = "admin",
             CreatedAt = DateTime.UtcNow
@@ -883,23 +787,11 @@ private static void SeedData(ModelBuilder modelBuilder)
         new SystemConfiguration
         {
             Id = 4L,
-            Key = "sales.allow_negative_stock",
-            Value = "false",
-            DataType = "bool",
-            Category = "sales",
-            Description = "Allow sales with negative stock",
-            IsEditable = true,
-            AccessLevel = "admin",
-            CreatedAt = DateTime.UtcNow
-        },
-        new SystemConfiguration
-        {
-            Id = 5L,
             Key = "sales.default_tax_rate",
             Value = "13",
             DataType = "decimal",
             Category = "sales",
-            Description = "Default tax rate percentage",
+            Description = "Tasa de impuesto por defecto (IVA)",
             IsEditable = true,
             AccessLevel = "admin",
             CreatedAt = DateTime.UtcNow
@@ -915,7 +807,7 @@ private static void SeedData(ModelBuilder modelBuilder)
             Id = 1L,
             OrganizationId = orgId,
             Name = "Alimentos",
-            Description = "Comidas y bebidas",
+            Description = "Comidas y snacks",
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
@@ -939,38 +831,15 @@ private static void SeedData(ModelBuilder modelBuilder)
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
-        },
-        new ServiceCategory
-        {
-            Id = 4L,
-            OrganizationId = orgId,
-            Name = "Servicios",
-            Description = "Servicios adicionales",
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new ServiceCategory
-        {
-            Id = 5L,
-            OrganizationId = orgId,
-            Name = "Entradas",
-            Description = "Tickets y boletos",
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
         }
     );
 
     // ============================================
-    // 14. ACTIVIDADES DE EJEMPLO
+    // 14. ACTIVIDAD DE EJEMPLO
     // ============================================
     var activity1Id = 1L;
-    var activity2Id = 2L;
-    var activity3Id = 3L;
 
     modelBuilder.Entity<Activity>().HasData(
-        // Actividad 1 - Festival de Música
         new Activity
         {
             Id = activity1Id,
@@ -981,56 +850,19 @@ private static void SeedData(ModelBuilder modelBuilder)
             EndDate = DateOnly.FromDateTime(DateTime.Today.AddDays(32)),
             EndTime = TimeOnly.Parse("23:00"),
             Location = "Parque Central, San José",
-            ActivityStatusId = 1L, // Not Started
+            ActivityStatusId = 1L, // No Iniciada
             ManagerUserId = adminUserId,
             OrganizationId = orgId,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = adminUserId,
-            SyncVersion = 1
-        },
-        // Actividad 2 - Feria Gastronómica
-        new Activity
-        {
-            Id = activity2Id,
-            Name = "Feria Gastronómica",
-            Description = "Exposición de comida típica costarricense",
-            StartDate = DateOnly.FromDateTime(DateTime.Today.AddDays(7)),
-            StartTime = TimeOnly.Parse("10:00"),
-            EndDate = DateOnly.FromDateTime(DateTime.Today.AddDays(9)),
-            EndTime = TimeOnly.Parse("22:00"),
-            Location = "Centro de Convenciones",
-            ActivityStatusId = 2L, // In Progress
-            ManagerUserId = user3Id,
-            OrganizationId = orgId,
-            CreatedAt = DateTime.UtcNow.AddDays(-5),
-            CreatedBy = adminUserId,
-            SyncVersion = 1
-        },
-        // Actividad 3 - Maratón Anual
-        new Activity
-        {
-            Id = activity3Id,
-            Name = "Maratón Ciudad 2025",
-            Description = "Carrera de 10K y 5K",
-            StartDate = DateOnly.FromDateTime(DateTime.Today.AddDays(60)),
-            StartTime = TimeOnly.Parse("06:00"),
-            EndDate = DateOnly.FromDateTime(DateTime.Today.AddDays(60)),
-            EndTime = TimeOnly.Parse("12:00"),
-            Location = "Sabana Metropolitana",
-            ActivityStatusId = 1L, // Not Started
-            ManagerUserId = user3Id,
-            OrganizationId = orgId,
-            CreatedAt = DateTime.UtcNow.AddDays(-10),
             CreatedBy = adminUserId,
             SyncVersion = 1
         }
     );
 
     // ============================================
-    // 15. CATEGORÍAS DE ACTIVIDAD (RELACIÓN)
+    // 15. CATEGORÍAS DE LA ACTIVIDAD
     // ============================================
     modelBuilder.Entity<ActivityCategory>().HasData(
-        // Festival de Música - Alimentos
         new ActivityCategory
         {
             Id = 1L,
@@ -1039,7 +871,6 @@ private static void SeedData(ModelBuilder modelBuilder)
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         },
-        // Festival de Música - Bebidas
         new ActivityCategory
         {
             Id = 2L,
@@ -1048,48 +879,11 @@ private static void SeedData(ModelBuilder modelBuilder)
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         },
-        // Festival de Música - Souvenirs
         new ActivityCategory
         {
             Id = 3L,
             ActivityId = activity1Id,
             ServiceCategoryId = 3L, // Souvenirs
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Feria Gastronómica - Alimentos
-        new ActivityCategory
-        {
-            Id = 4L,
-            ActivityId = activity2Id,
-            ServiceCategoryId = 1L, // Alimentos
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Feria Gastronómica - Bebidas
-        new ActivityCategory
-        {
-            Id = 5L,
-            ActivityId = activity2Id,
-            ServiceCategoryId = 2L, // Bebidas
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Maratón - Entradas
-        new ActivityCategory
-        {
-            Id = 6L,
-            ActivityId = activity3Id,
-            ServiceCategoryId = 5L, // Entradas
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        // Maratón - Bebidas
-        new ActivityCategory
-        {
-            Id = 7L,
-            ActivityId = activity3Id,
-            ServiceCategoryId = 2L, // Bebidas
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         }
@@ -1099,17 +893,17 @@ private static void SeedData(ModelBuilder modelBuilder)
     // 16. PRODUCTOS DE EJEMPLO
     // ============================================
     modelBuilder.Entity<CategoryProduct>().HasData(
-        // ===== FESTIVAL DE MÚSICA - ALIMENTOS =====
+        // Alimentos
         new CategoryProduct
         {
             Id = 1L,
-            ActivityCategoryId = 1L, // Festival - Alimentos
+            ActivityCategoryId = 1L,
             Code = "ALM-001",
             Name = "Hamburguesa Clásica",
             Description = "Hamburguesa con queso, lechuga y tomate",
             UnitPrice = 3500m,
-            InitialQuantity = 200,
-            CurrentQuantity = 200,
+            InitialQuantity = 100,
+            CurrentQuantity = 100,
             AlertQuantity = 20,
             Active = true,
             CreatedAt = DateTime.UtcNow,
@@ -1123,8 +917,8 @@ private static void SeedData(ModelBuilder modelBuilder)
             Name = "Hot Dog",
             Description = "Perro caliente con salsa especial",
             UnitPrice = 2000m,
-            InitialQuantity = 300,
-            CurrentQuantity = 300,
+            InitialQuantity = 150,
+            CurrentQuantity = 150,
             AlertQuantity = 30,
             Active = true,
             CreatedAt = DateTime.UtcNow,
@@ -1136,57 +930,27 @@ private static void SeedData(ModelBuilder modelBuilder)
             ActivityCategoryId = 1L,
             Code = "ALM-003",
             Name = "Papas Fritas",
-            Description = "Porción grande de papas fritas",
+            Description = "Porción de papas fritas",
             UnitPrice = 1500m,
-            InitialQuantity = 250,
-            CurrentQuantity = 250,
-            AlertQuantity = 25,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 4L,
-            ActivityCategoryId = 1L,
-            Code = "ALM-004",
-            Name = "Pizza Personal",
-            Description = "Pizza individual",
-            UnitPrice = 4000m,
-            InitialQuantity = 150,
-            CurrentQuantity = 150,
-            AlertQuantity = 15,
+            InitialQuantity = 200,
+            CurrentQuantity = 200,
+            AlertQuantity = 40,
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
         },
         
-        // ===== FESTIVAL DE MÚSICA - BEBIDAS =====
+        // Bebidas
         new CategoryProduct
         {
-            Id = 5L,
-            ActivityCategoryId = 2L, // Festival - Bebidas
+            Id = 4L,
+            ActivityCategoryId = 2L,
             Code = "BEB-001",
             Name = "Cerveza Nacional",
             Description = "Cerveza nacional 355ml",
             UnitPrice = 2500m,
-            InitialQuantity = 500,
-            CurrentQuantity = 500,
-            AlertQuantity = 50,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 6L,
-            ActivityCategoryId = 2L,
-            Code = "BEB-002",
-            Name = "Refresco Natural",
-            Description = "Refresco natural de frutas",
-            UnitPrice = 1500m,
-            InitialQuantity = 400,
-            CurrentQuantity = 400,
+            InitialQuantity = 200,
+            CurrentQuantity = 200,
             AlertQuantity = 40,
             Active = true,
             CreatedAt = DateTime.UtcNow,
@@ -1194,15 +958,47 @@ private static void SeedData(ModelBuilder modelBuilder)
         },
         new CategoryProduct
         {
-            Id = 7L,
+            Id = 5L,
+            ActivityCategoryId = 2L,
+            Code = "BEB-002",
+            Name = "Refresco Natural",
+            Description = "Refresco natural de frutas",
+            UnitPrice = 1500m,
+            InitialQuantity = 150,
+            CurrentQuantity = 150,
+            AlertQuantity = 30,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            SyncVersion = 1
+        },
+        new CategoryProduct
+        {
+            Id = 6L,
             ActivityCategoryId = 2L,
             Code = "BEB-003",
             Name = "Agua Embotellada",
             Description = "Agua purificada 500ml",
             UnitPrice = 1000m,
-            InitialQuantity = 600,
-            CurrentQuantity = 600,
+            InitialQuantity = 300,
+            CurrentQuantity = 300,
             AlertQuantity = 60,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            SyncVersion = 1
+        },
+        
+        // Souvenirs
+        new CategoryProduct
+        {
+            Id = 7L,
+            ActivityCategoryId = 3L,
+            Code = "SOU-001",
+            Name = "Camiseta Festival 2025",
+            Description = "Camiseta oficial del evento",
+            UnitPrice = 8000m,
+            InitialQuantity = 50,
+            CurrentQuantity = 50,
+            AlertQuantity = 10,
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
@@ -1210,204 +1006,14 @@ private static void SeedData(ModelBuilder modelBuilder)
         new CategoryProduct
         {
             Id = 8L,
-            ActivityCategoryId = 2L,
-            Code = "BEB-004",
-            Name = "Café Premium",
-            Description = "Café costarricense premium",
-            UnitPrice = 2000m,
-            InitialQuantity = 200,
-            CurrentQuantity = 200,
-            AlertQuantity = 20,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        
-        // ===== FESTIVAL DE MÚSICA - SOUVENIRS =====
-        new CategoryProduct
-        {
-            Id = 9L,
-            ActivityCategoryId = 3L, // Festival - Souvenirs
-            Code = "SOU-001",
-            Name = "Camiseta Festival 2025",
-            Description = "Camiseta oficial del evento",
-            UnitPrice = 8000m,
-            InitialQuantity = 100,
-            CurrentQuantity = 100,
-            AlertQuantity = 10,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 10L,
             ActivityCategoryId = 3L,
             Code = "SOU-002",
             Name = "Gorra Edición Especial",
             Description = "Gorra bordada del festival",
             UnitPrice = 6000m,
-            InitialQuantity = 80,
-            CurrentQuantity = 80,
+            InitialQuantity = 40,
+            CurrentQuantity = 40,
             AlertQuantity = 10,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 11L,
-            ActivityCategoryId = 3L,
-            Code = "SOU-003",
-            Name = "Taza Conmemorativa",
-            Description = "Taza cerámica del evento",
-            UnitPrice = 5000m,
-            InitialQuantity = 60,
-            CurrentQuantity = 60,
-            AlertQuantity = 5,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        
-        // ===== FERIA GASTRONÓMICA - ALIMENTOS =====
-        new CategoryProduct
-        {
-            Id = 12L,
-            ActivityCategoryId = 4L, // Feria - Alimentos
-            Code = "FER-001",
-            Name = "Gallo Pinto",
-            Description = "Plato típico costarricense",
-            UnitPrice = 3000m,
-            InitialQuantity = 150,
-            CurrentQuantity = 120, // Ya vendió algunos
-            AlertQuantity = 15,
-            Active = true,
-            CreatedAt = DateTime.UtcNow.AddDays(-2),
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 13L,
-            ActivityCategoryId = 4L,
-            Code = "FER-002",
-            Name = "Casado Completo",
-            Description = "Casado con carne, arroz, frijoles y ensalada",
-            UnitPrice = 4500m,
-            InitialQuantity = 100,
-            CurrentQuantity = 75,
-            AlertQuantity = 10,
-            Active = true,
-            CreatedAt = DateTime.UtcNow.AddDays(-2),
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 14L,
-            ActivityCategoryId = 4L,
-            Code = "FER-003",
-            Name = "Tamales",
-            Description = "Par de tamales tradicionales",
-            UnitPrice = 2500m,
-            InitialQuantity = 200,
-            CurrentQuantity = 180,
-            AlertQuantity = 20,
-            Active = true,
-            CreatedAt = DateTime.UtcNow.AddDays(-2),
-            SyncVersion = 1
-        },
-        
-        // ===== FERIA GASTRONÓMICA - BEBIDAS =====
-        new CategoryProduct
-        {
-            Id = 15L,
-            ActivityCategoryId = 5L, // Feria - Bebidas
-            Code = "FER-BEB-001",
-            Name = "Horchata",
-            Description = "Bebida tradicional de arroz",
-            UnitPrice = 1500m,
-            InitialQuantity = 150,
-            CurrentQuantity = 130,
-            AlertQuantity = 15,
-            Active = true,
-            CreatedAt = DateTime.UtcNow.AddDays(-2),
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 16L,
-            ActivityCategoryId = 5L,
-            Code = "FER-BEB-002",
-            Name = "Chan con Limón",
-            Description = "Bebida refrescante natural",
-            UnitPrice = 1200m,
-            InitialQuantity = 200,
-            CurrentQuantity = 185,
-            AlertQuantity = 20,
-            Active = true,
-            CreatedAt = DateTime.UtcNow.AddDays(-2),
-            SyncVersion = 1
-        },
-        
-        // ===== MARATÓN - ENTRADAS =====
-        new CategoryProduct
-        {
-            Id = 17L,
-            ActivityCategoryId = 6L, // Maratón - Entradas
-            Code = "MAR-ENT-001",
-            Name = "Inscripción 10K",
-            Description = "Entrada para carrera 10 kilómetros",
-            UnitPrice = 15000m,
-            InitialQuantity = 300,
-            CurrentQuantity = 300,
-            AlertQuantity = 20,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 18L,
-            ActivityCategoryId = 6L,
-            Code = "MAR-ENT-002",
-            Name = "Inscripción 5K",
-            Description = "Entrada para carrera 5 kilómetros",
-            UnitPrice = 10000m,
-            InitialQuantity = 500,
-            CurrentQuantity = 500,
-            AlertQuantity = 30,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        
-        // ===== MARATÓN - BEBIDAS =====
-        new CategoryProduct
-        {
-            Id = 19L,
-            ActivityCategoryId = 7L, // Maratón - Bebidas
-            Code = "MAR-BEB-001",
-            Name = "Bebida Deportiva",
-            Description = "Bebida isotónica 500ml",
-            UnitPrice = 2000m,
-            InitialQuantity = 600,
-            CurrentQuantity = 600,
-            AlertQuantity = 60,
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CategoryProduct
-        {
-            Id = 20L,
-            ActivityCategoryId = 7L,
-            Code = "MAR-BEB-002",
-            Name = "Agua con Electrolitos",
-            Description = "Agua enriquecida 750ml",
-            UnitPrice = 1500m,
-            InitialQuantity = 800,
-            CurrentQuantity = 800,
-            AlertQuantity = 80,
             Active = true,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
@@ -1415,85 +1021,16 @@ private static void SeedData(ModelBuilder modelBuilder)
     );
 
     // ============================================
-    // 17. CAJAS REGISTRADORAS
+    // 17. CAJA REGISTRADORA
     // ============================================
     modelBuilder.Entity<CashRegister>().HasData(
-        // Festival de Música - 3 cajas
         new CashRegister
         {
             Id = 1L,
             ActivityId = activity1Id,
             RegisterNumber = 1,
-            Name = "Caja Principal - Alimentos",
-            Location = "Zona de comidas Norte",
-            IsOpen = false,
-            OperatorUserId = user2Id,
-            SupervisorUserId = user3Id,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CashRegister
-        {
-            Id = 2L,
-            ActivityId = activity1Id,
-            RegisterNumber = 2,
-            Name = "Caja Bebidas",
-            Location = "Bar Central",
-            IsOpen = false,
-            OperatorUserId = user4Id,
-            SupervisorUserId = user3Id,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        new CashRegister
-        {
-            Id = 3L,
-            ActivityId = activity1Id,
-            RegisterNumber = 3,
-            Name = "Caja Souvenirs",
-            Location = "Tienda de Recuerdos",
-            IsOpen = false,
-            CreatedAt = DateTime.UtcNow,
-            SyncVersion = 1
-        },
-        
-        // Feria Gastronómica - 2 cajas (una actualmente abierta)
-        new CashRegister
-        {
-            Id = 4L,
-            ActivityId = activity2Id,
-            RegisterNumber = 1,
-            Name = "Caja 1 - Comidas",
-            Location = "Stand 1",
-            IsOpen = true, // ABIERTA
-            OpenedAt = DateTime.UtcNow.AddHours(-4),
-            OperatorUserId = user2Id,
-            SupervisorUserId = user3Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-5),
-            SyncVersion = 1
-        },
-        new CashRegister
-        {
-            Id = 5L,
-            ActivityId = activity2Id,
-            RegisterNumber = 2,
-            Name = "Caja 2 - Bebidas",
-            Location = "Stand 2",
-            IsOpen = false,
-            OperatorUserId = user4Id,
-            SupervisorUserId = user3Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-5),
-            SyncVersion = 1
-        },
-        
-        // Maratón - 1 caja
-        new CashRegister
-        {
-            Id = 6L,
-            ActivityId = activity3Id,
-            RegisterNumber = 1,
-            Name = "Caja Inscripciones",
-            Location = "Punto de Registro",
+            Name = "Caja Principal",
+            Location = "Zona de ventas",
             IsOpen = false,
             CreatedAt = DateTime.UtcNow,
             SyncVersion = 1
