@@ -26,10 +26,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const startDate = formatDate(activity.startDate);
   const endDate = activity.endDate ? formatDate(activity.endDate) : 'Sin definir';
 
-  // ✅ Validaciones para botones
+  // ✅ Validaciones
   const canManageProducts = categoryCount > 0;
   const canManageCashRegisters = productCount > 0;
   const canManageCombos = productCount >= 1;
+  const canDelete = categoryCount === 0; // ✅ Solo se puede eliminar si NO hay categorías
 
   const handleManageCashRegisters = () => {
     if (!canManageCashRegisters) return;
@@ -46,48 +47,57 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     onManageProducts(activity);
   };
 
+  const handleDelete = () => {
+    if (!canDelete) return;
+    onDelete(activity.id);
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            {activity.name}
-          </h3>
+      {/* ✅ HEADER: Nombre arriba, Estado + Botones abajo */}
+      <div className="mb-4">
+        {/* Nombre - arriba solo */}
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          {activity.name}
+        </h3>
+
+        {/* Estado + Botones - abajo del nombre */}
+        <div className="flex items-center gap-2">
+          {/* Estado */}
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActivityStatusColor(
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${getActivityStatusColor(
               activity.statusName
             )}`}
           >
             {activity.statusName || 'Sin estado'}
           </span>
-        </div>
-        
-        {/* ✅ Botones de Editar y Eliminar en la esquina superior derecha */}
-        <div className="flex gap-2 ml-3">
+
           {/* Botón Editar */}
           <button
             onClick={() => onEdit(activity)}
-            className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 
-                     transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
+            className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 
+                     transition-colors duration-200"
             title="Editar actividad"
           >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            <span className="whitespace-nowrap hidden sm:inline">Editar</span>
           </button>
 
-          {/* Botón Eliminar */}
+          {/* Botón Eliminar - ✅ Deshabilitado si hay categorías */}
           <button
-            onClick={() => onDelete(activity.id)}
-            className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 
-                     transition-colors duration-200 flex items-center gap-1.5 text-sm font-medium"
-            title="Eliminar actividad"
+            onClick={handleDelete}
+            disabled={!canDelete}
+            className={`p-2 rounded-lg transition-colors duration-200 ${
+              canDelete
+                ? 'bg-red-50 text-red-700 hover:bg-red-100 cursor-pointer'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+            }`}
+            title={canDelete ? 'Eliminar actividad' : 'No se puede eliminar: tiene categorías asignadas'}
           >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            <span className="whitespace-nowrap hidden sm:inline">Eliminar</span>
           </button>
         </div>
       </div>
@@ -173,11 +183,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         )}
       </div>
 
-      {/* ✅ Grid de 2x2: Cajas, Combos, Categorías, Productos */}
+      {/* Grid de botones 2x2 */}
       <div className="grid grid-cols-2 gap-2">
         {/* PRIMERA FILA: Cajas + Combos */}
         
-        {/* Botón Cajas - ✅ Deshabilitado si no hay productos */}
+        {/* Botón Cajas */}
         <button
           onClick={handleManageCashRegisters}
           disabled={!canManageCashRegisters}
@@ -199,7 +209,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           )}
         </button>
 
-        {/* Botón Combos - ✅ Deshabilitado si hay menos de 2 productos */}
+        {/* Botón Combos */}
         <button
           onClick={handleManageCombos}
           disabled={!canManageCombos}
@@ -208,7 +218,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               ? 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100 cursor-pointer'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
             }`}
-          title={canManageCombos ? "Gestionar Combos" : "Requiere al menos 2 productos"}
+          title={canManageCombos ? "Gestionar Combos" : "Requiere al menos 1 producto"}
         >
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -223,7 +233,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
         {/* SEGUNDA FILA: Categorías + Productos */}
 
-        {/* Botón Categorías - Siempre habilitado */}
+        {/* Botón Categorías */}
         {onManageCategories && (
           <button
             onClick={() => onManageCategories(activity)}
@@ -248,7 +258,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </button>
         )}
 
-        {/* Botón Productos - ✅ Deshabilitado si no hay categorías */}
+        {/* Botón Productos */}
         {onManageProducts && (
           <button
             onClick={handleManageProducts}

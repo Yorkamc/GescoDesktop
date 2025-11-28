@@ -323,7 +323,12 @@ namespace Gesco.Desktop.Core.Services
             int quantity, 
             string createdBy)
         {
+            // ✅ LOG: Ver conversión de GUID
             var comboId = MapGuidToLong(comboGuid);
+            _logger.LogInformation(
+                "Processing combo: GUID={ComboGuid}, Converted Long ID={ComboId}",
+                comboGuid, comboId
+            );
             
             // Cargar combo con sus items
             var combo = await _context.SalesCombos
@@ -333,7 +338,11 @@ namespace Gesco.Desktop.Core.Services
             
             if (combo == null)
             {
-                throw new ArgumentException($"Combo {comboGuid} not found");
+                _logger.LogError(
+                    "Combo NOT FOUND! GUID={ComboGuid}, Long ID={ComboId}",
+                    comboGuid, comboId
+                );
+                throw new ArgumentException($"Combo {comboGuid} not found (searched for ID: {comboId})");
             }
 
             if (!combo.Active)
@@ -887,7 +896,6 @@ namespace Gesco.Desktop.Core.Services
             bytes[8] = 0x5A; bytes[9] = 0x1E;
             return new Guid(bytes);
         }
-
         private static long MapGuidToLong(Guid guid)
         {
             var bytes = guid.ToByteArray();

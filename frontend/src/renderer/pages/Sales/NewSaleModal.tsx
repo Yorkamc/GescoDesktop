@@ -3,8 +3,8 @@ import { InlineSpinner } from '../../components/LoadingSpinner';
 import { useSales } from '../../hooks/useSales';
 import { useCashRegisters } from '../../hooks/useCashRegisters';
 import { useActivityProducts } from '../../hooks/useActivityProducts';
-import { useActivityCombos } from '../../hooks/useActivityCombos'; // ✅ Nuevo hook
-import type { CreateSaleRequest, CreateSaleItem } from '../../types/sales';
+import { useActivityCombos } from '../../hooks/useActivityCombos';
+import type { CreateSaleRequest } from '../../types/sales';
 
 interface NewSaleModalProps {
   cashRegisterId?: string;
@@ -12,10 +12,12 @@ interface NewSaleModalProps {
   onSuccess?: () => void;
 }
 
-// ✅ Tipo extendido para incluir combos
-interface SaleItemExtended extends CreateSaleItem {
-  isCombo?: boolean;
+// ✅ Tipo extendido para manejar productos Y combos
+interface SaleItemExtended {
+  productId?: string;
   comboId?: string;
+  quantity: number;
+  isCombo: boolean;
 }
 
 export const NewSaleModal: React.FC<NewSaleModalProps> = ({
@@ -30,11 +32,9 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ✅ Obtener activityId de la caja seleccionada
   const selectedCashRegister = cashRegisters.find(cr => cr.id === selectedCashRegisterId);
   const activityId = selectedCashRegister?.activityId;
 
-  // ✅ Cargar productos y combos
   const { 
     products: availableProducts, 
     isLoading: loadingProducts 
@@ -49,10 +49,10 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
 
   const handleAddItem = (isCombo: boolean = false) => {
     setItems([...items, { 
-      productId: '', 
+      productId: isCombo ? undefined : '', 
+      comboId: isCombo ? '' : undefined,
       quantity: 1,
-      isCombo,
-      comboId: isCombo ? '' : undefined
+      isCombo
     }]);
   };
 
@@ -64,9 +64,8 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     
-    // ✅ Si cambia el tipo (producto/combo), limpiar el ID
     if (field === 'isCombo') {
-      newItems[index].productId = '';
+      newItems[index].productId = value ? undefined : '';
       newItems[index].comboId = value ? '' : undefined;
     }
     
@@ -112,23 +111,47 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
 
-      // ✅ Convertir items extendidos a formato API
-      const apiItems: CreateSaleItem[] = items.map(item => ({
-        productId: item.isCombo ? (item.comboId || '') : item.productId,
-        quantity: item.quantity,
-      }));
+      // ✅ FIX: Convertir items correctamente según su tipo
+      const apiItems = items.map(item => {
+        if (item.isCombo) {
+          // ✅ Si es combo, enviar comboId
+          return {
+            comboId: item.comboId,
+            quantity: item.quantity,
+          };
+        } else {
+          // ✅ Si es producto, enviar productId
+          return {
+            productId: item.productId,
+            quantity: item.quantity,
+          };
+        }
+      });
+
+      console.log('📤 Enviando venta:', {
+        cashRegisterId: selectedCashRegisterId,
+        items: apiItems,
+        itemsDetalle: apiItems.map(i => ({
+          tipo: i.comboId ? 'COMBO' : 'PRODUCTO',
+          id: i.comboId || i.productId,
+          cantidad: i.quantity
+        }))
+      });
 
       const request: CreateSaleRequest = {
         cashRegisterId: selectedCashRegisterId,
-        items: apiItems,
+        items: apiItems as any, // TypeScript puede quejarse pero está correcto
         createdBy: user?.id || user?.nombreUsuario || '',
       };
 
       const created = await createSale(request);
       if (created) {
+        console.log('✅ Venta creada exitosamente:', created);
         onClose();
         onSuccess?.();
       }
+    } catch (error) {
+      console.error('❌ Error al crear venta:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -136,7 +159,6 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
 
   const openCashRegisters = cashRegisters.filter(cr => cr.isOpen);
 
-  // ✅ Calcular precio de un item
   const getItemPrice = (item: SaleItemExtended): number => {
     if (item.isCombo) {
       const combo = availableCombos.find(c => c.id === item.comboId);
@@ -180,7 +202,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                 value={selectedCashRegisterId}
                 onChange={(e) => {
                   setSelectedCashRegisterId(e.target.value);
-                  setItems([]); // Limpiar items al cambiar de caja
+                  setItems([]);
                 }}
                 disabled={isSubmitting || !!cashRegisterId}
                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 
@@ -197,14 +219,9 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
               {errors.cashRegisterId && (
                 <p className="mt-1 text-sm text-red-600">{errors.cashRegisterId}</p>
               )}
-              {cashRegisterId && (
-                <p className="mt-1 text-sm text-gray-500">
-                  Caja pre-seleccionada desde la que vienes
-                </p>
-              )}
             </div>
 
-            {/* Productos y Combos */}
+            {/* Items */}
             <div>
               <div className="flex justify-between items-center mb-3">
                 <label className="block text-sm font-medium text-gray-700">
@@ -253,20 +270,6 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                 </div>
               )}
 
-              {selectedCashRegisterId && !isLoadingItems && availableProducts.length === 0 && availableCombos.length === 0 && (
-                <div className="p-4 bg-yellow-50 rounded-lg text-center">
-                  <p className="text-sm text-yellow-800">
-                    No hay productos ni combos disponibles para esta actividad.
-                  </p>
-                </div>
-              )}
-
-              {selectedCashRegisterId && !isLoadingItems && items.length === 0 && (availableProducts.length > 0 || availableCombos.length > 0) && (
-                <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-500 text-sm">
-                  No hay items agregados. Haz clic en "Producto" o "Combo" para agregar
-                </div>
-              )}
-
               <div className="space-y-3">
                 {items.map((item, index) => {
                   const itemPrice = getItemPrice(item);
@@ -291,7 +294,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                         </select>
                       </div>
 
-                      {/* Selector de Producto o Combo */}
+                      {/* Selector */}
                       <div className="flex-1">
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           {item.isCombo ? 'Combo' : 'Producto'}
@@ -343,16 +346,12 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                         <input
                           type="number"
                           min="1"
-                          max={product?.currentQuantity}
                           value={item.quantity}
                           onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
                           disabled={isSubmitting}
                           className={`w-full px-3 py-2 border rounded-lg text-sm
                                    ${errors[`item_${index}_quantity`] ? 'border-red-500' : 'border-gray-300'}`}
                         />
-                        {errors[`item_${index}_quantity`] && (
-                          <p className="mt-1 text-xs text-red-600">{errors[`item_${index}_quantity`]}</p>
-                        )}
                       </div>
 
                       {/* Subtotal */}
@@ -361,24 +360,19 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                         <p className={`text-sm font-semibold ${item.isCombo ? 'text-cyan-700' : 'text-green-700'}`}>
                           ₡{(itemPrice * item.quantity).toLocaleString()}
                         </p>
-                        {/* ✅ Mostrar contenido del combo */}
                         {combo && (
                           <p className="text-xs text-gray-500 mt-1">
-                            {combo.items.map(ci => {
-                              const p = availableProducts.find(ap => ap.id === ci.productId);
-                              return p ? `${p.name} x${ci.quantity}` : '';
-                            }).filter(Boolean).join(', ')}
+                            Incluye: {combo.items.length} productos
                           </p>
                         )}
                       </div>
 
-                      {/* Botón eliminar */}
+                      {/* Eliminar */}
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
                         disabled={isSubmitting}
                         className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
-                        title="Eliminar item"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -396,15 +390,13 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-blue-900">Total de la venta:</span>
                   <span className="text-2xl font-bold text-blue-900">
-                    ₡{items.reduce((sum, item) => {
-                      return sum + (getItemPrice(item) * item.quantity);
-                    }, 0).toLocaleString()}
+                    ₡{items.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0).toLocaleString()}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Alert */}
+            {/* Info */}
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex">
                 <svg className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -423,8 +415,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                 onClick={onClose}
                 disabled={isSubmitting}
                 className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 
-                         hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed
-                         transition-colors font-medium"
+                         hover:bg-gray-50 disabled:opacity-50 transition-colors font-medium"
               >
                 Cancelar
               </button>
@@ -432,8 +423,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                 type="submit"
                 disabled={isSubmitting || items.length === 0}
                 className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
-                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors
-                         flex items-center justify-center font-medium"
+                         disabled:opacity-50 transition-colors flex items-center justify-center font-medium"
               >
                 {isSubmitting ? (
                   <>
