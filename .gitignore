@@ -114,6 +114,23 @@ out/
 release/
 *.local
 
+## Electron packaging artifacts
+frontend/dist/
+frontend/dist-electron/
+frontend/build/
+frontend/out/
+frontend/release/
+frontend/release-builds/
+frontend/.webpack/
+frontend/.vite/
+
+## Backend copiado durante empaquetado de Electron
+frontend/backend/
+frontend/resources/backend/
+frontend/dist-electron/backend/
+frontend/out/backend/
+frontend/release/resources/backend/
+
 ## Logs
 npm-debug.log*
 yarn-debug.log*
@@ -147,6 +164,10 @@ app.asar
 *.AppImage
 *.deb
 *.rpm
+
+## Electron builder configuration files (generated)
+frontend/builder-effective-config.yaml
+frontend/builder-debug.yml
 
 ## Cache
 .cache/
