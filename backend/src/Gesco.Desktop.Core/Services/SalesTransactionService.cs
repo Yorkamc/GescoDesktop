@@ -7,6 +7,9 @@ using Gesco.Desktop.Core.Interfaces;
 
 namespace Gesco.Desktop.Core.Services
 {
+    /// <summary>
+    /// Servicio de Transacciones de Venta - ACTUALIZADO CON SOPORTE PARA COMBOS
+    /// </summary>
     public class SalesTransactionService : ISalesTransactionService
     {
         private readonly LocalDbContext _context;
@@ -44,7 +47,6 @@ namespace Gesco.Desktop.Core.Services
                     .OrderByDescending(st => st.TransactionDate)
                     .ToListAsync();
 
-                // ✅ Mapear manualmente
                 var result = new List<SalesTransactionDto>();
 
                 foreach (var sale in sales)
@@ -62,102 +64,91 @@ namespace Gesco.Desktop.Core.Services
                 throw;
             }
         }
-private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
-{
-    // Cargar relaciones
-    var cashRegister = await _context.CashRegisters.FindAsync(sale.CashRegisterId);
-    var status = await _context.SalesStatuses.FindAsync(sale.SalesStatusId);
-    
-    // Cargar detalles
-    var details = await _context.TransactionDetails
-        .Where(td => td.SalesTransactionId == sale.Id)
-        .ToListAsync();
-    
-    var detailDtos = new List<TransactionDetailDto>();
-    foreach (var detail in details)
-    {
-        CategoryProduct? product = null;
-        SalesCombo? combo = null;
-        
-        if (detail.ProductId.HasValue)
+
+        private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
         {
-            product = await _context.CategoryProducts.FindAsync(detail.ProductId.Value);
+            var cashRegister = await _context.CashRegisters.FindAsync(sale.CashRegisterId);
+            var status = await _context.SalesStatuses.FindAsync(sale.SalesStatusId);
+            
+            var details = await _context.TransactionDetails
+                .Where(td => td.SalesTransactionId == sale.Id)
+                .ToListAsync();
+            
+            var detailDtos = new List<TransactionDetailDto>();
+            foreach (var detail in details)
+            {
+                CategoryProduct? product = null;
+                SalesCombo? combo = null;
+                
+                if (detail.ProductId.HasValue)
+                {
+                    product = await _context.CategoryProducts.FindAsync(detail.ProductId.Value);
+                }
+                
+                if (detail.ComboId.HasValue)
+                {
+                    combo = await _context.SalesCombos.FindAsync(detail.ComboId.Value);
+                }
+                
+                detailDtos.Add(new TransactionDetailDto
+                {
+                    Id = MapLongToGuid(detail.Id),
+                    ProductId = detail.ProductId.HasValue ? MapLongToGuid(detail.ProductId.Value) : null,
+                    ProductName = product?.Name ?? combo?.Name,
+                    ComboId = detail.ComboId.HasValue ? MapLongToGuid(detail.ComboId.Value) : null,
+                    ComboName = combo?.Name,
+                    Quantity = detail.Quantity,
+                    UnitPrice = detail.UnitPrice,
+                    TotalAmount = detail.TotalAmount,
+                    IsCombo = detail.IsCombo
+                });
+            }
+            
+            var payments = await _context.TransactionPayments
+                .Where(tp => tp.SalesTransactionId == sale.Id)
+                .ToListAsync();
+            
+            var paymentDtos = new List<TransactionPaymentDto>();
+            foreach (var payment in payments)
+            {
+                var paymentMethod = await _context.PaymentMethods.FindAsync(payment.PaymentMethodId);
+                
+                paymentDtos.Add(new TransactionPaymentDto
+                {
+                    Id = MapLongToGuid(payment.Id),
+                    PaymentMethodId = (int)payment.PaymentMethodId,
+                    PaymentMethodName = paymentMethod?.Name,
+                    Amount = payment.Amount,
+                    Reference = payment.Reference,
+                    ProcessedAt = payment.ProcessedAt,
+                    ProcessedBy = payment.ProcessedBy,
+                    ProcessedByName = payment.ProcessedBy
+                });
+            }
+            
+            return new SalesTransactionDto
+            {
+                Id = MapLongToGuid(sale.Id),
+                CashRegisterId = MapLongToGuid(sale.CashRegisterId),
+                TransactionNumber = sale.TransactionNumber,
+                InvoiceNumber = sale.InvoiceNumber,
+                SalesStatusId = (int)sale.SalesStatusId,
+                StatusName = status?.Name,
+                TransactionDate = sale.TransactionDate,
+                TotalAmount = sale.TotalAmount,
+                Details = detailDtos,
+                Payments = paymentDtos
+            };
         }
-        
-        if (detail.ComboId.HasValue)
-        {
-            combo = await _context.SalesCombos.FindAsync(detail.ComboId.Value);
-        }
-        
-        detailDtos.Add(new TransactionDetailDto
-        {
-            Id = MapLongToGuid(detail.Id),
-            ProductId = detail.ProductId.HasValue ? MapLongToGuid(detail.ProductId.Value) : null,
-            ProductName = product?.Name ?? combo?.Name,
-            ComboId = detail.ComboId.HasValue ? MapLongToGuid(detail.ComboId.Value) : null,
-            ComboName = combo?.Name,
-            Quantity = detail.Quantity,
-            UnitPrice = detail.UnitPrice,
-            TotalAmount = detail.TotalAmount,
-            IsCombo = detail.IsCombo
-        });
-    }
-    
-    // Cargar pagos
-    var payments = await _context.TransactionPayments
-        .Where(tp => tp.SalesTransactionId == sale.Id)
-        .ToListAsync();
-    
-    var paymentDtos = new List<TransactionPaymentDto>();
-    foreach (var payment in payments)
-    {
-        var paymentMethod = await _context.PaymentMethods.FindAsync(payment.PaymentMethodId);
-        
-        paymentDtos.Add(new TransactionPaymentDto
-        {
-            Id = MapLongToGuid(payment.Id),
-            PaymentMethodId = (int)payment.PaymentMethodId,
-            PaymentMethodName = paymentMethod?.Name,
-            Amount = payment.Amount,
-            Reference = payment.Reference,
-            ProcessedAt = payment.ProcessedAt,
-            ProcessedBy = payment.ProcessedBy,
-            ProcessedByName = payment.ProcessedBy
-        });
-    }
-    
-    return new SalesTransactionDto
-    {
-        Id = MapLongToGuid(sale.Id),
-        CashRegisterId = MapLongToGuid(sale.CashRegisterId),
-        TransactionNumber = sale.TransactionNumber,
-        InvoiceNumber = sale.InvoiceNumber,
-        SalesStatusId = (int)sale.SalesStatusId,
-        StatusName = status?.Name,
-        TransactionDate = sale.TransactionDate,
-        TotalAmount = sale.TotalAmount,
-        Details = detailDtos,
-        Payments = paymentDtos
-    };
-}
 
         public async Task<SalesTransactionDto?> GetSaleByIdAsync(Guid id)
         {
             try
             {
                 var longId = MapGuidToLong(id);
-                var sale = await _context.SalesTransactions
-                    .Include(st => st.CashRegister)
-                    .Include(st => st.SalesStatus)
-                    .Include(st => st.TransactionDetails)
-                        .ThenInclude(td => td.Product)
-                    .Include(st => st.TransactionPayments)
-                        .ThenInclude(tp => tp.PaymentMethod)
-                    .Include(st => st.TransactionPayments)
-                        .ThenInclude(tp => tp.ProcessedByUser)
-                    .FirstOrDefaultAsync(st => st.Id == longId);
+                var sale = await _context.SalesTransactions.FindAsync(longId);
 
-                return sale != null ? MapToDto(sale) : null;
+                return sale != null ? await MapToDtoAsync(sale) : null;
             }
             catch (Exception ex)
             {
@@ -166,6 +157,9 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
             }
         }
 
+        /// <summary>
+        /// Crear nueva venta - ACTUALIZADO: Ahora soporta productos Y combos
+        /// </summary>
         public async Task<SalesTransactionDto> CreateSaleAsync(CreateSaleRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -203,52 +197,49 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                     TransactionNumber = await GenerateTransactionNumberAsync(cashRegisterId),
                     SalesStatusId = pendingStatus.Id,
                     TransactionDate = DateTime.UtcNow,
-                    TotalAmount = 0, // Se calculará después
+                    TotalAmount = 0,
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = request.CreatedBy
                 };
 
                 _context.SalesTransactions.Add(sale);
-                await _context.SaveChangesAsync(); // Guardar para obtener el ID
+                await _context.SaveChangesAsync();
 
-                // Crear detalles
+                // ✅ NUEVO: Procesar items (productos Y combos)
                 decimal totalAmount = 0;
                 foreach (var item in request.Items)
                 {
-                    // Validar producto
-                    var productId = MapGuidToLong(item.ProductId);
-                    var product = await _context.CategoryProducts.FindAsync(productId);
-                    
-                    if (product == null)
+                    // Validar que tenga ProductId O ComboId
+                    if (!item.ProductId.HasValue && !item.ComboId.HasValue)
                     {
-                        throw new ArgumentException($"Product {item.ProductId} not found");
+                        throw new ArgumentException("Each item must have either ProductId or ComboId");
                     }
 
-                    if (!product.Active)
+                    if (item.ProductId.HasValue && item.ComboId.HasValue)
                     {
-                        throw new ArgumentException($"Product {product.Name} is not active");
+                        throw new ArgumentException("Item cannot have both ProductId and ComboId");
                     }
 
-                    // Verificar stock disponible (no descontar aún)
-                    if (product.CurrentQuantity < item.Quantity)
+                    // ✅ SI ES COMBO
+                    if (item.ComboId.HasValue)
                     {
-                        throw new InvalidOperationException($"Insufficient stock for product {product.Name}. Available: {product.CurrentQuantity}, Requested: {item.Quantity}");
+                        totalAmount += await ProcessComboItemAsync(
+                            sale, 
+                            item.ComboId.Value, 
+                            item.Quantity, 
+                            request.CreatedBy
+                        );
                     }
-
-                    var detail = new TransactionDetail
+                    // ✅ SI ES PRODUCTO
+                    else if (item.ProductId.HasValue)
                     {
-                        SalesTransactionId = sale.Id,
-                        ProductId = productId,
-                        Quantity = item.Quantity,
-                        UnitPrice = product.UnitPrice,
-                        TotalAmount = product.UnitPrice * item.Quantity,
-                        IsCombo = false,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = request.CreatedBy
-                    };
-
-                    _context.TransactionDetails.Add(detail);
-                    totalAmount += detail.TotalAmount;
+                        totalAmount += await ProcessProductItemAsync(
+                            sale, 
+                            item.ProductId.Value, 
+                            item.Quantity, 
+                            request.CreatedBy
+                        );
+                    }
                 }
 
                 // Actualizar total
@@ -267,6 +258,140 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                 _logger.LogError(ex, "Error creating sale");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// ✅ NUEVO: Procesar un producto individual en la venta
+        /// </summary>
+        private async Task<decimal> ProcessProductItemAsync(
+            SalesTransaction sale, 
+            Guid productGuid, 
+            int quantity, 
+            string createdBy)
+        {
+            var productId = MapGuidToLong(productGuid);
+            var product = await _context.CategoryProducts.FindAsync(productId);
+            
+            if (product == null)
+            {
+                throw new ArgumentException($"Product {productGuid} not found");
+            }
+
+            if (!product.Active)
+            {
+                throw new ArgumentException($"Product {product.Name} is not active");
+            }
+
+            // Verificar stock disponible (NO descontar aún, se descuenta al completar)
+            if (product.CurrentQuantity < quantity)
+            {
+                throw new InvalidOperationException(
+                    $"Insufficient stock for {product.Name}. " +
+                    $"Available: {product.CurrentQuantity}, Requested: {quantity}"
+                );
+            }
+
+            var detail = new TransactionDetail
+            {
+                SalesTransactionId = sale.Id,
+                ProductId = productId,
+                ComboId = null,
+                Quantity = quantity,
+                UnitPrice = product.UnitPrice,
+                TotalAmount = product.UnitPrice * quantity,
+                IsCombo = false,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = createdBy
+            };
+
+            _context.TransactionDetails.Add(detail);
+            
+            _logger.LogInformation(
+                "Product added to sale: {ProductName} x{Quantity}, Price: {Price}",
+                product.Name, quantity, product.UnitPrice
+            );
+
+            return detail.TotalAmount;
+        }
+
+        /// <summary>
+        /// ✅ NUEVO: Procesar un combo en la venta (verifica stock de productos del combo)
+        /// </summary>
+        private async Task<decimal> ProcessComboItemAsync(
+            SalesTransaction sale, 
+            Guid comboGuid, 
+            int quantity, 
+            string createdBy)
+        {
+            var comboId = MapGuidToLong(comboGuid);
+            
+            // Cargar combo con sus items
+            var combo = await _context.SalesCombos
+                .Include(c => c.ComboItems)
+                    .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(c => c.Id == comboId);
+            
+            if (combo == null)
+            {
+                throw new ArgumentException($"Combo {comboGuid} not found");
+            }
+
+            if (!combo.Active)
+            {
+                throw new ArgumentException($"Combo {combo.Name} is not active");
+            }
+
+            if (combo.ComboItems == null || !combo.ComboItems.Any())
+            {
+                throw new InvalidOperationException($"Combo {combo.Name} has no items");
+            }
+
+            // ✅ Verificar stock de TODOS los productos del combo ANTES de crear detalles
+            foreach (var comboItem in combo.ComboItems)
+            {
+                var requiredQuantity = comboItem.Quantity * quantity;
+                
+                if (comboItem.Product == null)
+                {
+                    throw new InvalidOperationException($"Product in combo {combo.Name} not found");
+                }
+
+                if (!comboItem.Product.Active)
+                {
+                    throw new ArgumentException($"Product {comboItem.Product.Name} in combo {combo.Name} is not active");
+                }
+
+                if (comboItem.Product.CurrentQuantity < requiredQuantity)
+                {
+                    throw new InvalidOperationException(
+                        $"Insufficient stock for {comboItem.Product.Name} in combo {combo.Name}. " +
+                        $"Available: {comboItem.Product.CurrentQuantity}, Required: {requiredQuantity}"
+                    );
+                }
+            }
+
+            // ✅ Crear UN detalle para el combo completo
+            var comboDetail = new TransactionDetail
+            {
+                SalesTransactionId = sale.Id,
+                ProductId = null,
+                ComboId = comboId,
+                Quantity = quantity,
+                UnitPrice = combo.ComboPrice,
+                TotalAmount = combo.ComboPrice * quantity,
+                IsCombo = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = createdBy
+            };
+
+            _context.TransactionDetails.Add(comboDetail);
+
+            _logger.LogInformation(
+                "Combo added to sale: {ComboName} x{Quantity}, Price: {Price}, Products: {ProductCount}",
+                combo.Name, quantity, combo.ComboPrice, combo.ComboItems.Count
+            );
+
+            return comboDetail.TotalAmount;
         }
 
         public async Task<SalesTransactionDto?> UpdateSaleAsync(Guid id, CreateSaleRequest request)
@@ -292,37 +417,28 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                 // Eliminar detalles existentes
                 _context.TransactionDetails.RemoveRange(sale.TransactionDetails);
 
-                // Agregar nuevos detalles
+                // ✅ ACTUALIZADO: Agregar nuevos detalles (productos Y combos)
                 decimal totalAmount = 0;
                 foreach (var item in request.Items)
                 {
-                    var productId = MapGuidToLong(item.ProductId);
-                    var product = await _context.CategoryProducts.FindAsync(productId);
-                    
-                    if (product == null || !product.Active)
+                    if (!item.ProductId.HasValue && !item.ComboId.HasValue)
                     {
-                        throw new ArgumentException($"Product {item.ProductId} not found or inactive");
+                        throw new ArgumentException("Each item must have either ProductId or ComboId");
                     }
 
-                    if (product.CurrentQuantity < item.Quantity)
+                    if (item.ProductId.HasValue && item.ComboId.HasValue)
                     {
-                        throw new InvalidOperationException($"Insufficient stock for {product.Name}");
+                        throw new ArgumentException("Item cannot have both ProductId and ComboId");
                     }
 
-                    var detail = new TransactionDetail
+                    if (item.ComboId.HasValue)
                     {
-                        SalesTransactionId = sale.Id,
-                        ProductId = productId,
-                        Quantity = item.Quantity,
-                        UnitPrice = product.UnitPrice,
-                        TotalAmount = product.UnitPrice * item.Quantity,
-                        IsCombo = false,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = request.CreatedBy
-                    };
-
-                    _context.TransactionDetails.Add(detail);
-                    totalAmount += detail.TotalAmount;
+                        totalAmount += await ProcessComboItemAsync(sale, item.ComboId.Value, item.Quantity, request.CreatedBy);
+                    }
+                    else if (item.ProductId.HasValue)
+                    {
+                        totalAmount += await ProcessProductItemAsync(sale, item.ProductId.Value, item.Quantity, request.CreatedBy);
+                    }
                 }
 
                 sale.TotalAmount = totalAmount;
@@ -356,7 +472,6 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                 if (sale == null)
                     return false;
 
-                // Obtener estado cancelado
                 var cancelledStatus = await _context.SalesStatuses
                     .FirstOrDefaultAsync(s => s.Name == "Cancelled");
 
@@ -389,6 +504,9 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
             }
         }
 
+        /// <summary>
+        /// Completar venta - ACTUALIZADO: Ahora maneja combos correctamente
+        /// </summary>
         public async Task<SalesTransactionDto?> CompleteSaleAsync(Guid id, List<CreatePaymentRequest> payments)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -397,7 +515,6 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                 var longId = MapGuidToLong(id);
                 var sale = await _context.SalesTransactions
                     .Include(st => st.TransactionDetails)
-                        .ThenInclude(td => td.Product)
                     .Include(st => st.TransactionPayments)
                     .FirstOrDefaultAsync(st => st.Id == longId);
 
@@ -447,35 +564,33 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                     _context.TransactionPayments.Add(transactionPayment);
                 }
 
-                // Actualizar inventario y crear movimientos
+                // ✅ ACTUALIZADO: Actualizar inventario (maneja productos Y combos)
                 var saleMovementType = await _context.InventoryMovementTypes
-                    .FirstOrDefaultAsync(t => t.Name == "Sale");
+                    .FirstOrDefaultAsync(t => t.Name == "Venta");
 
                 foreach (var detail in sale.TransactionDetails)
                 {
-                    if (detail.Product == null) continue;
-
-                    var previousQuantity = detail.Product.CurrentQuantity;
-                    detail.Product.CurrentQuantity -= detail.Quantity;
-                    detail.Product.UpdatedAt = DateTime.UtcNow;
-
-                    // Crear movimiento de inventario
-                    if (saleMovementType != null)
+                    // ✅ SI ES COMBO - Expandir y rebajar stock de cada producto
+                    if (detail.IsCombo && detail.ComboId.HasValue)
                     {
-                        var movement = new InventoryMovement
-                        {
-                            ProductId = detail.ProductId ?? 0,
-                            MovementTypeId = saleMovementType.Id,
-                            Quantity = -detail.Quantity,
-                            PreviousQuantity = previousQuantity,
-                            NewQuantity = detail.Product.CurrentQuantity,
-                            SalesTransactionId = sale.Id,
-                            MovementDate = DateTime.UtcNow,
-                            PerformedBy = payments.FirstOrDefault()?.ProcessedBy,
-                            CreatedAt = DateTime.UtcNow
-                        };
-
-                        _context.InventoryMovements.Add(movement);
+                        await ProcessComboInventoryAsync(
+                            detail.ComboId.Value,
+                            detail.Quantity,
+                            sale.Id,
+                            saleMovementType?.Id,
+                            payments.FirstOrDefault()?.ProcessedBy
+                        );
+                    }
+                    // ✅ SI ES PRODUCTO - Rebajar stock normalmente
+                    else if (detail.ProductId.HasValue)
+                    {
+                        await ProcessProductInventoryAsync(
+                            detail.ProductId.Value,
+                            detail.Quantity,
+                            sale.Id,
+                            saleMovementType?.Id,
+                            payments.FirstOrDefault()?.ProcessedBy
+                        );
                     }
                 }
 
@@ -505,6 +620,109 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
                 _logger.LogError(ex, "Error completing sale {Id}", id);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// ✅ NUEVO: Procesar inventario de un producto individual
+        /// </summary>
+        private async Task ProcessProductInventoryAsync(
+            long productId,
+            int quantity,
+            long saleId,
+            long? movementTypeId,
+            string? performedBy)
+        {
+            var product = await _context.CategoryProducts.FindAsync(productId);
+            if (product == null)
+            {
+                throw new InvalidOperationException($"Product {productId} not found");
+            }
+
+            var previousQuantity = product.CurrentQuantity;
+            product.CurrentQuantity -= quantity;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            _logger.LogInformation(
+                "Stock reduced: {ProductName} from {Previous} to {New} (-{Quantity})",
+                product.Name, previousQuantity, product.CurrentQuantity, quantity
+            );
+
+            // Crear movimiento de inventario
+            if (movementTypeId.HasValue)
+            {
+                var movement = new InventoryMovement
+                {
+                    ProductId = productId,
+                    MovementTypeId = movementTypeId.Value,
+                    Quantity = -quantity,
+                    PreviousQuantity = previousQuantity,
+                    NewQuantity = product.CurrentQuantity,
+                    SalesTransactionId = saleId,
+                    MovementDate = DateTime.UtcNow,
+                    PerformedBy = performedBy,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.InventoryMovements.Add(movement);
+            }
+        }
+
+        /// <summary>
+        /// ✅ NUEVO: Procesar inventario de un combo (expandir a productos)
+        /// </summary>
+        private async Task ProcessComboInventoryAsync(
+            long comboId,
+            int comboQuantity,
+            long saleId,
+            long? movementTypeId,
+            string? performedBy)
+        {
+            // Cargar items del combo
+            var comboItems = await _context.ComboItems
+                .Include(ci => ci.Product)
+                .Where(ci => ci.ComboId == comboId)
+                .ToListAsync();
+
+            if (!comboItems.Any())
+            {
+                throw new InvalidOperationException($"Combo {comboId} has no items");
+            }
+
+            var combo = await _context.SalesCombos.FindAsync(comboId);
+
+            _logger.LogInformation(
+                "Processing combo inventory: {ComboName} x{ComboQuantity}, Total products: {ProductCount}",
+                combo?.Name ?? "Unknown", comboQuantity, comboItems.Count
+            );
+
+            // ✅ Rebajar stock de CADA producto del combo
+            foreach (var comboItem in comboItems)
+            {
+                if (comboItem.Product == null)
+                {
+                    throw new InvalidOperationException($"Product {comboItem.ProductId} in combo {comboId} not found");
+                }
+
+                var totalQuantity = comboItem.Quantity * comboQuantity;
+                
+                _logger.LogInformation(
+                    "  -> Combo item: {ProductName} x{ItemQty} * {ComboQty} = {Total}",
+                    comboItem.Product.Name, comboItem.Quantity, comboQuantity, totalQuantity
+                );
+
+                await ProcessProductInventoryAsync(
+                    comboItem.ProductId,
+                    totalQuantity,
+                    saleId,
+                    movementTypeId,
+                    performedBy
+                );
+            }
+
+            _logger.LogInformation(
+                "Combo inventory processed: {ComboName} x{Quantity}",
+                combo?.Name ?? "Unknown", comboQuantity
+            );
         }
 
         public async Task<List<SalesTransactionDto>> GetSalesByCashRegisterAsync(Guid cashRegisterId)
@@ -569,78 +787,96 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
             return $"TXN-{cashRegisterId}-{today:yyyyMMdd}-{(count + 1):D4}";
         }
 
+        /// <summary>
+        /// Revertir inventario al cancelar venta completada - ACTUALIZADO: Maneja combos
+        /// </summary>
         private async Task RevertInventoryAsync(SalesTransaction sale)
         {
             var details = await _context.TransactionDetails
-                .Include(td => td.Product)
                 .Where(td => td.SalesTransactionId == sale.Id)
                 .ToListAsync();
 
             var adjustmentType = await _context.InventoryMovementTypes
-                .FirstOrDefaultAsync(t => t.Name == "Adjustment");
+                .FirstOrDefaultAsync(t => t.Name == "Ajuste");
 
             foreach (var detail in details)
             {
-                if (detail.Product == null) continue;
-
-                var previousQuantity = detail.Product.CurrentQuantity;
-                detail.Product.CurrentQuantity += detail.Quantity; // Devolver al inventario
-                detail.Product.UpdatedAt = DateTime.UtcNow;
-
-                if (adjustmentType != null)
+                // ✅ SI ES COMBO - Revertir stock de cada producto del combo
+                if (detail.IsCombo && detail.ComboId.HasValue)
                 {
-                    var movement = new InventoryMovement
-                    {
-                        ProductId = detail.ProductId ?? 0,
-                        MovementTypeId = adjustmentType.Id,
-                        Quantity = detail.Quantity,
-                        PreviousQuantity = previousQuantity,
-                        NewQuantity = detail.Product.CurrentQuantity,
-                        SalesTransactionId = sale.Id,
-                        Justification = "Sale cancellation - inventory revert",
-                        MovementDate = DateTime.UtcNow,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    var comboItems = await _context.ComboItems
+                        .Include(ci => ci.Product)
+                        .Where(ci => ci.ComboId == detail.ComboId.Value)
+                        .ToListAsync();
 
-                    _context.InventoryMovements.Add(movement);
+                    foreach (var comboItem in comboItems)
+                    {
+                        if (comboItem.Product == null) continue;
+
+                        var totalQuantity = comboItem.Quantity * detail.Quantity;
+                        var previousQuantity = comboItem.Product.CurrentQuantity;
+                        
+                        comboItem.Product.CurrentQuantity += totalQuantity;
+                        comboItem.Product.UpdatedAt = DateTime.UtcNow;
+
+                        _logger.LogInformation(
+                            "Reverting combo item stock: {ProductName} +{Quantity} (from {Previous} to {New})",
+                            comboItem.Product.Name, totalQuantity, previousQuantity, comboItem.Product.CurrentQuantity
+                        );
+
+                        if (adjustmentType != null)
+                        {
+                            var movement = new InventoryMovement
+                            {
+                                ProductId = comboItem.ProductId,
+                                MovementTypeId = adjustmentType.Id,
+                                Quantity = totalQuantity,
+                                PreviousQuantity = previousQuantity,
+                                NewQuantity = comboItem.Product.CurrentQuantity,
+                                SalesTransactionId = sale.Id,
+                                Justification = $"Sale cancellation - combo revert",
+                                MovementDate = DateTime.UtcNow,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _context.InventoryMovements.Add(movement);
+                        }
+                    }
+                }
+                // ✅ SI ES PRODUCTO - Revertir normalmente
+                else if (detail.ProductId.HasValue)
+                {
+                    var product = await _context.CategoryProducts.FindAsync(detail.ProductId.Value);
+                    if (product == null) continue;
+
+                    var previousQuantity = product.CurrentQuantity;
+                    product.CurrentQuantity += detail.Quantity;
+                    product.UpdatedAt = DateTime.UtcNow;
+
+                    _logger.LogInformation(
+                        "Reverting product stock: {ProductName} +{Quantity} (from {Previous} to {New})",
+                        product.Name, detail.Quantity, previousQuantity, product.CurrentQuantity
+                    );
+
+                    if (adjustmentType != null)
+                    {
+                        var movement = new InventoryMovement
+                        {
+                            ProductId = detail.ProductId.Value,
+                            MovementTypeId = adjustmentType.Id,
+                            Quantity = detail.Quantity,
+                            PreviousQuantity = previousQuantity,
+                            NewQuantity = product.CurrentQuantity,
+                            SalesTransactionId = sale.Id,
+                            Justification = "Sale cancellation - inventory revert",
+                            MovementDate = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.InventoryMovements.Add(movement);
+                    }
                 }
             }
-        }
-
-        private SalesTransactionDto MapToDto(SalesTransaction sale)
-        {
-            return new SalesTransactionDto
-            {
-                Id = MapLongToGuid(sale.Id),
-                CashRegisterId = MapLongToGuid(sale.CashRegisterId),
-                TransactionNumber = sale.TransactionNumber,
-                InvoiceNumber = sale.InvoiceNumber,
-                SalesStatusId = (int)sale.SalesStatusId,
-                StatusName = sale.SalesStatus?.Name,
-                TransactionDate = sale.TransactionDate,
-                TotalAmount = sale.TotalAmount,
-                Details = sale.TransactionDetails?.Select(td => new TransactionDetailDto
-                {
-                    Id = MapLongToGuid(td.Id),
-                    ProductId = td.ProductId.HasValue ? MapLongToGuid(td.ProductId.Value) : null,
-                    ProductName = td.Product?.Name,
-                    Quantity = td.Quantity,
-                    UnitPrice = td.UnitPrice,
-                    TotalAmount = td.TotalAmount,
-                    IsCombo = td.IsCombo
-                }).ToList() ?? new List<TransactionDetailDto>(),
-                Payments = sale.TransactionPayments?.Select(tp => new TransactionPaymentDto
-                {
-                    Id = MapLongToGuid(tp.Id),
-                    PaymentMethodId = (int)tp.PaymentMethodId,
-                    PaymentMethodName = tp.PaymentMethod?.Name,
-                    Amount = tp.Amount,
-                    Reference = tp.Reference,
-                    ProcessedAt = tp.ProcessedAt,
-                    ProcessedBy = tp.ProcessedBy,
-                    ProcessedByName = tp.ProcessedByUser?.FullName ?? tp.ProcessedByUser?.Username
-                }).ToList() ?? new List<TransactionPaymentDto>()
-            };
         }
 
         private static Guid MapLongToGuid(long longId)
@@ -648,7 +884,7 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
             var bytes = new byte[16];
             var longBytes = BitConverter.GetBytes(longId);
             Array.Copy(longBytes, 0, bytes, 0, 8);
-            bytes[8] = 0x5A; bytes[9] = 0x1E; // "SALE" identifier
+            bytes[8] = 0x5A; bytes[9] = 0x1E;
             return new Guid(bytes);
         }
 
@@ -658,7 +894,4 @@ private async Task<SalesTransactionDto> MapToDtoAsync(SalesTransaction sale)
             return BitConverter.ToInt64(bytes, 0);
         }
     }
-
-    // NOTA: Los DTOs CreateSaleRequest, CreateSaleItemRequest, CreatePaymentRequest 
-    // y SalesSummaryDto deben estar en Gesco.Desktop.Shared.DTOs
 }

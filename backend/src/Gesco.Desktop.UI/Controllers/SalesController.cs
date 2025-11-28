@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Gesco.Desktop.Core.Interfaces;
-using Gesco.Desktop.Core.Services;
 using Gesco.Desktop.Shared.DTOs;
 using System.Security.Claims;
 
 namespace Gesco.Desktop.UI.Controllers
 {
+    /// <summary>
+    /// Controlador de Ventas - ACTUALIZADO CON VALIDACIONES PARA COMBOS
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -22,9 +24,6 @@ namespace Gesco.Desktop.UI.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Obtener todas las ventas con filtros opcionales
-        /// </summary>
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<List<SalesTransactionDto>>), 200)]
         public async Task<IActionResult> GetSales(
@@ -55,9 +54,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener venta por ID
-        /// </summary>
         [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(ApiResponse<SalesTransactionDto>), 200)]
         [ProducesResponseType(404)]
@@ -95,7 +91,7 @@ namespace Gesco.Desktop.UI.Controllers
         }
 
         /// <summary>
-        /// Crear nueva venta (estado pendiente)
+        /// Crear nueva venta - ACTUALIZADO: Ahora valida productos Y combos
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse<SalesTransactionDto>), 201)]
@@ -111,6 +107,39 @@ namespace Gesco.Desktop.UI.Controllers
                         Success = false,
                         Message = "Datos de venta inválidos",
                         Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()
+                    });
+                }
+
+                // ✅ NUEVA VALIDACIÓN: Verificar que cada item tenga ProductId O ComboId
+                var validationErrors = new List<string>();
+                
+                for (int i = 0; i < request.Items.Count; i++)
+                {
+                    var item = request.Items[i];
+                    
+                    if (!item.ProductId.HasValue && !item.ComboId.HasValue)
+                    {
+                        validationErrors.Add($"Item {i + 1}: Debe tener ProductId o ComboId");
+                    }
+                    
+                    if (item.ProductId.HasValue && item.ComboId.HasValue)
+                    {
+                        validationErrors.Add($"Item {i + 1}: No puede tener ProductId y ComboId al mismo tiempo");
+                    }
+
+                    if (item.Quantity <= 0)
+                    {
+                        validationErrors.Add($"Item {i + 1}: La cantidad debe ser mayor a 0");
+                    }
+                }
+
+                if (validationErrors.Any())
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Errores de validación en los items",
+                        Errors = validationErrors
                     });
                 }
 
@@ -169,9 +198,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Actualizar venta existente (solo si está pendiente)
-        /// </summary>
         [HttpPut("{id:guid}")]
         [ProducesResponseType(typeof(ApiResponse<SalesTransactionDto>), 200)]
         [ProducesResponseType(404)]
@@ -186,6 +212,34 @@ namespace Gesco.Desktop.UI.Controllers
                         Success = false,
                         Message = "Datos de venta inválidos",
                         Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()
+                    });
+                }
+
+                // ✅ VALIDACIÓN: Igual que en CreateSale
+                var validationErrors = new List<string>();
+                
+                for (int i = 0; i < request.Items.Count; i++)
+                {
+                    var item = request.Items[i];
+                    
+                    if (!item.ProductId.HasValue && !item.ComboId.HasValue)
+                    {
+                        validationErrors.Add($"Item {i + 1}: Debe tener ProductId o ComboId");
+                    }
+                    
+                    if (item.ProductId.HasValue && item.ComboId.HasValue)
+                    {
+                        validationErrors.Add($"Item {i + 1}: No puede tener ProductId y ComboId al mismo tiempo");
+                    }
+                }
+
+                if (validationErrors.Any())
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Errores de validación en los items",
+                        Errors = validationErrors
                     });
                 }
 
@@ -240,9 +294,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Cancelar venta
-        /// </summary>
         [HttpPost("{id:guid}/cancel")]
         [ProducesResponseType(typeof(ApiResponse), 200)]
         [ProducesResponseType(404)]
@@ -279,9 +330,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Completar venta (procesar pagos y actualizar inventario)
-        /// </summary>
         [HttpPost("{id:guid}/complete")]
         [ProducesResponseType(typeof(ApiResponse<SalesTransactionDto>), 200)]
         [ProducesResponseType(400)]
@@ -310,7 +358,6 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                // Asignar usuario a todos los pagos
                 foreach (var payment in request.Payments)
                 {
                     payment.ProcessedBy = currentUserId;
@@ -364,9 +411,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener ventas por caja registradora
-        /// </summary>
         [HttpGet("by-cash-register/{cashRegisterId:guid}")]
         [ProducesResponseType(typeof(ApiResponse<List<SalesTransactionDto>>), 200)]
         public async Task<IActionResult> GetSalesByCashRegister(Guid cashRegisterId)
@@ -394,11 +438,8 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener resumen de ventas
-        /// </summary>
         [HttpGet("summary")]
-        [ProducesResponseType(typeof(ApiResponse<Gesco.Desktop.Shared.DTOs.SalesSummaryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<SalesSummaryDto>), 200)]
         public async Task<IActionResult> GetSalesSummary(
             [FromQuery] Guid? cashRegisterId = null,
             [FromQuery] DateTime? date = null)
@@ -407,7 +448,7 @@ namespace Gesco.Desktop.UI.Controllers
             {
                 var summary = await _salesService.GetSalesSummaryAsync(cashRegisterId, date);
                 
-                return Ok(new ApiResponse<Gesco.Desktop.Shared.DTOs.SalesSummaryDto>
+                return Ok(new ApiResponse<SalesSummaryDto>
                 {
                     Success = true,
                     Data = summary,
@@ -426,9 +467,6 @@ namespace Gesco.Desktop.UI.Controllers
             }
         }
 
-        /// <summary>
-        /// Endpoint rápido: Crear y completar venta en un solo paso
-        /// </summary>
         [HttpPost("quick-sale")]
         [ProducesResponseType(typeof(ApiResponse<SalesTransactionDto>), 201)]
         [ProducesResponseType(400)]
@@ -446,6 +484,34 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
+                // ✅ VALIDACIÓN para quick sale también
+                var validationErrors = new List<string>();
+                
+                for (int i = 0; i < request.Items.Count; i++)
+                {
+                    var item = request.Items[i];
+                    
+                    if (!item.ProductId.HasValue && !item.ComboId.HasValue)
+                    {
+                        validationErrors.Add($"Item {i + 1}: Debe tener ProductId o ComboId");
+                    }
+                    
+                    if (item.ProductId.HasValue && item.ComboId.HasValue)
+                    {
+                        validationErrors.Add($"Item {i + 1}: No puede tener ProductId y ComboId al mismo tiempo");
+                    }
+                }
+
+                if (validationErrors.Any())
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Errores de validación en los items",
+                        Errors = validationErrors
+                    });
+                }
+
                 var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(currentUserId))
                 {
@@ -456,7 +522,6 @@ namespace Gesco.Desktop.UI.Controllers
                     });
                 }
 
-                // Crear venta
                 var createRequest = new CreateSaleRequest
                 {
                     CashRegisterId = request.CashRegisterId,
@@ -466,7 +531,6 @@ namespace Gesco.Desktop.UI.Controllers
 
                 var sale = await _salesService.CreateSaleAsync(createRequest);
 
-                // Completar venta inmediatamente
                 foreach (var payment in request.Payments)
                 {
                     payment.ProcessedBy = currentUserId;
@@ -504,7 +568,6 @@ namespace Gesco.Desktop.UI.Controllers
 
     // ============================================
     // DTOs LOCALES DEL CONTROLADOR
-    // (Los demás están en Gesco.Desktop.Shared.DTOs)
     // ============================================
     
     public class CancelSaleRequest

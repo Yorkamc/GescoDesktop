@@ -5,30 +5,49 @@ using System.ComponentModel.DataAnnotations;
 namespace Gesco.Desktop.Shared.DTOs
 {
     // ============================================
-    // SALES REQUEST DTOs
+    // SALES REQUEST DTOs - ACTUALIZADO CON SOPORTE PARA COMBOS
     // ============================================
     
-public class CreateSaleRequest
-{
-    [Required]
-    public Guid CashRegisterId { get; set; }
-    
-    [Required]
-    [MinLength(1, ErrorMessage = "Debe incluir al menos un producto")]
-    public List<CreateSaleItemRequest> Items { get; set; } = new();
-    
-    public string CreatedBy { get; set; } = string.Empty;
-}
+    public class CreateSaleRequest
+    {
+        [Required]
+        public Guid CashRegisterId { get; set; }
+        
+        [Required]
+        [MinLength(1, ErrorMessage = "Debe incluir al menos un producto o combo")]
+        public List<CreateSaleItemRequest> Items { get; set; } = new();
+        
+        public string CreatedBy { get; set; } = string.Empty;
+    }
 
-public class CreateSaleItemRequest
-{
-    [Required]
-    public Guid ProductId { get; set; }  
-    
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
-    public int Quantity { get; set; }
-}
+    public class CreateSaleItemRequest
+    {
+        // ✅ ProductId ahora es opcional (puede ser null si es combo)
+        public Guid? ProductId { get; set; }
+        
+        // ✅ ComboId ahora es opcional (puede ser null si es producto)
+        public Guid? ComboId { get; set; }
+        
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
+        public int Quantity { get; set; }
+        
+        /// <summary>
+        /// Validar que tenga ProductId O ComboId, pero no ambos
+        /// </summary>
+        public bool IsValid()
+        {
+            // Debe tener al menos uno
+            if (!ProductId.HasValue && !ComboId.HasValue)
+                return false;
+            
+            // No puede tener ambos
+            if (ProductId.HasValue && ComboId.HasValue)
+                return false;
+            
+            return true;
+        }
+    }
 
     public class CreatePaymentRequest
     {
@@ -86,7 +105,6 @@ public class CreateSaleItemRequest
         public string? SupervisorUserId { get; set; }
     }
 
-    // ✅ AGREGADO: Movido desde CashRegisterService
     public class CloseCashRegisterRequest
     {
         [Required]
@@ -124,56 +142,61 @@ public class CreateSaleItemRequest
         public string? SupervisedByName { get; set; }
         public string? Observations { get; set; }
     }
+
+    // ============================================
+    // SALES COMBO DTOs
+    // ============================================
+    
     public class SalesComboDto
-{
-    public Guid Id { get; set; }
-    public Guid ActivityId { get; set; }
-    public string ActivityName { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public decimal ComboPrice { get; set; }
-    public bool Active { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public List<ComboItemDto> Items { get; set; } = new();
-}
+    {
+        public Guid Id { get; set; }
+        public Guid ActivityId { get; set; }
+        public string ActivityName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal ComboPrice { get; set; }
+        public bool Active { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<ComboItemDto> Items { get; set; } = new();
+    }
 
-public class ComboItemDto
-{
-    public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
-    public string ProductName { get; set; } = string.Empty;
-    public decimal ProductPrice { get; set; }
-    public int Quantity { get; set; }
-}
+    public class ComboItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public decimal ProductPrice { get; set; }
+        public int Quantity { get; set; }
+    }
 
-public class CreateSalesComboRequest
-{
-    [Required]
-    public Guid ActivityId { get; set; }
-    
-    [Required]
-    [MaxLength(200)]
-    public string Name { get; set; } = string.Empty;
-    
-    [MaxLength(500)]
-    public string? Description { get; set; }
-    
-    [Required]
-    [Range(0.01, double.MaxValue, ErrorMessage = "El precio del combo debe ser mayor a 0")]
-    public decimal ComboPrice { get; set; }
-    
-    [Required]
-    [MinLength(2, ErrorMessage = "Un combo debe tener al menos 2 productos")]
-    public List<CreateComboItemRequest> Items { get; set; } = new();
-}
+    public class CreateSalesComboRequest
+    {
+        [Required]
+        public Guid ActivityId { get; set; }
+        
+        [Required]
+        [MaxLength(200)]
+        public string Name { get; set; } = string.Empty;
+        
+        [MaxLength(500)]
+        public string? Description { get; set; }
+        
+        [Required]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio del combo debe ser mayor a 0")]
+        public decimal ComboPrice { get; set; }
+        
+        [Required]
+        [MinLength(2, ErrorMessage = "Un combo debe tener al menos 2 productos")]
+        public List<CreateComboItemRequest> Items { get; set; } = new();
+    }
 
-public class CreateComboItemRequest
-{
-    [Required]
-    public Guid ProductId { get; set; }
-    
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser al menos 1")]
-    public int Quantity { get; set; } = 1;
-}
+    public class CreateComboItemRequest
+    {
+        [Required]
+        public Guid ProductId { get; set; }
+        
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser al menos 1")]
+        public int Quantity { get; set; } = 1;
+    }
 }
