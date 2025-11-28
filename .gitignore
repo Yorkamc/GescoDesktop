@@ -1,213 +1,262 @@
-﻿# ================================
+﻿# ============================================
+# .gitignore para GESCO Desktop
+# Backend (.NET) + Frontend (React/Node.js)
+# ============================================
+
+# ============================================
 # BACKEND (.NET)
-# ================================
+# ============================================
 
-# Build folders
-backend/bin/
-backend/obj/
-backend/publish/
-backend/dist/
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# Visual Studio
-backend/.vs/
+## Visual Studio cache/options
+.vs/
+.vscode/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 
-# VS Code
-backend/.vscode/
+## User-specific files
+*.rsuser
 
-# Rider
-backend/.idea/
+## Build Results
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
 
-# NuGet
+## Test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+## NuGet
 *.nupkg
-backend/packages/
+*.snupkg
+**/packages/*
+!**/packages/build/
 *.nuget.props
 *.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
 
-# .NET artifacts
-backend/project.lock.json
-backend/project.fragment.lock.json
-backend/artifacts/
+## Entity Framework
+*.edmx.diagram
+*.edmx.sql
 
-# Entity Framework
-backend/*.db
-backend/*.db-shm
-backend/*.db-wal
+## Database files (IMPORTANTE)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+**/data/*.db
+**/data/*.db-*
+gesco_encrypted.db*
 
-# Logs del backend
-backend/logs/
-backend/src/Gesco.Desktop.UI/logs/
+## Publish profiles
+PublishProfiles/
+*.pubxml
+*.publishproj
+publish/
 
-# Temp files
-backend/*.tmp
-backend/*.temp
-backend/*.bak
+# ============================================
+# FRONTEND (Node.js / React / Electron)
+# ============================================
 
-# Base de datos SQLite
-backend/data/*.db
-backend/data/*.sqlite
-backend/src/Gesco.Desktop.UI/data/*.db
-backend/src/Gesco.Desktop.UI/data/*.sqlite
-backend/src/Gesco.Desktop.UI/data/gesco_encrypted.db*
-
-# ================================
-# FRONTEND (Electron + Vite + React)
-# ================================
-
-# Node modules
-frontend/node_modules/
+## Dependencies
 node_modules/
+jspm_packages/
 
-# Dependencias
-frontend/package-lock.json
-frontend/yarn.lock
-frontend/pnpm-lock.yaml
+## Build output
+dist/
+dist-electron/
+build/
+out/
+release/
+*.local
 
-# Build outputs
-frontend/dist/
-frontend/dist-electron/
-frontend/out/
-frontend/release/
-frontend/.vite/
-
-# ================================
-# CRÍTICO: BACKEND COPIADO AL FRONTEND
-# ================================
-# Durante el empaquetado de Electron, el backend se copia a:
-# frontend/backend/ (o frontend/resources/backend/)
-# Esta carpeta NO debe ir a Git
-
-frontend/backend/
-frontend/resources/backend/
-frontend/dist-electron/backend/
-frontend/out/backend/
-
-# Instaladores generados
-frontend/*.exe
-frontend/*.dmg
-frontend/*.AppImage
-frontend/*.deb
-frontend/*.rpm
-frontend/*.msi
-
-# ================================
-# ARCHIVOS DE SEGURIDAD (CRÍTICO)
-# ================================
-
-# Variables de entorno
-.env
-.env.local
-.env.production
-.env.staging
-.env.development
-backend/.env
-backend/src/Gesco.Desktop.UI/.env
-frontend/.env
-
-# Llaves de encriptación
-keys/
-certificates/
-backend/keys/
-backend/src/Gesco.Desktop.UI/keys/
-*.pfx
-*.key
-*.pem
-*.crt
-
-# Base de datos con datos sensibles
-**/gesco_encrypted.db
-**/gesco_encrypted.db-shm
-**/gesco_encrypted.db-wal
-data/gesco_encrypted.db*
-
-# Configuraciones de producción
-backend/src/Gesco.Desktop.UI/appsettings.Production.json
-backend/src/Gesco.Desktop.UI/appsettings.Staging.json
-
-# ================================
-# LOGS
-# ================================
-
-*.log
+## Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-logs/
-backend/logs/
-frontend/logs/
+pnpm-debug.log*
+lerna-debug.log*
 
-# ================================
-# OS GENERATED FILES
-# ================================
+## Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# macOS
+## Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+## Electron build output
+app/
+app.asar
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+
+## Cache
+.cache/
+.parcel-cache/
+.npm
+.eslintcache
+.node_repl_history
+
+## Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ============================================
+# SISTEMA OPERATIVO
+# ============================================
+
+## Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+## macOS
+.DS_Store
 .AppleDouble
 .LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# Linux
+## Linux
 *~
+.fuse_hidden*
 .directory
 .Trash-*
+.nfs*
 
-# ================================
-# IDEs
-# ================================
-
-# VS Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Visual Studio
-.vs/
-*.user
-*.suo
-
-# JetBrains (Rider, WebStorm)
-.idea/
-*.iml
-
-# ================================
-# TESTING
-# ================================
-
-backend/tests/**/TestResults/
-frontend/coverage/
-*.trx
-*.coverage
-
-# ================================
-# MISC
-# ================================
-
-# Backup files
-*.bak
+# ============================================
+# ARCHIVOS TEMPORALES
+# ============================================
+*.tmp
+*.temp
 *.swp
 *.swo
 *~
-.restructure-state.json
-backup_*/
+.#*
+\#*#
+.*.kate-swp
+.*.swp
 
-# Temporales
-*.tmp
-*.temp
+# ============================================
+# ARCHIVOS SENSIBLES (SEGURIDAD)
+# ============================================
+*.key
+*.pem
+*.p12
+*.pfx
+appsettings.Development.json
+appsettings.Production.json
+secrets.json
+.env.production
 
-# Cache
-.cache/
-.parcel-cache/
+# ============================================
+# DOCUMENTACIÓN GENERADA
+# ============================================
+docs/_build/
+site/
+
+# ============================================
+# BACKUPS
+# ============================================
+*.bak
+*.backup
+*.old
+*.orig
+
+# ============================================
+# OTROS
+# ============================================
+.sass-cache/
+*.css.map
+*.js.map
+.grunt/
+bower_components/
+.lock-wscript
+*.tgz
+.yarn-integrity
+.pnp.*
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
